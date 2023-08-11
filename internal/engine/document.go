@@ -20,13 +20,14 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []model.Docu
 	req.Collection = i.collectionName
 	req.BuildIndex = buidIndex
 	for _, doc := range documents {
-		d := document.Document{}
+		d := &document.Document{}
 		d.Id = doc.Id
 		d.Vector = doc.Vector
 		d.Fields = make(map[string]interface{})
 		for k, v := range doc.Fields {
 			d.Fields[k] = v.Val
 		}
+		req.Documents = append(req.Documents, d)
 	}
 
 	res := new(document.UpsertRes)
@@ -54,8 +55,8 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, r
 		d.Vector = doc.Vector
 		d.Fields = make(map[string]model.Field)
 
-		for n, f := range doc.Fields {
-			d.Fields[n] = model.Field{Val: f.OneofVal}
+		for n, v := range doc.Fields {
+			d.Fields[n] = model.Field{Val: v}
 		}
 		documents = append(documents, d)
 	}
@@ -85,16 +86,17 @@ func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, f
 		return nil, err
 	}
 	var documents [][]model.Document
-	for _, result := range res.Results {
+	for _, result := range res.Documents {
 		var vecDoc []model.Document
-		for _, doc := range result.Documents {
+		for _, doc := range result {
 			d := model.Document{
 				Id:     doc.Id,
 				Vector: doc.Vector,
 				Score:  doc.Score,
+				Fields: make(map[string]model.Field),
 			}
-			for n, f := range doc.Fields {
-				d.Fields[n] = model.Field{Val: f.OneofVal}
+			for n, v := range doc.Fields {
+				d.Fields[n] = model.Field{Val: v}
 			}
 			vecDoc = append(vecDoc, d)
 		}
@@ -127,16 +129,17 @@ func (i *implementerDocument) SearchById(ctx context.Context, documentIds []stri
 		return nil, err
 	}
 	var documents [][]model.Document
-	for _, result := range res.Results {
+	for _, result := range res.Documents {
 		var vecDoc []model.Document
-		for _, doc := range result.Documents {
+		for _, doc := range result {
 			d := model.Document{
 				Id:     doc.Id,
 				Vector: doc.Vector,
 				Score:  doc.Score,
+				Fields: make(map[string]model.Field),
 			}
-			for n, f := range doc.Fields {
-				d.Fields[n] = model.Field{Val: f.OneofVal}
+			for n, v := range doc.Fields {
+				d.Fields[n] = model.Field{Val: v}
 			}
 			vecDoc = append(vecDoc, d)
 		}

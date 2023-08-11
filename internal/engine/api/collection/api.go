@@ -7,7 +7,7 @@ import (
 )
 
 type CreateReq struct {
-	g.Meta `path:"/collection/createCollection" tags:"Collection" method:"Post" summary:"创建collection"`
+	g.Meta `path:"/collection/create" tags:"Collection" method:"Post" summary:"创建collection"`
 	proto.CreateCollectionRequest
 }
 
@@ -16,7 +16,7 @@ type CreateRes struct {
 }
 
 type DescribeReq struct {
-	g.Meta `path:"/collection/describeCollection" tags:"Collection" method:"Post" summary:"返回collection信息"`
+	g.Meta `path:"/collection/describe" tags:"Collection" method:"Post" summary:"返回collection信息"`
 	proto.DescribeCollectionRequest
 }
 
@@ -25,7 +25,7 @@ type DescribeRes struct {
 }
 
 type DropReq struct {
-	g.Meta `path:"/collection/dropCollection" tags:"Collection" method:"Post" summary:"删除collection，并删除collection中的所有文档，如果collectio不经存在返回失败"`
+	g.Meta `path:"/collection/drop" tags:"Collection" method:"Post" summary:"删除collection，并删除collection中的所有文档，如果collectio不经存在返回失败"`
 	proto.DropCollectionRequest
 }
 
@@ -34,7 +34,7 @@ type DropRes struct {
 }
 
 type ListReq struct {
-	g.Meta `path:"/collection/listCollections" tags:"Collection" method:"Post" summary:"列出指定database中的所有collection"`
+	g.Meta `path:"/collection/list" tags:"Collection" method:"Post" summary:"列出指定database中的所有collection"`
 	proto.ListCollectionsRequest
 }
 

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"strings"
 	"vectordb-sdk-go/internal/client"
 	"vectordb-sdk-go/internal/engine/api/collection"
 	"vectordb-sdk-go/internal/proto"
@@ -80,13 +81,16 @@ func (i *implementerCollection) DropCollection(ctx context.Context, collectionNa
 
 	res := new(collection.DropRes)
 	err = i.Request(ctx, req, res)
-	if err != nil {
-		return err
+
+	if err != nil && strings.Contains(err.Error(), "not exist") {
+		return nil
 	}
-	return nil
+	return err
 }
 
-func (i *implementerCollection) ListCollection(ctx context.Context, req *collection.ListReq) ([]*Collection, error) {
+func (i *implementerCollection) ListCollection(ctx context.Context) ([]*Collection, error) {
+	req := new(collection.ListReq)
+	req.Database = i.databaseName
 	res := new(collection.ListRes)
 	err := i.Request(ctx, req, &res)
 	if err != nil {

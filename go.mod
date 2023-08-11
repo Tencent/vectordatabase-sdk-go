@@ -1,10 +1,11 @@
 module vectordb-sdk-go
 
-go 1.19
+go 1.18
 
 require (
 	github.com/gogf/gf v1.16.9
 	github.com/gogf/gf/v2 v2.5.1
+	github.com/json-iterator/go v1.1.12
 	google.golang.org/protobuf v1.31.0
 )
 
@@ -24,6 +25,8 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
 	go.opentelemetry.io/otel v1.13.0 // indirect

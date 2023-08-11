@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -10,8 +11,6 @@ import (
 	"time"
 
 	"github.com/gogf/gf/errors/gerror"
-	"github.com/gogf/gf/net/ghttp"
-	"github.com/gogf/gf/text/gstr"
 	"github.com/gogf/gf/util/gmeta"
 	"github.com/gogf/gf/v2/net/gclient"
 	"github.com/gogf/gf/v2/os/glog"
@@ -86,28 +85,19 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 		method = gmeta.Get(req, gtag.Method).String()
 		path   = gmeta.Get(req, gtag.Path).String()
 	)
-	var data []interface{}
-	switch gstr.ToUpper(method) {
-	case http.MethodGet:
-		if urlParams := ghttp.BuildParams(req); urlParams != "" {
-			path += "?" + ghttp.BuildParams(req)
-		}
-	default:
-		data = append(data, req)
-	}
-	if c.debug {
-		glog.Debugf(ctx, "REQUEST, Method: %s, Path: %s", method, path)
-		if len(data) > 0 {
-			jsonData, err := json.Marshal(data[0])
-			if err != nil {
-				glog.Debugf(ctx, "Body MarshalJson error: %+v", data[0])
-				return err
-			}
-			glog.Debugf(ctx, "Body: %s", string(jsonData))
-		}
+	reqBody := bytes.NewBuffer(nil)
+	encoder := json.NewEncoder(reqBody)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(req)
+	if err != nil {
+		return err
 	}
 
-	response, err := c.cli.ContentJson().DoRequest(ctx, method, path, data...)
+	if c.debug {
+		glog.Debugf(ctx, "REQUEST, Method: %s, Path: %s, Body: %s", method, path, strings.TrimSpace(reqBody.String()))
+	}
+
+	response, err := c.cli.ContentJson().DoRequest(ctx, method, c.url+path, reqBody.String())
 	if err != nil {
 		return err
 	}

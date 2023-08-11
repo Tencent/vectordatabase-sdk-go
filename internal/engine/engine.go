@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"vectordb-sdk-go/internal/client"
-	"vectordb-sdk-go/internal/engine/api/collection"
 	"vectordb-sdk-go/model"
 )
 
@@ -20,7 +19,7 @@ type CollectionInterface interface {
 	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes) (*Collection, error)
 	DescribeCollection(ctx context.Context, name string) (*Collection, error)
 	DropCollection(ctx context.Context, collectionName string) (err error)
-	ListCollection(ctx context.Context, req *collection.ListReq) ([]*Collection, error)
+	ListCollection(ctx context.Context) ([]*Collection, error)
 	Collection(name string) *Collection
 }
 

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"strings"
 
 	"vectordb-sdk-go/internal/client"
 	"vectordb-sdk-go/internal/engine/api/database"
@@ -27,6 +28,9 @@ func (i *implementerDatabase) DropDatabase(ctx context.Context, name string) (er
 	req := database.DropReq{Database: name}
 	res := new(database.DropRes)
 	err = i.Request(ctx, req, res)
+	if err != nil && strings.Contains(err.Error(), "not exist") {
+		return nil
+	}
 	return
 }
 

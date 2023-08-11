@@ -75,7 +75,11 @@ func In(key string, list interface{}) string {
 	for i := 0; i < values.Len(); i++ {
 		b.WriteString(",")
 		v := values.Index(i)
-		b.WriteString(fmt.Sprintf("%v", v.Interface()))
+		if v.Kind() == reflect.String {
+			b.WriteString(fmt.Sprintf(`"%v"`, v.Interface()))
+		} else {
+			b.WriteString(fmt.Sprintf(`%v`, v.Interface()))
+		}
 	}
 	if b.Len() != 0 {
 		return fmt.Sprintf("%s in (%s)", key, b.String()[1:])

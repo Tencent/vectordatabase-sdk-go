@@ -17,11 +17,11 @@ type Field struct {
 	Val interface{}
 }
 
-func (f *Field) String() string {
+func (f Field) String() string {
 	return fmt.Sprintf("%v", f.Val)
 }
 
-func (f *Field) Int() int64 {
+func (f Field) Int() int64 {
 	switch v := f.Val.(type) {
 	case int, int8, int16, int32, int64:
 		return reflect.ValueOf(v).Int()
@@ -36,7 +36,7 @@ func (f *Field) Int() int64 {
 	return 0
 }
 
-func (f *Field) Float() float64 {
+func (f Field) Float() float64 {
 	switch v := f.Val.(type) {
 	case int, int8, int16, int32, int64:
 		return float64(reflect.ValueOf(v).Int())
