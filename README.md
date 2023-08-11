@@ -3,7 +3,7 @@
 ## Getting started
 
 ### Prerequisites
-Go 1.18 or higher
+Go 1.15 or higher
 
 ### Install TencentCloud VectorDB Go SDK
 
