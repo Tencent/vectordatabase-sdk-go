@@ -1,13 +1,12 @@
 package document
 
 import (
+	"encoding/json"
+
 	"vectordb-sdk-go/internal/proto"
 
 	"github.com/gogf/gf/v2/frame/g"
-	jsoniter "github.com/json-iterator/go"
 )
-
-var json = jsoniter.Config{SortMapKeys: true, ValidateJsonRawMessage: true}.Froze()
 
 type UpsertReq struct {
 	g.Meta `path:"/document/upsert" tags:"Document" method:"Post" summary:"插入一条文档数据"`
