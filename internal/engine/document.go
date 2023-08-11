@@ -2,10 +2,11 @@ package engine
 
 import (
 	"context"
-	"vectordb-sdk-go/internal/client"
-	"vectordb-sdk-go/internal/engine/api/document"
-	"vectordb-sdk-go/internal/proto"
-	"vectordb-sdk-go/model"
+
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine/api/document"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/proto"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
 )
 
 type implementerDocument struct {

@@ -5,10 +5,11 @@ import (
 	"log"
 	"testing"
 	"time"
-	"vectordb-sdk-go/internal/client"
-	"vectordb-sdk-go/internal/engine"
-	"vectordb-sdk-go/model"
-	"vectordb-sdk-go/tcvectordb"
+
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/tcvectordb"
 )
 
 var cli engine.VectorDBClient

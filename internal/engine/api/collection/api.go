@@ -1,7 +1,7 @@
 package collection
 
 import (
-	"vectordb-sdk-go/internal/proto"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/proto"
 
 	"github.com/gogf/gf/v2/frame/g"
 )

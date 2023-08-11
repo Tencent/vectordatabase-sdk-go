@@ -1,8 +1,8 @@
 package tcvectordb
 
 import (
-	"vectordb-sdk-go/internal/client"
-	"vectordb-sdk-go/internal/engine"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine"
 )
 
 func NewClient(url, username, key string, option *client.ClientOption) (engine.VectorDBClient, error) {

@@ -2,8 +2,9 @@ package engine
 
 import (
 	"context"
-	"vectordb-sdk-go/internal/client"
-	"vectordb-sdk-go/model"
+
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
 )
 
 type DatabaseInterface interface {
