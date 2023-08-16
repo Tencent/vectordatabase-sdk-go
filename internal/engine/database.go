@@ -4,15 +4,21 @@ import (
 	"context"
 	"strings"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine/api/database"
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
 )
 
 type implementerDatabase struct {
-	client.SdkClient
+	model.SdkClient
 }
 
-func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string) (*Database, error) {
+func VectorDB(sdkClient model.SdkClient) model.VectorDBClient {
+	databaseImpl := new(implementerDatabase)
+	databaseImpl.SdkClient = sdkClient
+	return databaseImpl
+}
+
+func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string) (*model.Database, error) {
 	req := database.CreateReq{
 		Database: name,
 	}
@@ -34,7 +40,7 @@ func (i *implementerDatabase) DropDatabase(ctx context.Context, name string) (er
 	return
 }
 
-func (i *implementerDatabase) ListDatabase(ctx context.Context) (databases []*Database, err error) {
+func (i *implementerDatabase) ListDatabase(ctx context.Context) (databases []*model.Database, err error) {
 	req := database.ListReq{}
 	res := new(database.ListRes)
 	err = i.Request(ctx, req, res)
@@ -48,8 +54,8 @@ func (i *implementerDatabase) ListDatabase(ctx context.Context) (databases []*Da
 	return
 }
 
-func (i *implementerDatabase) Database(name string) *Database {
-	database := new(Database)
+func (i *implementerDatabase) Database(name string) *model.Database {
+	database := new(model.Database)
 	collImpl := new(implementerCollection)
 	collImpl.SdkClient = i.SdkClient
 	collImpl.databaseName = name

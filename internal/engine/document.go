@@ -3,14 +3,13 @@ package engine
 import (
 	"context"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine/api/document"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/proto"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
 )
 
 type implementerDocument struct {
-	client.SdkClient
+	model.SdkClient
 	databaseName   string
 	collectionName string
 }

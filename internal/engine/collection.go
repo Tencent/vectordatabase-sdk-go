@@ -4,18 +4,17 @@ import (
 	"context"
 	"strings"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine/api/collection"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/proto"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
 )
 
 type implementerCollection struct {
-	client.SdkClient
+	model.SdkClient
 	databaseName string
 }
 
-func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes) (*Collection, error) {
+func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes) (*model.Collection, error) {
 	req := new(collection.CreateReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -61,7 +60,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	return coll, nil
 }
 
-func (i *implementerCollection) DescribeCollection(ctx context.Context, name string) (*Collection, error) {
+func (i *implementerCollection) DescribeCollection(ctx context.Context, name string) (*model.Collection, error) {
 	req := new(collection.DescribeReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -89,7 +88,7 @@ func (i *implementerCollection) DropCollection(ctx context.Context, collectionNa
 	return err
 }
 
-func (i *implementerCollection) ListCollection(ctx context.Context) ([]*Collection, error) {
+func (i *implementerCollection) ListCollection(ctx context.Context) ([]*model.Collection, error) {
 	req := new(collection.ListReq)
 	req.Database = i.databaseName
 	res := new(collection.ListRes)
@@ -97,15 +96,15 @@ func (i *implementerCollection) ListCollection(ctx context.Context) ([]*Collecti
 	if err != nil {
 		return nil, err
 	}
-	var collections []*Collection
+	var collections []*model.Collection
 	for _, collection := range res.Collections {
 		collections = append(collections, i.toCollection(collection))
 	}
 	return collections, nil
 }
 
-func (i *implementerCollection) Collection(name string) *Collection {
-	coll := new(Collection)
+func (i *implementerCollection) Collection(name string) *model.Collection {
+	coll := new(model.Collection)
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.databaseName = i.databaseName
@@ -116,7 +115,7 @@ func (i *implementerCollection) Collection(name string) *Collection {
 	return coll
 }
 
-func (i *implementerCollection) toCollection(collectionRes *proto.CreateCollectionRequest) *Collection {
+func (i *implementerCollection) toCollection(collectionRes *proto.CreateCollectionRequest) *model.Collection {
 	coll := i.Collection(collectionRes.Collection)
 	coll.ShardNum = collectionRes.ShardNum
 	coll.ReplicasNum = collectionRes.ReplicaNum

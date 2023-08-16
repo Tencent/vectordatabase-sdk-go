@@ -10,19 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
+
 	"github.com/gogf/gf/errors/gerror"
 	"github.com/gogf/gf/util/gmeta"
 	"github.com/gogf/gf/v2/net/gclient"
 	"github.com/gogf/gf/v2/os/glog"
 	"github.com/gogf/gf/v2/util/gtag"
 )
-
-type SdkClient interface {
-	Close()
-	Request(ctx context.Context, req, res interface{}) error
-	WithTimeout(d time.Duration)
-	Debug(v bool)
-}
 
 type Client struct {
 	cli      *gclient.Client
@@ -33,22 +28,13 @@ type Client struct {
 	debug    bool
 }
 
-type ClientOption struct {
-	// Timeout: default 5s
-	Timeout time.Duration
-	// MaxIdldConnPerHost: default 10
-	MaxIdldConnPerHost int
-	// IdleConnTimeout: default 1m
-	IdleConnTimeout time.Duration
-}
-
-var defaultOption = ClientOption{
+var defaultOption = model.ClientOption{
 	Timeout:            time.Second * 5,
 	MaxIdldConnPerHost: 10,
 	IdleConnTimeout:    time.Minute,
 }
 
-func NewClient(url, username, key string, options *ClientOption) (SdkClient, error) {
+func NewClient(url, username, key string, options *model.ClientOption) (model.SdkClient, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, gerror.Newf("invailid url param with: %s", url)
 	}
@@ -124,7 +110,7 @@ func (c *Client) handleResponse(ctx context.Context, res *gclient.Response, out 
 	if !json.Valid(responseBytes) {
 		return gerror.Newf(`invalid response content: %s`, responseBytes)
 	}
-	var commenRes CommmonResponse
+	var commenRes model.CommmonResponse
 
 	if err := json.Unmarshal(responseBytes, &commenRes); err != nil {
 		return gerror.Wrapf(err, `json.Unmarshal failed with content:%s`, responseBytes)

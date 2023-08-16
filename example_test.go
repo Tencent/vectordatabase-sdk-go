@@ -6,17 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/client"
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
 	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/tcvectordb"
 )
 
-var cli engine.VectorDBClient
+var cli model.VectorDBClient
 
 func init() {
 	var err error
-	cli, err = tcvectordb.NewClient("http://127.0.0.1", "root", "key get from web console", &client.ClientOption{
+	cli, err = tcvectordb.NewClient("http://127.0.0.1", "root", "key get from web console", &model.ClientOption{
 		MaxIdldConnPerHost: 50,
 		IdleConnTimeout:    time.Second * 30,
 	})
