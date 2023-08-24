@@ -64,54 +64,20 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, r
 }
 
 func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, filter *model.Filter, hnswParam *model.HNSWParam, retrieveVector bool, limit int) ([][]model.Document, error) {
-	req := new(document.SearchReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
-	req.Search = new(document.SearchCond)
-	req.Search.Vectors = vectors
-	if filter != nil {
-		req.Search.Filter = filter.Cond()
-	}
-	req.Search.RetrieveVector = retrieveVector
-	req.Search.Limit = uint32(limit)
-	if hnswParam != nil {
-		req.Search.Params = &proto.SearchParams{
-			Ef: hnswParam.EfConstruction,
-		}
-	}
-
-	res := new(document.SearchRes)
-	err := i.Request(ctx, req, res)
-	if err != nil {
-		return nil, err
-	}
-	var documents [][]model.Document
-	for _, result := range res.Documents {
-		var vecDoc []model.Document
-		for _, doc := range result {
-			d := model.Document{
-				Id:     doc.Id,
-				Vector: doc.Vector,
-				Score:  doc.Score,
-				Fields: make(map[string]model.Field),
-			}
-			for n, v := range doc.Fields {
-				d.Fields[n] = model.Field{Val: v}
-			}
-			vecDoc = append(vecDoc, d)
-		}
-		documents = append(documents, vecDoc)
-	}
-
-	return documents, nil
+	return i.search(ctx, nil, vectors, filter, hnswParam, retrieveVector, limit)
 }
 
 func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, filter *model.Filter, hnswParam *model.HNSWParam, retrieveVector bool, limit int) ([][]model.Document, error) {
+	return i.search(ctx, documentIds, nil, filter, hnswParam, retrieveVector, limit)
+}
+
+func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, filter *model.Filter, hnswParam *model.HNSWParam, retrieveVector bool, limit int) ([][]model.Document, error) {
 	req := new(document.SearchReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
 	req.Search = new(document.SearchCond)
 	req.Search.DocumentIds = documentIds
+	req.Search.Vectors = vectors
 	if filter != nil {
 		req.Search.Filter = filter.Cond()
 	}
