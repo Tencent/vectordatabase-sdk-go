@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/tcvectordb"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 )
 
 var cli model.VectorDBClient

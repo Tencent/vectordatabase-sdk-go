@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/engine/api/database"
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/database"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 )
 
 type implementerDatabase struct {

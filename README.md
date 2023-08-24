@@ -9,12 +9,12 @@ Go 1.15 or higher
 
 1. Use `go get` to install the latest version of the TencentCloud VectorDB Go SDK and dependencies: 
 ```sh
-go get -u git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/tcvectordb
+go get -u git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb
 ```
 
 2. Create New VectorDB Client To Start:
 ```go
-import "git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/tcvectordb"
+import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 
 cli, err := tcvectordb.NewClient("http://127.0.0.1", "root", "key get from web console", &client.ClientOption{
 		MaxIdldConnPerHost: 50,

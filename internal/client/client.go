@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/model"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 
 	"github.com/gogf/gf/errors/gerror"
 	"github.com/gogf/gf/util/gmeta"

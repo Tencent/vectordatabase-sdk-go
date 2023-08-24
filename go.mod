@@ -1,4 +1,4 @@
-module git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go
+module git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go
 
 go 1.15
 

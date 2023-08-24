@@ -9,7 +9,7 @@ package proto
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "git.woa.com/cloud_nosql/vectordb/vectordb-sdk-go/internal/proto/json2pb"
+	_ "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto/json2pb"
 	reflect "reflect"
 	sync "sync"
 )
