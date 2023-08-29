@@ -12,6 +12,8 @@ type ClientOption struct {
 }
 
 type CommmonResponse struct {
-	Code int32  `json:"code,omitempty"`
-	Msg  string `json:"msg,omitempty"`
+	// Code: 0 means success, other means failure.
+	Code int32 `json:"code,omitempty"`
+	// Msg: response msg
+	Msg string `json:"msg,omitempty"`
 }

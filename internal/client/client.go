@@ -12,10 +12,10 @@ import (
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 
-	"github.com/gogf/gf/errors/gerror"
-	"github.com/gogf/gf/util/gmeta"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/net/gclient"
 	"github.com/gogf/gf/v2/os/glog"
+	"github.com/gogf/gf/v2/util/gmeta"
 	"github.com/gogf/gf/v2/util/gtag"
 )
 
@@ -34,6 +34,7 @@ var defaultOption = model.ClientOption{
 	IdleConnTimeout:    time.Minute,
 }
 
+// NewClient new http client with url, username and api key
 func NewClient(url, username, key string, options *model.ClientOption) (model.SdkClient, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, gerror.Newf("invailid url param with: %s", url)
@@ -66,6 +67,7 @@ func NewClient(url, username, key string, options *model.ClientOption) (model.Sd
 	return cli, nil
 }
 
+// Request do request for client
 func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 	var (
 		method = gmeta.Get(req, gtag.Method).String()
@@ -90,11 +92,13 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 	return c.handleResponse(ctx, response, res)
 }
 
+// WithTimeout set client timeout
 func (c *Client) WithTimeout(d time.Duration) {
 	c.timeout = d
 	c.cli.Timeout(d)
 }
 
+// Debug set debug mode to show the request and response info
 func (c *Client) Debug(v bool) {
 	c.debug = v
 }
@@ -125,6 +129,7 @@ func (c *Client) handleResponse(ctx context.Context, res *gclient.Response, out 
 	return nil
 }
 
+// Close wrap http.Client.CloseIdleConnections
 func (c *Client) Close() {
 	c.cli.CloseIdleConnections()
 }

@@ -14,6 +14,7 @@ type implementerDocument struct {
 	collectionName string
 }
 
+// Upsert upsert documents into collection. Support for repeated insertion
 func (i *implementerDocument) Upsert(ctx context.Context, documents []model.Document, buidIndex bool) (err error) {
 	req := new(document.UpsertReq)
 	req.Database = i.databaseName
@@ -35,18 +36,23 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []model.Docu
 	return
 }
 
-func (i *implementerDocument) Query(ctx context.Context, documentIds []string, retrieveVector bool) ([]model.Document, error) {
+// Query query the document by document ids. The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
+func (i *implementerDocument) Query(ctx context.Context, documentIds []string, filter *model.Filter, readConsistency string, retrieveVector bool, outputFields []string, offset, limit int64) ([]model.Document, uint64, error) {
 	req := new(document.QueryReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
 	req.Query = &proto.QueryCond{
 		DocumentIds:    documentIds,
 		RetrieveVector: retrieveVector,
+		Filter:         filter.Cond(),
+		Offset:         offset,
+		Limit:          limit,
+		OutputFields:   outputFields,
 	}
 	res := new(document.QueryRes)
 	err := i.Request(ctx, req, res)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var documents []model.Document
 	for _, doc := range res.Documents {
@@ -60,18 +66,22 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, r
 		}
 		documents = append(documents, d)
 	}
-	return documents, nil
+	return documents, res.Count, nil
 }
 
-func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, filter *model.Filter, hnswParam *model.HNSWParam, retrieveVector bool, limit int) ([][]model.Document, error) {
-	return i.search(ctx, nil, vectors, filter, hnswParam, retrieveVector, limit)
+// Search search document topK by vector. The optional parameters filter will add the filter condition to search.
+// The optional parameters hnswParam only be set with the HNSW vector index type.
+func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, retrieves []string, filter *model.Filter, readConsistency string, hnswParam *model.HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
+	return i.search(ctx, nil, vectors, retrieves, filter, readConsistency, hnswParam, retrieveVector, outputFields, limit)
 }
 
-func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, filter *model.Filter, hnswParam *model.HNSWParam, retrieveVector bool, limit int) ([][]model.Document, error) {
-	return i.search(ctx, documentIds, nil, filter, hnswParam, retrieveVector, limit)
+// Search search document topK by document ids. The optional parameters filter will add the filter condition to search.
+// The optional parameters hnswParam only be set with the HNSW vector index type.
+func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, retrieves []string, filter *model.Filter, readConsistency string, hnswParam *model.HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
+	return i.search(ctx, documentIds, nil, retrieves, filter, readConsistency, hnswParam, retrieveVector, outputFields, limit)
 }
 
-func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, filter *model.Filter, hnswParam *model.HNSWParam, retrieveVector bool, limit int) ([][]model.Document, error) {
+func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, retrieves []string, filter *model.Filter, readConsistency string, hnswParam *model.HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
 	req := new(document.SearchReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
@@ -81,6 +91,7 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 	if filter != nil {
 		req.Search.Filter = filter.Cond()
 	}
+	req.ReadConsistency = readConsistency
 	req.Search.RetrieveVector = retrieveVector
 	req.Search.Limit = uint32(limit)
 	if hnswParam != nil {
@@ -88,6 +99,8 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 			Ef: hnswParam.EfConstruction,
 		}
 	}
+	req.Search.Outputfields = outputFields
+	req.Search.Retrieves = retrieves
 
 	res := new(document.SearchRes)
 	err := i.Request(ctx, req, res)
@@ -115,15 +128,39 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 	return documents, nil
 }
 
-func (i *implementerDocument) Delete(ctx context.Context, documentIds []string) (err error) {
+// Delete delete document by document ids
+func (i *implementerDocument) Delete(ctx context.Context, documentIds []string, filter *model.Filter) (err error) {
 	req := new(document.DeleteReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
 	req.Query = &proto.QueryCond{
 		DocumentIds: documentIds,
+		Filter:      filter.Cond(),
 	}
 
 	res := new(document.DeleteRes)
 	err = i.Request(ctx, req, res)
 	return
+}
+
+func (i *implementerDocument) Update(ctx context.Context, documentIds []string, vector []float32, fields map[string]model.Field, filter *model.Filter) (uint64, error) {
+	req := new(document.UpdateReq)
+	req.Database = i.databaseName
+	req.Collection = i.collectionName
+	req.Query = &proto.QueryCond{
+		DocumentIds: documentIds,
+		Filter:      filter.Cond(),
+	}
+	req.Update.Vector = vector
+	req.Update.Fields = make(map[string]interface{})
+	for k, v := range fields {
+		req.Update.Fields[k] = v.Val
+	}
+
+	res := new(document.UpdateRes)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return 0, nil
+	}
+	return res.AffectedCount, nil
 }

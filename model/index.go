@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type HNSWParam struct {
 	M              uint32
 	EfConstruction uint32
@@ -30,4 +32,9 @@ type VectorIndex struct {
 type Indexes struct {
 	VectorIndex []VectorIndex
 	FilterIndex []FilterIndex
+}
+
+type IndexStatus struct {
+	Status    string
+	StartTime time.Time
 }

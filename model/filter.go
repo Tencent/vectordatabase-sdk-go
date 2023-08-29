@@ -18,6 +18,7 @@ func NewFilter(cond string) *Filter {
 	return f
 }
 
+// And `and` condition, eg: And(`key1 = "string value"`).And("key2=0")
 func (f *Filter) And(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
@@ -29,6 +30,7 @@ func (f *Filter) And(cond string) *Filter {
 	return f
 }
 
+// Or `or` condition, eg: Or(`key1 = "string value"`).Or("key2=0")
 func (f *Filter) Or(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
@@ -40,6 +42,7 @@ func (f *Filter) Or(cond string) *Filter {
 	return f
 }
 
+// AndNot `and not` condition, eg: AndNot(`key1 = "string value"`).AndNot("key2=0")
 func (f *Filter) AndNot(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
@@ -51,6 +54,7 @@ func (f *Filter) AndNot(cond string) *Filter {
 	return f
 }
 
+// OrNot `or not` condition, eg: OrNot(`key1 = "string value"`).OrNot("key2=0")
 func (f *Filter) OrNot(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
@@ -62,6 +66,7 @@ func (f *Filter) OrNot(cond string) *Filter {
 	return f
 }
 
+// In `in` condition function, use with other condition. eg: And(In("key1", []string{"value1"})).And(In("key2", []int{2}))
 func In(key string, list interface{}) string {
 	if reflect.TypeOf(list).Kind() != reflect.Slice &&
 		reflect.TypeOf(list).Kind() != reflect.Array {

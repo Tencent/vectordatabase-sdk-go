@@ -88,7 +88,7 @@ func TestCreateCollection(t *testing.T) {
 				IndexType: model.FILTER,
 			},
 		},
-	})
+	}, nil)
 	printErr(err)
 
 	colList, err := db.ListCollection(context.TODO())
@@ -100,6 +100,34 @@ func TestCreateCollection(t *testing.T) {
 	col, err := db.DescribeCollection(context.Background(), "col1")
 	printErr(err)
 	t.Logf("%+v", col)
+}
+
+func TestAlias(t *testing.T) {
+	db := cli.Database("dbtest1")
+	err := db.AliasSet(context.Background(), "col1", "alias-col1")
+	printErr(err)
+	aliasList, err := db.AliasList(context.Background())
+	printErr(err)
+	for _, item := range aliasList {
+		t.Logf("%+v", item)
+	}
+
+	alias, err := db.AliasDescribe(context.Background(), "alias-col1")
+	printErr(err)
+	t.Logf("%+v", alias)
+	err = db.AliasDrop(context.Background(), "alias-col1")
+	printErr(err)
+	aliasList, err = db.AliasList(context.Background())
+	printErr(err)
+	for _, item := range aliasList {
+		t.Logf("%+v", item)
+	}
+}
+
+func TestIndex(t *testing.T) {
+	db := cli.Database("dbtest1")
+	err := db.IndexRebuild(context.Background(), "col1", false, 1)
+	printErr(err)
 }
 
 func TestUpsertDocument(t *testing.T) {
@@ -143,15 +171,16 @@ func TestSearch(t *testing.T) {
 	defer cli.Close()
 	col := cli.Database("dbtest1").Collection("col1")
 	t.Log("document query-----------------")
-	docs, err := col.Query(context.Background(), []string{"0001", "0002"}, true)
+	docs, count, err := col.Query(context.Background(), []string{"0001", "0002"}, nil, "", true, nil, 0, 10)
 	printErr(err)
+	t.Logf("total doc: %d", count)
 	for _, doc := range docs {
 		t.Logf("id: %s, vector: %v, author: %s, page: %d, section: %s", doc.Id, doc.Vector,
 			doc.Fields["author"].String(), doc.Fields["page"].Int(), doc.Fields["section"].String())
 	}
 	t.Log("document search-----------------")
 	filter := model.NewFilter("page > 22").And(model.In("author", []string{"max", "sam"}))
-	searchRes, err := col.Search(context.Background(), [][]float32{{0.3123, 0.43, 0.213}}, filter, &model.HNSWParam{EfConstruction: 10}, true, 10)
+	searchRes, err := col.Search(context.Background(), [][]float32{{0.3123, 0.43, 0.213}}, nil, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
 	printErr(err)
 	for i, docs := range searchRes {
 		t.Logf("doc %d result: ", i)
@@ -163,7 +192,7 @@ func TestSearch(t *testing.T) {
 
 	col.Debug(true)
 	t.Log("document searchById-----------------")
-	searchRes, err = col.SearchById(context.Background(), []string{"0001", "0002", "0003"}, filter, &model.HNSWParam{EfConstruction: 10}, true, 10)
+	searchRes, err = col.SearchById(context.Background(), []string{"0001", "0002", "0003"}, nil, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
 	printErr(err)
 	for i, docs := range searchRes {
 		t.Logf("doc %d result: ", i)
@@ -181,13 +210,13 @@ func TestDeleteDocument(t *testing.T) {
 	col := db.Collection("col1")
 
 	// delete documents
-	err = col.Delete(context.Background(), []string{"0002", "0003"})
+	err = col.Delete(context.Background(), []string{"0002", "0003"}, nil)
 	printErr(err)
-	err = col.Delete(context.Background(), []string{"0002", "0003"})
+	err = col.Delete(context.Background(), []string{"0002", "0003"}, nil)
 	printErr(err)
 
-	docs, err := col.Query(context.Background(), []string{"0002", "0003"}, false)
-	printErr(err)
+	docs, count, err := col.Query(context.Background(), []string{"0002", "0003"}, nil, "", false, nil, 0, 10)
+	t.Logf("affect doc: %d", count)
 	if len(docs) != 0 {
 		t.Errorf("%v", docs)
 	}

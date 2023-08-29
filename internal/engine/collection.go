@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"strings"
+	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/collection"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto"
@@ -14,13 +15,25 @@ type implementerCollection struct {
 	databaseName string
 }
 
-func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes) (*model.Collection, error) {
+// CreateCollection create a collection. It returns collection struct if err is nil.
+// The parameter `name` must be a unique string, otherwise an error will be returned.
+// The parameter `shardNum`, `replicasNum` must bigger than 0, `description` could be empty.
+// You can set the index field in model.Indexes, the vectorIndex must be set one currently, and
+// the filterIndex sets at least one primaryKey value.
+func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes, embedding *model.Embedding) (*model.Collection, error) {
 	req := new(collection.CreateReq)
 	req.Database = i.databaseName
 	req.Collection = name
 	req.ShardNum = shardNum
 	req.ReplicaNum = replicasNum
 	req.Description = description
+	if embedding != nil {
+		req.EmbeddingParams = &proto.EmbeddingParams{
+			TextField:   embedding.TextField,
+			VectorField: embedding.VectorField,
+			Model:       embedding.Model,
+		}
+	}
 
 	for _, v := range indexes.VectorIndex {
 		var column proto.IndexColumn
@@ -60,6 +73,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	return coll, nil
 }
 
+// DescribeCollection get a collection detail. It returns the collection object to get collecton parameters or operate document api
 func (i *implementerCollection) DescribeCollection(ctx context.Context, name string) (*model.Collection, error) {
 	req := new(collection.DescribeReq)
 	req.Database = i.databaseName
@@ -74,10 +88,11 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 	return coll, nil
 }
 
-func (i *implementerCollection) DropCollection(ctx context.Context, collectionName string) (err error) {
+// DropCollection drop a collection. If collection not exist, it return nil.
+func (i *implementerCollection) DropCollection(ctx context.Context, name string) (err error) {
 	req := new(collection.DropReq)
 	req.Database = i.databaseName
-	req.Collection = collectionName
+	req.Collection = name
 
 	res := new(collection.DropRes)
 	err = i.Request(ctx, req, res)
@@ -88,6 +103,21 @@ func (i *implementerCollection) DropCollection(ctx context.Context, collectionNa
 	return err
 }
 
+func (i *implementerCollection) FlushCollection(ctx context.Context, name string) (affectedCount int, err error) {
+	req := new(collection.FlushReq)
+	req.Database = i.databaseName
+	req.Collection = name
+
+	res := new(collection.FlushRes)
+	err = i.Request(ctx, req, res)
+
+	if err != nil {
+		return 0, err
+	}
+	return int(res.AffectedCount), nil
+}
+
+// ListCollection get collection list. It return the list of collection, each collection same as DescribeCollection return.
 func (i *implementerCollection) ListCollection(ctx context.Context) ([]*model.Collection, error) {
 	req := new(collection.ListReq)
 	req.Database = i.databaseName
@@ -103,6 +133,16 @@ func (i *implementerCollection) ListCollection(ctx context.Context) ([]*model.Co
 	return collections, nil
 }
 
+func (i *implementerCollection) ModifyCollection(ctx context.Context, name, alias string) error {
+	req := new(collection.ModifyReq)
+	req.Database = i.databaseName
+	res := new(collection.ModifyRes)
+	err := i.Request(ctx, req, &res)
+	return err
+}
+
+// Collection get a collection interface to operate the document api. It could not send http request to vectordb.
+// If you want to show collection parameters, use DescribeCollection.
 func (i *implementerCollection) Collection(name string) *model.Collection {
 	coll := new(model.Collection)
 	docImpl := new(implementerDocument)
@@ -115,15 +155,31 @@ func (i *implementerCollection) Collection(name string) *model.Collection {
 	return coll
 }
 
-func (i *implementerCollection) toCollection(collectionRes *proto.CreateCollectionRequest) *model.Collection {
-	coll := i.Collection(collectionRes.Collection)
-	coll.ShardNum = collectionRes.ShardNum
-	coll.ReplicasNum = collectionRes.ReplicaNum
-	coll.Description = collectionRes.Description
-	coll.CreateTime = collectionRes.CreateTime
-	coll.Size = collectionRes.Size
+func (i *implementerCollection) toCollection(collectionItem *collection.DescribeCollectionItem) *model.Collection {
+	coll := i.Collection(collectionItem.Collection)
+	coll.DocumentCount = collectionItem.DocumentCount
+	coll.Alias = collectionItem.AliasList
+	coll.ShardNum = collectionItem.ShardNum
+	coll.ReplicasNum = collectionItem.ReplicaNum
+	coll.Description = collectionItem.Description
+	coll.Size = collectionItem.Size
+	if collectionItem.EmbeddingParams != nil {
+		coll.Embedding = model.Embedding{
+			TextField:   collectionItem.EmbeddingParams.TextField,
+			VectorField: collectionItem.EmbeddingParams.VectorField,
+			Model:       collectionItem.EmbeddingParams.Model,
+			Enabled:     collectionItem.EmbeddingParams.Status == "enabled",
+		}
+	}
+	if collectionItem.IndexStatus != nil {
+		coll.IndexStatus = model.IndexStatus{
+			Status: collectionItem.IndexStatus.Status,
+		}
+		coll.IndexStatus.StartTime, _ = time.Parse("2006-01-02 15:04:05", collectionItem.IndexStatus.StartTime)
+	}
+	coll.CreateTime, _ = time.Parse("2006-01-02 15:04:05", collectionItem.CreateTime)
 
-	for _, index := range collectionRes.Indexes {
+	for _, index := range collectionItem.Indexes {
 		switch index.FieldType {
 		case string(model.Vector):
 			vector := model.VectorIndex{}

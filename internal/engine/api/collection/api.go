@@ -6,29 +6,36 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 )
 
+// CreateReq create collection request
 type CreateReq struct {
 	g.Meta `path:"/collection/create" tags:"Collection" method:"Post" summary:"创建collection"`
 	proto.CreateCollectionRequest
 }
 
+// CreateRes create collection response
 type CreateRes struct {
 	proto.CreateCollectionResponse
 }
 
+// DescribeReq get collection detail request
 type DescribeReq struct {
 	g.Meta `path:"/collection/describe" tags:"Collection" method:"Post" summary:"返回collection信息"`
 	proto.DescribeCollectionRequest
 }
 
+// DescribeRes get collection detail response
 type DescribeRes struct {
 	proto.DescribeCollectionResponse
+	Collection *DescribeCollectionItem
 }
 
+// DropReq delete collection request
 type DropReq struct {
 	g.Meta `path:"/collection/drop" tags:"Collection" method:"Post" summary:"删除collection，并删除collection中的所有文档，如果collectio不经存在返回失败"`
 	proto.DropCollectionRequest
 }
 
+// DropReq delete collection response
 type DropRes struct {
 	proto.DropCollectionResponse
 }
@@ -40,4 +47,28 @@ type ListReq struct {
 
 type ListRes struct {
 	proto.ListCollectionsResponse
+	Collections []*DescribeCollectionItem `json:"collections,omitempty"`
+}
+
+type DescribeCollectionItem struct {
+	proto.CreateCollectionRequest
+	DocumentCount int64 `json:"documentCount,omitempty"`
+}
+
+type FlushReq struct {
+	g.Meta `path:"/collection/flush" tags:"Collection" method:"Post" summary:"清空 collection 中的所有数据和索引"`
+	proto.FlushCollectionRequest
+}
+
+type FlushRes struct {
+	proto.FlushCollectionResponse
+}
+
+type ModifyReq struct {
+	g.Meta `path:"/collection/flush" tags:"Collection" method:"Post" summary:"清空 collection 中的所有数据和索引"`
+	proto.UpdateCollectionRequest
+}
+
+type ModifyRes struct {
+	proto.UpdateCollectionResponse
 }
