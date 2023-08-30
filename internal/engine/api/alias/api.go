@@ -14,12 +14,12 @@ type SetRes struct {
 	proto.UpdateAliasResponse
 }
 
-type DropReq struct {
-	g.Meta `path:"/alias/drop" tags:"Alias" method:"Post" summary:"删除集合别名"`
+type DeleteReq struct {
+	g.Meta `path:"/alias/delete" tags:"Alias" method:"Post" summary:"删除集合别名"`
 	proto.DropAliasRequest
 }
 
-type DropRes struct {
+type DeleteRes struct {
 	proto.UpdateAliasResponse
 }
 

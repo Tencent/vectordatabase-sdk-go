@@ -26,11 +26,11 @@ func (i *implementerAlias) AliasSet(ctx context.Context, collectionName, aliasNa
 	return int(res.AffectedCount), nil
 }
 
-func (i *implementerAlias) AliasDrop(ctx context.Context, aliasName string) (int, error) {
-	req := new(alias.DropReq)
+func (i *implementerAlias) AliasDelete(ctx context.Context, aliasName string) (int, error) {
+	req := new(alias.DeleteReq)
 	req.Database = i.databaseName
 	req.Alias = aliasName
-	res := new(alias.DropRes)
+	res := new(alias.DeleteRes)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
 		return 0, err

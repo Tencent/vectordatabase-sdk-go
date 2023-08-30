@@ -133,14 +133,6 @@ func (i *implementerCollection) ListCollection(ctx context.Context) ([]*model.Co
 	return collections, nil
 }
 
-func (i *implementerCollection) ModifyCollection(ctx context.Context, name, alias string) error {
-	req := new(collection.ModifyReq)
-	req.Database = i.databaseName
-	res := new(collection.ModifyRes)
-	err := i.Request(ctx, req, &res)
-	return err
-}
-
 // Collection get a collection interface to operate the document api. It could not send http request to vectordb.
 // If you want to show collection parameters, use DescribeCollection.
 func (i *implementerCollection) Collection(name string) *model.Collection {

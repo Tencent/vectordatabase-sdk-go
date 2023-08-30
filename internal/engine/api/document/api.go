@@ -44,8 +44,13 @@ func (d Document) MarshalJSON() ([]byte, error) {
 		if len(field) == 0 {
 			return res, nil
 		}
-		res[len(res)-1] = ','
-		res = append(res, field[1:]...)
+		// res = {}
+		if len(res) == 2 {
+			res = append(res[:1], field[1:]...)
+		} else {
+			res[len(res)-1] = ','
+			res = append(res, field[1:]...)
+		}
 	}
 	return res, nil
 }
@@ -84,8 +89,9 @@ type SearchRes struct {
 // SearchCond search filter condition
 type SearchCond struct {
 	proto.SearchCond
-	Vectors [][]float32 `json:"vectors,omitempty"`
-	Filter  string      `json:"filter,omitempty"`
+	Vectors   [][]float32 `json:"vectors,omitempty"`
+	Filter    string      `json:"filter,omitempty"`
+	TextField []string    `json:"retrieves,omitempty"`
 }
 
 // QueryReq query document request
@@ -114,7 +120,7 @@ type DeleteRes struct {
 type UpdateReq struct {
 	g.Meta `path:"/document/update" tags:"Document" method:"Post" summary:"基于[主键查询]和[ Filter 过滤]的部分字段更新或者新增非索引字段"`
 	proto.UpdateRequest
-	Update *Document
+	Update Document `json:"update,omitempty"`
 }
 
 type UpdateRes struct {

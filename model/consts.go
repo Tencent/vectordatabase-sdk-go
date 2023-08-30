@@ -4,8 +4,13 @@ type IndexType string
 
 const (
 	// vector index type
-	FLAT IndexType = "FLAT"
-	HNSW IndexType = "HNSW"
+	FLAT     IndexType = "FLAT"
+	HNSW     IndexType = "HNSW"
+	IVF_FLAT IndexType = "IVF_FLAT"
+	IVF_PQFS IndexType = "IVF_PQFS"
+	IVF_SQ4  IndexType = "IVF_SQ4"
+	IVF_SQ8  IndexType = "IVF_SQ8"
+	IVF_SQ16 IndexType = "IVF_SQ16"
 
 	// scalar index type
 	PRIMARY IndexType = "primaryKey"
@@ -41,4 +46,12 @@ const (
 	E5_LARGE_V2 = "e5-large-v2"
 	// TEXT2VEC_LARGE_CHINESE 1024
 	TEXT2VEC_LARGE_CHINESE = "text2vec-large-chinese"
+)
+
+type ReadConsistency string
+
+const (
+	// EventualConsistency default value, 选择就近节点
+	EventualConsistency ReadConsistency = "eventualConsistency"
+	StrongConsistency   ReadConsistency = "strongConsistency"
 )

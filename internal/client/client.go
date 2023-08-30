@@ -78,7 +78,7 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w, %#v", err, req)
 	}
 
 	if c.debug {

@@ -187,10 +187,10 @@ func TestAlias(t *testing.T) {
 	// alias, err := db.AliasDescribe(context.Background(), "alias-col1")
 	// printErr(err)
 	// t.Logf("%+v", alias)
-	// affectCount, err = db.AliasDrop(context.Background(), "alias-col1")
+	// affectCount, err = db.AliasDelete(context.Background(), "alias-col1")
 	// t.Logf("affect count: %d", affectCount)
 	// printErr(err)
-	// affectCount, err = db.AliasDrop(context.Background(), "alias-col2")
+	// affectCount, err = db.AliasDelete(context.Background(), "alias-col2")
 	// t.Logf("affect count: %d", affectCount)
 	// printErr(err)
 	// aliasList, err = db.AliasList(context.Background())
@@ -202,7 +202,8 @@ func TestAlias(t *testing.T) {
 
 func TestIndex(t *testing.T) {
 	db := cli.Database("dbtest1")
-	err := db.IndexRebuild(context.Background(), "col1", false, 1)
+	db.Debug(true)
+	err := db.IndexRebuild(context.Background(), "col2", false, 1)
 	printErr(err)
 }
 
@@ -243,6 +244,31 @@ func TestUpsertDocument(t *testing.T) {
 	printErr(err)
 }
 
+func TestUpdateDocument(t *testing.T) {
+	defer cli.Close()
+	col := cli.Database("dbtest1").Collection("col1")
+	cli.Debug(true)
+	count, err := col.Update(context.Background(), []string{"0001"}, nil, nil, map[string]model.Field{
+		"author": model.Field{Val: "jerry"},
+		// "page":     model.Field{Val: 21},
+		// "section":  model.Field{Val: "1.1.1"},
+		"newfield": model.Field{Val: time.Now().String()},
+	})
+	printErr(err)
+	t.Logf("affect count: %d", count)
+}
+
+func TestQuery(t *testing.T) {
+	defer cli.Close()
+	col := cli.Database("dbtest1").Collection("col1")
+	docs, count, err := col.Query(context.Background(), []string{"0001", "0002"}, nil, "", true, nil, 0, 10)
+	printErr(err)
+	t.Logf("total doc: %d", count)
+	for _, doc := range docs {
+		t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
+	}
+}
+
 func TestSearch(t *testing.T) {
 	defer cli.Close()
 	col := cli.Database("dbtest1").Collection("col1")
@@ -256,7 +282,7 @@ func TestSearch(t *testing.T) {
 	}
 	t.Log("document search-----------------")
 	filter := model.NewFilter("page > 22").And(model.In("author", []string{"max", "sam"}))
-	searchRes, err := col.Search(context.Background(), [][]float32{{0.3123, 0.43, 0.213}}, nil, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
+	searchRes, err := col.Search(context.Background(), [][]float32{{0.3123, 0.43, 0.213}}, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
 	printErr(err)
 	for i, docs := range searchRes {
 		t.Logf("doc %d result: ", i)
@@ -268,13 +294,86 @@ func TestSearch(t *testing.T) {
 
 	col.Debug(true)
 	t.Log("document searchById-----------------")
-	searchRes, err = col.SearchById(context.Background(), []string{"0001", "0002", "0003"}, nil, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
+	searchRes, err = col.SearchById(context.Background(), []string{"0001", "0002", "0003"}, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
 	printErr(err)
 	for i, docs := range searchRes {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, author: %s, page: %d, section: %s", doc.Id, doc.Vector,
 				doc.Fields["author"].String(), doc.Fields["page"].Int(), doc.Fields["section"].String())
+		}
+	}
+}
+
+func TestUpsertEmbedding(t *testing.T) {
+	defer cli.Close()
+	col := cli.Database("dbtest1").Collection("col2")
+
+	err := col.Upsert(context.Background(), []model.Document{
+		{
+			Id: "0001",
+			Fields: map[string]model.Field{
+				"text":    model.Field{Val: "这是第一行文本数据，后面是填充字段。"},
+				"author":  model.Field{Val: "jerry"},
+				"page":    model.Field{Val: 21},
+				"section": model.Field{Val: "1.1.1"},
+			},
+		},
+		{
+			Id: "0002",
+			Fields: map[string]model.Field{
+				"text":    model.Field{Val: "这是第二行文本数据，后面是填充字段。"},
+				"author":  model.Field{Val: "sam"},
+				"page":    model.Field{Val: 22},
+				"section": model.Field{Val: "1.1.2"},
+			},
+		},
+		{
+			Id: "0003",
+			Fields: map[string]model.Field{
+				"text":    model.Field{Val: "这是第三行文本数据，后面是填充字段。"},
+				"author":  model.Field{Val: "max"},
+				"page":    model.Field{Val: 23},
+				"section": model.Field{Val: "1.1.3"},
+			},
+		},
+	}, true)
+
+	printErr(err)
+}
+
+func TestQueryEmbedding(t *testing.T) {
+	defer cli.Close()
+	col := cli.Database("dbtest1").Collection("col2")
+	docs, count, err := col.Query(context.Background(), []string{"0001", "0002", "0003"}, nil, "", true, []string{"author", "text"}, 0, 0)
+	printErr(err)
+	t.Logf("total doc: %d", count)
+	for _, doc := range docs {
+		t.Logf("%+v", doc)
+	}
+}
+
+func TestSearchEmbedding(t *testing.T) {
+	defer cli.Close()
+	col := cli.Database("dbtest1").Collection("col2")
+	searchRes, err := col.SearchById(context.Background(), []string{"0001"}, nil, model.EventualConsistency, &model.HNSWParam{EfConstruction: 10}, false, nil, 2)
+	printErr(err)
+	t.Log("document searchById-----------------")
+	for i, docs := range searchRes {
+		t.Logf("doc %d result: ", i)
+		for _, doc := range docs {
+			t.Logf("id: %s, vector: %v, field: %v", doc.Id, doc.Vector, doc.Fields)
+		}
+	}
+
+	col.Debug(true)
+	searchRes, err = col.SearchByText(context.Background(), map[string][]string{"text": {"第二行文本"}}, nil, model.EventualConsistency, &model.HNSWParam{EfConstruction: 10}, false, nil, 2)
+	printErr(err)
+	t.Log("document searchByText-----------------")
+	for i, docs := range searchRes {
+		t.Logf("doc %d result: ", i)
+		for _, doc := range docs {
+			t.Logf("id: %s, vector: %v, field: %v", doc.Id, doc.Vector, doc.Fields)
 		}
 	}
 }

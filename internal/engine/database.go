@@ -72,7 +72,8 @@ func (i *implementerDatabase) Database(name string) *model.Database {
 	database.AliasInterface = aliasImpl
 
 	indexImpl := new(implementerIndex)
-	aliasImpl.SdkClient = i.SdkClient
+	indexImpl.databaseName = name
+	indexImpl.SdkClient = i.SdkClient
 	database.IndexInterface = indexImpl
 
 	database.DatabaseName = name

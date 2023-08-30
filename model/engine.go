@@ -30,14 +30,13 @@ type CollectionInterface interface {
 	DropCollection(ctx context.Context, collectionName string) (err error)
 	FlushCollection(ctx context.Context, name string) (affectedCount int, err error)
 	ListCollection(ctx context.Context) ([]*Collection, error)
-	ModifyCollection(ctx context.Context, name, alias string) error
 	Collection(name string) *Collection
 }
 
 type AliasInterface interface {
 	SdkClient
 	AliasSet(ctx context.Context, collectionName, aliasName string) (int, error)
-	AliasDrop(ctx context.Context, aliasName string) (int, error)
+	AliasDelete(ctx context.Context, aliasName string) (int, error)
 	AliasDescribe(ctx context.Context, aliasName string) (*Alias, error)
 	AliasList(ctx context.Context) ([]*Alias, error)
 }
@@ -52,10 +51,11 @@ type DocumentInterface interface {
 	SdkClient
 	Upsert(ctx context.Context, documents []Document, buidIndex bool) (err error)
 	Query(ctx context.Context, documentIds []string, filter *Filter, readConsistency string, retrieveVector bool, outputFields []string, offset, limit int64) (docs []Document, count uint64, err error)
-	Search(ctx context.Context, vectors [][]float32, retrieves []string, filter *Filter, readConsistency string, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
-	SearchById(ctx context.Context, documentIds []string, retrieves []string, filter *Filter, readConsistency string, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
+	Search(ctx context.Context, vectors [][]float32, filter *Filter, readConsistency ReadConsistency, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
+	SearchById(ctx context.Context, documentIds []string, filter *Filter, readConsistency ReadConsistency, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
+	SearchByText(ctx context.Context, text map[string][]string, filter *Filter, readConsistency ReadConsistency, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
 	Delete(ctx context.Context, documentIds []string, filter *Filter) (err error)
-	Update(ctx context.Context, documentIds []string, vector []float32, fields map[string]Field, filter *Filter) (uint64, error)
+	Update(ctx context.Context, queryIds []string, queryFilter *Filter, updateVector []float32, updateFields map[string]Field) (uint64, error)
 }
 
 type VectorDBClient interface {
