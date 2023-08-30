@@ -13,7 +13,7 @@ type implementerAlias struct {
 	databaseName string
 }
 
-func (i *implementerAlias) AliasSet(ctx context.Context, collectionName, aliasName string) error {
+func (i *implementerAlias) AliasSet(ctx context.Context, collectionName, aliasName string) (int, error) {
 	req := new(alias.SetReq)
 	req.Database = i.databaseName
 	req.Collection = collectionName
@@ -21,21 +21,21 @@ func (i *implementerAlias) AliasSet(ctx context.Context, collectionName, aliasNa
 	res := new(alias.SetRes)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return int(res.AffectedCount), nil
 }
 
-func (i *implementerAlias) AliasDrop(ctx context.Context, aliasName string) error {
+func (i *implementerAlias) AliasDrop(ctx context.Context, aliasName string) (int, error) {
 	req := new(alias.DropReq)
 	req.Database = i.databaseName
 	req.Alias = aliasName
 	res := new(alias.DropRes)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return int(res.AffectedCount), nil
 }
 
 func (i *implementerAlias) AliasDescribe(ctx context.Context, aliasName string) (*model.Alias, error) {

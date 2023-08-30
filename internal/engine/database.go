@@ -65,6 +65,16 @@ func (i *implementerDatabase) Database(name string) *model.Database {
 	collImpl.SdkClient = i.SdkClient
 	collImpl.databaseName = name
 	database.CollectionInterface = collImpl
+
+	aliasImpl := new(implementerAlias)
+	aliasImpl.databaseName = name
+	aliasImpl.SdkClient = i.SdkClient
+	database.AliasInterface = aliasImpl
+
+	indexImpl := new(implementerIndex)
+	aliasImpl.SdkClient = i.SdkClient
+	database.IndexInterface = indexImpl
+
 	database.DatabaseName = name
 	return database
 }

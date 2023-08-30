@@ -36,8 +36,8 @@ type CollectionInterface interface {
 
 type AliasInterface interface {
 	SdkClient
-	AliasSet(ctx context.Context, collectionName, aliasName string) error
-	AliasDrop(ctx context.Context, aliasName string) error
+	AliasSet(ctx context.Context, collectionName, aliasName string) (int, error)
+	AliasDrop(ctx context.Context, aliasName string) (int, error)
 	AliasDescribe(ctx context.Context, aliasName string) (*Alias, error)
 	AliasList(ctx context.Context) ([]*Alias, error)
 }
@@ -68,6 +68,10 @@ type Database struct {
 	AliasInterface
 	IndexInterface
 	DatabaseName string
+}
+
+func (d *Database) Debug(v bool) {
+	d.CollectionInterface.Debug(v)
 }
 
 // Collection wrap the collection parameters and document interface to operating the document api

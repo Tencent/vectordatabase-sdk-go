@@ -1,8 +1,8 @@
 package model
 
 type Embedding struct {
-	TextField   string
-	VectorField string
-	Model       string
-	Enabled     bool
+	TextField   string         `json:"textField,omitempty"`
+	VectorField string         `json:"vectorField,omitempty"`
+	Model       EmbeddingModel `json:"model,omitempty"`
+	Enabled     bool           `json:"enabled,omitempty"`
 }

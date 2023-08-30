@@ -2,6 +2,7 @@ package collection
 
 import (
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 
 	"github.com/gogf/gf/v2/frame/g"
 )
@@ -10,6 +11,7 @@ import (
 type CreateReq struct {
 	g.Meta `path:"/collection/create" tags:"Collection" method:"Post" summary:"创建collection"`
 	proto.CreateCollectionRequest
+	Embedding model.Embedding `json:"embedding"`
 }
 
 // CreateRes create collection response
@@ -26,7 +28,7 @@ type DescribeReq struct {
 // DescribeRes get collection detail response
 type DescribeRes struct {
 	proto.DescribeCollectionResponse
-	Collection *DescribeCollectionItem
+	Collection *DescribeCollectionItem `json:"collection"`
 }
 
 // DropReq delete collection request
@@ -52,7 +54,9 @@ type ListRes struct {
 
 type DescribeCollectionItem struct {
 	proto.CreateCollectionRequest
-	DocumentCount int64 `json:"documentCount,omitempty"`
+	Alias         []string     `json:"alias"`
+	DocumentCount int64        `json:"documentCount,omitempty"`
+	Embedding     EmbeddingRes `json:"embedding"`
 }
 
 type FlushReq struct {
@@ -71,4 +75,9 @@ type ModifyReq struct {
 
 type ModifyRes struct {
 	proto.UpdateCollectionResponse
+}
+
+type EmbeddingRes struct {
+	model.Embedding
+	Status string
 }

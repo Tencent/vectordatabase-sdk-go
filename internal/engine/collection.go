@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -28,11 +29,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	req.ReplicaNum = replicasNum
 	req.Description = description
 	if embedding != nil {
-		req.EmbeddingParams = &proto.EmbeddingParams{
-			TextField:   embedding.TextField,
-			VectorField: embedding.VectorField,
-			Model:       embedding.Model,
-		}
+		req.Embedding = *embedding
 	}
 
 	for _, v := range indexes.VectorIndex {
@@ -82,6 +79,9 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 	err := i.Request(ctx, req, &res)
 	if err != nil {
 		return nil, err
+	}
+	if res.Collection == nil {
+		return nil, fmt.Errorf("get collection %s failed", name)
 	}
 	coll := i.toCollection(res.Collection)
 
@@ -158,19 +158,14 @@ func (i *implementerCollection) Collection(name string) *model.Collection {
 func (i *implementerCollection) toCollection(collectionItem *collection.DescribeCollectionItem) *model.Collection {
 	coll := i.Collection(collectionItem.Collection)
 	coll.DocumentCount = collectionItem.DocumentCount
-	coll.Alias = collectionItem.AliasList
+	coll.Alias = collectionItem.Alias
 	coll.ShardNum = collectionItem.ShardNum
 	coll.ReplicasNum = collectionItem.ReplicaNum
 	coll.Description = collectionItem.Description
 	coll.Size = collectionItem.Size
-	if collectionItem.EmbeddingParams != nil {
-		coll.Embedding = model.Embedding{
-			TextField:   collectionItem.EmbeddingParams.TextField,
-			VectorField: collectionItem.EmbeddingParams.VectorField,
-			Model:       collectionItem.EmbeddingParams.Model,
-			Enabled:     collectionItem.EmbeddingParams.Status == "enabled",
-		}
-	}
+	coll.Embedding = collectionItem.Embedding.Embedding
+	coll.Embedding.Enabled = collectionItem.Embedding.Status == "enabled"
+
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = model.IndexStatus{
 			Status: collectionItem.IndexStatus.Status,
@@ -195,7 +190,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
 
-		case string(model.FILTER):
+		default:
 			filter := model.FilterIndex{}
 			filter.FieldName = index.FieldName
 			filter.FieldType = model.FieldType(index.FieldType)

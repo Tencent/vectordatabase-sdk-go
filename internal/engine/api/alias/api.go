@@ -33,7 +33,7 @@ type DescribeRes struct {
 }
 
 type ListReq struct {
-	g.Meta   `path:"/alias/drop" tags:"Alias" method:"Post" summary:"列举指定db下的所有别名信息"`
+	g.Meta   `path:"/alias/list" tags:"Alias" method:"Post" summary:"列举指定db下的所有别名信息"`
 	Database string `json:"database"`
 }
 

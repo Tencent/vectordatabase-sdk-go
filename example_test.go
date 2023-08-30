@@ -14,7 +14,7 @@ var cli model.VectorDBClient
 
 func init() {
 	var err error
-	cli, err = tcvectordb.NewClient("http://127.0.0.1", "root", "key get from web console", &model.ClientOption{
+	cli, err = tcvectordb.NewClient("http://11.141.218.159:8100", "root", "p193scgeHBYRlDWHKCVfIm5z8eI0Q96HyArkbqNg", &model.ClientOption{
 		MaxIdldConnPerHost: 50,
 		IdleConnTimeout:    time.Second * 30,
 	})
@@ -52,7 +52,6 @@ func TestCreateCollection(t *testing.T) {
 	defer cli.Close()
 
 	db := cli.Database("dbtest1")
-
 	_ = db.DropCollection(context.Background(), "col1")
 
 	_, err := db.CreateCollection(context.Background(), "col1", 2, 2, "desription doc", model.Indexes{
@@ -102,26 +101,103 @@ func TestCreateCollection(t *testing.T) {
 	t.Logf("%+v", col)
 }
 
-func TestAlias(t *testing.T) {
+func TestCreateCollectionWithEmbedding(t *testing.T) {
+	defer cli.Close()
+
 	db := cli.Database("dbtest1")
-	err := db.AliasSet(context.Background(), "col1", "alias-col1")
-	printErr(err)
-	aliasList, err := db.AliasList(context.Background())
-	printErr(err)
-	for _, item := range aliasList {
-		t.Logf("%+v", item)
+	_ = db.DropCollection(context.Background(), "col2")
+
+	em := model.Embedding{
+		TextField:   "text",
+		VectorField: "vector",
+		Model:       model.M3E_BASE,
+		Enabled:     true,
 	}
 
-	alias, err := db.AliasDescribe(context.Background(), "alias-col1")
+	cli.Debug(true)
+	_, err := db.CreateCollection(context.Background(), "col2", 2, 2, "desription doc", model.Indexes{
+		VectorIndex: []model.VectorIndex{
+			{
+				FilterIndex: model.FilterIndex{
+					FieldName: "vector",
+					FieldType: model.Vector,
+					IndexType: model.HNSW,
+				},
+				Dimension:  768,
+				MetricType: model.L2,
+				HNSWParam: model.HNSWParam{
+					M:              64,
+					EfConstruction: 8,
+				},
+			},
+		},
+		FilterIndex: []model.FilterIndex{
+			{
+				FieldName: "id",
+				FieldType: model.String,
+				IndexType: model.PRIMARY,
+			},
+			{
+				FieldName: "author",
+				FieldType: model.String,
+				IndexType: model.FILTER,
+			},
+			{
+				FieldName: "page",
+				FieldType: model.Uint64,
+				IndexType: model.FILTER,
+			},
+		},
+	}, &em)
 	printErr(err)
-	t.Logf("%+v", alias)
-	err = db.AliasDrop(context.Background(), "alias-col1")
+
+	col, err := db.DescribeCollection(context.Background(), "col2")
 	printErr(err)
-	aliasList, err = db.AliasList(context.Background())
+	t.Logf("%+v", col)
+}
+
+func TestGetCollection(t *testing.T) {
+	defer cli.Close()
+
+	db := cli.Database("dbtest1")
+	cli.Debug(true)
+	col, err := db.DescribeCollection(context.TODO(), "col2")
 	printErr(err)
-	for _, item := range aliasList {
-		t.Logf("%+v", item)
-	}
+	t.Logf("%+v", col)
+}
+
+func TestAlias(t *testing.T) {
+	db := cli.Database("dbtest1")
+	// db.Debug(true)
+	var affectCount int
+	var err error
+	affectCount, err = db.AliasSet(context.Background(), "col1", "alias-col1")
+	t.Logf("affect count: %d", affectCount)
+	printErr(err)
+	affectCount, err = db.AliasSet(context.Background(), "col2", "alias-col2")
+	t.Logf("affect count: %d", affectCount)
+	printErr(err)
+
+	// aliasList, err := db.AliasList(context.Background())
+	// printErr(err)
+	// for _, item := range aliasList {
+	// 	t.Logf("%+v", item)
+	// }
+
+	// alias, err := db.AliasDescribe(context.Background(), "alias-col1")
+	// printErr(err)
+	// t.Logf("%+v", alias)
+	// affectCount, err = db.AliasDrop(context.Background(), "alias-col1")
+	// t.Logf("affect count: %d", affectCount)
+	// printErr(err)
+	// affectCount, err = db.AliasDrop(context.Background(), "alias-col2")
+	// t.Logf("affect count: %d", affectCount)
+	// printErr(err)
+	// aliasList, err = db.AliasList(context.Background())
+	// printErr(err)
+	// for _, item := range aliasList {
+	// 	t.Logf("%+v", item)
+	// }
 }
 
 func TestIndex(t *testing.T) {
