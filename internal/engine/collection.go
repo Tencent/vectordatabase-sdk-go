@@ -40,11 +40,8 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		column.MetricType = string(v.MetricType)
 		column.Dimension = v.Dimension
 
-		if v.IndexType == model.HNSW {
-			column.Params = new(proto.IndexParams)
-			column.Params.M = v.HNSWParam.M
-			column.Params.EfConstruction = v.HNSWParam.EfConstruction
-		}
+		optionParams(&column, v)
+
 		req.Indexes = append(req.Indexes, &column)
 	}
 	for _, v := range indexes.FilterIndex {
@@ -103,7 +100,7 @@ func (i *implementerCollection) DropCollection(ctx context.Context, name string)
 	return err
 }
 
-func (i *implementerCollection) FlushCollection(ctx context.Context, name string) (affectedCount int, err error) {
+func (i *implementerCollection) TruncateCollection(ctx context.Context, name string) (affectedCount int, err error) {
 	req := new(collection.FlushReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -192,4 +189,20 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 		}
 	}
 	return coll
+}
+
+// optionParams option index parameters
+func optionParams(column *proto.IndexColumn, v model.VectorIndex) {
+	column.Params = new(proto.IndexParams)
+	if v.IndexType == model.HNSW {
+		column.Params.M = v.HNSWParam.M
+		column.Params.EfConstruction = v.HNSWParam.EfConstruction
+	} else if v.IndexType == model.IVF_FLAT {
+		column.Params.Nlist = v.IVFFLATParams.NList
+	} else if v.IndexType == model.IVF_SQ8 {
+		column.Params.Nlist = v.IVFSQ8Params.NList
+	} else if v.IndexType == model.IVF_PQ {
+		column.Params.M = v.IVFPQParams.M
+		column.Params.Nlist = v.IVFPQParams.NList
+	}
 }

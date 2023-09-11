@@ -7,6 +7,19 @@ type HNSWParam struct {
 	EfConstruction uint32
 }
 
+type IVFFLATParams struct {
+	NList uint32
+}
+
+type IVFSQ8Params struct {
+	NList uint32
+}
+
+type IVFPQParams struct {
+	M     uint32
+	NList uint32
+}
+
 type FilterIndex struct {
 	FieldName string
 	FieldType FieldType
@@ -23,10 +36,13 @@ func (i *FilterIndex) IsVectorField() bool {
 
 type VectorIndex struct {
 	FilterIndex
-	Dimension    uint32
-	MetricType   MetricType
-	IndexedCount uint64
-	HNSWParam    HNSWParam
+	Dimension     uint32
+	MetricType    MetricType
+	IndexedCount  uint64
+	HNSWParam     HNSWParam
+	IVFFLATParams IVFFLATParams
+	IVFSQ8Params  IVFSQ8Params
+	IVFPQParams   IVFPQParams
 }
 
 type Indexes struct {

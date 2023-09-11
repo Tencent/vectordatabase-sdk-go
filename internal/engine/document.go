@@ -107,7 +107,7 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 	}
 	req.Search.Outputfields = outputFields
 	for _, v := range text {
-		req.Search.TextField = v
+		req.Search.EmbeddingItems = v
 	}
 
 	res := new(document.SearchRes)
