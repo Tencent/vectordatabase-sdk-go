@@ -173,9 +173,15 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			vector.Dimension = index.Dimension
 			vector.MetricType = model.MetricType(index.MetricType)
 			vector.IndexedCount = index.IndexedCount
-			if vector.IndexType == model.HNSW {
-				vector.HNSWParam.M = index.Params.M
-				vector.HNSWParam.EfConstruction = index.Params.EfConstruction
+			switch vector.IndexType {
+			case model.HNSW:
+				vector.Params = &model.HNSWParam{M: index.Params.M, EfConstruction: index.Params.EfConstruction}
+			case model.IVF_FLAT:
+				vector.Params = &model.IVFFLATParams{NList: index.Params.Nlist}
+			case model.IVF_PQ:
+				vector.Params = &model.IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
+			case model.IVF_SQ8:
+				vector.Params = &model.IVFSQ8Params{NList: index.Params.Nlist}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
 
@@ -195,14 +201,22 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 func optionParams(column *proto.IndexColumn, v model.VectorIndex) {
 	column.Params = new(proto.IndexParams)
 	if v.IndexType == model.HNSW {
-		column.Params.M = v.HNSWParam.M
-		column.Params.EfConstruction = v.HNSWParam.EfConstruction
+		if param, ok := v.Params.(*model.HNSWParam); ok && param != nil {
+			column.Params.M = param.M
+			column.Params.EfConstruction = param.EfConstruction
+		}
 	} else if v.IndexType == model.IVF_FLAT {
-		column.Params.Nlist = v.IVFFLATParams.NList
+		if param, ok := v.Params.(*model.IVFFLATParams); ok && param != nil {
+			column.Params.Nlist = param.NList
+		}
 	} else if v.IndexType == model.IVF_SQ8 {
-		column.Params.Nlist = v.IVFSQ8Params.NList
+		if param, ok := v.Params.(*model.IVFSQ8Params); ok && param != nil {
+			column.Params.Nlist = param.NList
+		}
 	} else if v.IndexType == model.IVF_PQ {
-		column.Params.M = v.IVFPQParams.M
-		column.Params.Nlist = v.IVFPQParams.NList
+		if param, ok := v.Params.(*model.IVFPQParams); ok && param != nil {
+			column.Params.M = param.M
+			column.Params.Nlist = param.NList
+		}
 	}
 }

@@ -64,7 +64,7 @@ func TestCreateCollection(t *testing.T) {
 				},
 				Dimension:  3,
 				MetricType: model.L2,
-				HNSWParam: model.HNSWParam{
+				Params: &model.HNSWParam{
 					M:              64,
 					EfConstruction: 8,
 				},
@@ -125,7 +125,7 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 				},
 				Dimension:  768,
 				MetricType: model.L2,
-				HNSWParam: model.HNSWParam{
+				Params: &model.HNSWParam{
 					M:              64,
 					EfConstruction: 8,
 				},
@@ -282,7 +282,7 @@ func TestSearch(t *testing.T) {
 	}
 	t.Log("document search-----------------")
 	filter := model.NewFilter("page > 22").And(model.In("author", []string{"max", "sam"}))
-	searchRes, err := col.Search(context.Background(), [][]float32{{0.3123, 0.43, 0.213}}, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
+	searchRes, err := col.Search(context.Background(), [][]float32{{0.3123, 0.43, 0.213}}, filter, "", &model.SearchParams{Ef: 10}, true, nil, 10)
 	printErr(err)
 	for i, docs := range searchRes {
 		t.Logf("doc %d result: ", i)
@@ -294,7 +294,7 @@ func TestSearch(t *testing.T) {
 
 	col.Debug(true)
 	t.Log("document searchById-----------------")
-	searchRes, err = col.SearchById(context.Background(), []string{"0001", "0002", "0003"}, filter, "", &model.HNSWParam{EfConstruction: 10}, true, nil, 10)
+	searchRes, err = col.SearchById(context.Background(), []string{"0001", "0002", "0003"}, filter, "", &model.SearchParams{Ef: 10}, true, nil, 10)
 	printErr(err)
 	for i, docs := range searchRes {
 		t.Logf("doc %d result: ", i)
@@ -356,7 +356,7 @@ func TestQueryEmbedding(t *testing.T) {
 func TestSearchEmbedding(t *testing.T) {
 	defer cli.Close()
 	col := cli.Database("dbtest1").Collection("col2")
-	searchRes, err := col.SearchById(context.Background(), []string{"0001"}, nil, model.EventualConsistency, &model.HNSWParam{EfConstruction: 10}, false, nil, 2)
+	searchRes, err := col.SearchById(context.Background(), []string{"0001"}, nil, model.EventualConsistency, &model.SearchParams{Ef: 10}, false, nil, 2)
 	printErr(err)
 	t.Log("document searchById-----------------")
 	for i, docs := range searchRes {
@@ -367,7 +367,7 @@ func TestSearchEmbedding(t *testing.T) {
 	}
 
 	col.Debug(true)
-	searchRes, err = col.SearchByText(context.Background(), map[string][]string{"text": {"第二行文本"}}, nil, model.EventualConsistency, &model.HNSWParam{EfConstruction: 10}, false, nil, 2)
+	searchRes, err = col.SearchByText(context.Background(), map[string][]string{"text": {"第二行文本"}}, nil, model.EventualConsistency, &model.SearchParams{Ef: 10}, false, nil, 2)
 	printErr(err)
 	t.Log("document searchByText-----------------")
 	for i, docs := range searchRes {

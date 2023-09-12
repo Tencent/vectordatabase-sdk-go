@@ -51,9 +51,9 @@ type DocumentInterface interface {
 	SdkClient
 	Upsert(ctx context.Context, documents []Document, buidIndex bool) (err error)
 	Query(ctx context.Context, documentIds []string, filter *Filter, readConsistency string, retrieveVector bool, outputFields []string, offset, limit int64) (docs []Document, count uint64, err error)
-	Search(ctx context.Context, vectors [][]float32, filter *Filter, readConsistency ReadConsistency, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
-	SearchById(ctx context.Context, documentIds []string, filter *Filter, readConsistency ReadConsistency, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
-	SearchByText(ctx context.Context, text map[string][]string, filter *Filter, readConsistency ReadConsistency, hnswParam *HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
+	Search(ctx context.Context, vectors [][]float32, filter *Filter, readConsistency ReadConsistency, searchParam *SearchParams, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
+	SearchById(ctx context.Context, documentIds []string, filter *Filter, readConsistency ReadConsistency, searchParam *SearchParams, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
+	SearchByText(ctx context.Context, text map[string][]string, filter *Filter, readConsistency ReadConsistency, searchParam *SearchParams, retrieveVector bool, outputFields []string, limit int) ([][]Document, error)
 	Delete(ctx context.Context, documentIds []string, filter *Filter) (err error)
 	Update(ctx context.Context, queryIds []string, queryFilter *Filter, updateVector []float32, updateFields map[string]Field) (uint64, error)
 }

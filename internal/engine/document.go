@@ -73,21 +73,21 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, f
 
 // Search search document topK by vector. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, filter *model.Filter, readConsistency model.ReadConsistency, hnswParam *model.HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
-	return i.search(ctx, nil, vectors, nil, filter, readConsistency, hnswParam, retrieveVector, outputFields, limit)
+func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, filter *model.Filter, readConsistency model.ReadConsistency, searchParam *model.SearchParams, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
+	return i.search(ctx, nil, vectors, nil, filter, readConsistency, searchParam, retrieveVector, outputFields, limit)
 }
 
 // Search search document topK by document ids. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, filter *model.Filter, readConsistency model.ReadConsistency, hnswParam *model.HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
-	return i.search(ctx, documentIds, nil, nil, filter, readConsistency, hnswParam, retrieveVector, outputFields, limit)
+func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, filter *model.Filter, readConsistency model.ReadConsistency, searchParam *model.SearchParams, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
+	return i.search(ctx, documentIds, nil, nil, filter, readConsistency, searchParam, retrieveVector, outputFields, limit)
 }
 
-func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, filter *model.Filter, readConsistency model.ReadConsistency, hnswParam *model.HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
-	return i.search(ctx, nil, nil, text, filter, readConsistency, hnswParam, retrieveVector, outputFields, limit)
+func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, filter *model.Filter, readConsistency model.ReadConsistency, searchParam *model.SearchParams, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
+	return i.search(ctx, nil, nil, text, filter, readConsistency, searchParam, retrieveVector, outputFields, limit)
 }
 
-func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, filter *model.Filter, readConsistency model.ReadConsistency, hnswParam *model.HNSWParam, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
+func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, filter *model.Filter, readConsistency model.ReadConsistency, searchParam *model.SearchParams, retrieveVector bool, outputFields []string, limit int) ([][]model.Document, error) {
 	req := new(document.SearchReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
@@ -100,9 +100,11 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 	req.ReadConsistency = string(readConsistency)
 	req.Search.RetrieveVector = retrieveVector
 	req.Search.Limit = uint32(limit)
-	if hnswParam != nil {
+	if searchParam != nil {
 		req.Search.Params = &proto.SearchParams{
-			Ef: hnswParam.EfConstruction,
+			Ef:     searchParam.Ef,
+			Nprobe: searchParam.Nprobe,
+			Radius: searchParam.Radius,
 		}
 	}
 	req.Search.Outputfields = outputFields
