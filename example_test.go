@@ -108,7 +108,7 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	_ = db.DropCollection(context.Background(), "col2")
 
 	em := model.Embedding{
-		TextField:   "text",
+		Field:       "text",
 		VectorField: "vector",
 		Model:       model.M3E_BASE,
 		Enabled:     true,

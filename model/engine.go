@@ -28,7 +28,7 @@ type CollectionInterface interface {
 	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes Indexes, embedding *Embedding) (*Collection, error)
 	DescribeCollection(ctx context.Context, name string) (*Collection, error)
 	DropCollection(ctx context.Context, collectionName string) (err error)
-	FlushCollection(ctx context.Context, name string) (affectedCount int, err error)
+	TruncateCollection(ctx context.Context, name string) (affectedCount int, err error)
 	ListCollection(ctx context.Context) ([]*Collection, error)
 	Collection(name string) *Collection
 }

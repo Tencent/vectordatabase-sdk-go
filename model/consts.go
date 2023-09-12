@@ -7,7 +7,7 @@ const (
 	FLAT     IndexType = "FLAT"
 	HNSW     IndexType = "HNSW"
 	IVF_FLAT IndexType = "IVF_FLAT"
-	IVF_PQFS IndexType = "IVF_PQFS"
+	IVF_PQ   IndexType = "IVF_PQ"
 	IVF_SQ4  IndexType = "IVF_SQ4"
 	IVF_SQ8  IndexType = "IVF_SQ8"
 	IVF_SQ16 IndexType = "IVF_SQ16"

@@ -60,7 +60,7 @@ type DescribeCollectionItem struct {
 }
 
 type FlushReq struct {
-	g.Meta `path:"/collection/flush" tags:"Collection" method:"Post" summary:"清空 collection 中的所有数据和索引"`
+	g.Meta `path:"/collection/truncate" tags:"Collection" method:"Post" summary:"清空 collection 中的所有数据和索引"`
 	proto.FlushCollectionRequest
 }
 

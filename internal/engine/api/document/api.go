@@ -89,9 +89,9 @@ type SearchRes struct {
 // SearchCond search filter condition
 type SearchCond struct {
 	proto.SearchCond
-	Vectors   [][]float32 `json:"vectors,omitempty"`
-	Filter    string      `json:"filter,omitempty"`
-	TextField []string    `json:"retrieves,omitempty"`
+	Vectors        [][]float32 `json:"vectors,omitempty"`
+	Filter         string      `json:"filter,omitempty"`
+	EmbeddingItems []string    `json:"embeddingItems,omitempty"`
 }
 
 // QueryReq query document request
