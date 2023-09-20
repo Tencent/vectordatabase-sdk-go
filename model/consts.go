@@ -38,7 +38,7 @@ type EmbeddingModel string
 const (
 	// M3E_BASE 768
 	M3E_BASE EmbeddingModel = "m3e-base"
-	// BGE_BASE_ZH 1024
+	// BGE_BASE_ZH 768
 	BGE_BASE_ZH EmbeddingModel = "bge-base-zh"
 	// MULTILINGUAL 768
 	MULTILINGUAL_E5_BASE EmbeddingModel = "multilingual-e5-base"
