@@ -38,14 +38,14 @@ type EmbeddingModel string
 const (
 	// M3E_BASE 768
 	M3E_BASE EmbeddingModel = "m3e-base"
-	// BGE_LARGE_ZH 1024
-	BGE_LARGE_ZH EmbeddingModel = "bge-large-zh"
+	// BGE_BASE_ZH 1024
+	BGE_BASE_ZH EmbeddingModel = "bge-base-zh"
 	// MULTILINGUAL 768
-	MULTILINGUAL_E5_BASE = "multilingual-e5-base"
+	MULTILINGUAL_E5_BASE EmbeddingModel = "multilingual-e5-base"
 	// E5_LARGE_V2 1024
-	E5_LARGE_V2 = "e5-large-v2"
+	E5_LARGE_V2 EmbeddingModel = "e5-large-v2"
 	// TEXT2VEC_LARGE_CHINESE 1024
-	TEXT2VEC_LARGE_CHINESE = "text2vec-large-chinese"
+	TEXT2VEC_LARGE_CHINESE EmbeddingModel = "text2vec-large-chinese"
 )
 
 type ReadConsistency string
