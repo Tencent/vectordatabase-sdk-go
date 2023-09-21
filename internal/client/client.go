@@ -6,6 +6,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -13,14 +15,13 @@ import (
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 
 	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/net/gclient"
-	"github.com/gogf/gf/v2/os/glog"
 	"github.com/gogf/gf/v2/util/gmeta"
 	"github.com/gogf/gf/v2/util/gtag"
 )
 
 type Client struct {
-	cli      *gclient.Client
+	// cli      *gclient.Client
+	cli      *http.Client
 	url      string
 	username string
 	key      string
@@ -45,16 +46,23 @@ func NewClient(url, username, key string, options *model.ClientOption) (model.Sd
 	if options == nil {
 		options = &defaultOption
 	}
+	if options.Timeout == 0 {
+		options.Timeout = defaultOption.Timeout
+	}
+	if options.IdleConnTimeout == 0 {
+		options.IdleConnTimeout = defaultOption.IdleConnTimeout
+	}
+	if options.MaxIdldConnPerHost == 0 {
+		options.MaxIdldConnPerHost = defaultOption.MaxIdldConnPerHost
+	}
 
 	cli := new(Client)
 	cli.url = url
 	cli.username = username
 	cli.key = key
 	cli.debug = false
-	auth := fmt.Sprintf("Bearer account=%s&api_key=%s", username, key)
 
-	cli.cli = gclient.New()
-	cli.cli.SetHeader("Authorization", auth)
+	cli.cli = new(http.Client)
 	cli.cli.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -62,7 +70,7 @@ func NewClient(url, username, key string, options *model.ClientOption) (model.Sd
 		MaxIdleConnsPerHost: options.MaxIdldConnPerHost,
 		IdleConnTimeout:     options.IdleConnTimeout,
 	}
-	cli.cli.Timeout(options.Timeout)
+	cli.cli.Timeout = options.Timeout
 
 	return cli, nil
 }
@@ -81,11 +89,20 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 		return fmt.Errorf("%w, %#v", err, req)
 	}
 
-	if c.debug {
-		glog.Debugf(ctx, "REQUEST, Method: %s, Path: %s, Body: %s", method, path, strings.TrimSpace(reqBody.String()))
+	request, err := http.NewRequest(strings.ToUpper(method), c.url+path, reqBody)
+	if err != nil {
+		return err
 	}
 
-	response, err := c.cli.ContentJson().DoRequest(ctx, method, c.url+path, reqBody.String())
+	if c.debug {
+		log.Printf("[DEBUG] REQUEST, Method: %s, Path: %s, Body: %s", method, path, strings.TrimSpace(reqBody.String()))
+	}
+
+	auth := fmt.Sprintf("Bearer account=%s&api_key=%s", c.username, c.key)
+	request.Header.Add("Authorization", auth)
+	request.Header.Add("Content-Type", "application/json")
+	response, err := c.cli.Do(request)
+	// response, err := gclient.New().ContentJson().DoRequest(ctx, method, c.url+path, reqBody.String())
 	if err != nil {
 		return err
 	}
@@ -95,7 +112,7 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 // WithTimeout set client timeout
 func (c *Client) WithTimeout(d time.Duration) {
 	c.timeout = d
-	c.cli.Timeout(d)
+	c.cli.Timeout = d
 }
 
 // Debug set debug mode to show the request and response info
@@ -103,12 +120,17 @@ func (c *Client) Debug(v bool) {
 	c.debug = v
 }
 
-func (c *Client) handleResponse(ctx context.Context, res *gclient.Response, out interface{}) error {
-	var (
-		responseBytes = res.ReadAll()
-	)
+func (c *Client) handleResponse(ctx context.Context, res *http.Response, out interface{}) error {
+	if res.StatusCode/100 != 2 {
+		return gerror.Newf("response code is not 200OK, %d", res.StatusCode)
+	}
+	responseBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 	if c.debug {
-		glog.Debugf(ctx, "RESPONSE: %s", string(responseBytes))
+		log.Printf("[DEBUG] RESPONSE: %s", string(responseBytes))
 	}
 
 	if !json.Valid(responseBytes) {
