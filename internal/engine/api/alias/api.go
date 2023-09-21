@@ -1,12 +1,12 @@
 package alias
 
 import (
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto"
-	"github.com/gogf/gf/v2/frame/g"
 )
 
 type SetReq struct {
-	g.Meta `path:"/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
+	api.Meta `path:"/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
 	proto.SetAliasRequest
 }
 
@@ -15,7 +15,7 @@ type SetRes struct {
 }
 
 type DeleteReq struct {
-	g.Meta `path:"/alias/delete" tags:"Alias" method:"Post" summary:"删除集合别名"`
+	api.Meta `path:"/alias/delete" tags:"Alias" method:"Post" summary:"删除集合别名"`
 	proto.DropAliasRequest
 }
 
@@ -24,7 +24,7 @@ type DeleteRes struct {
 }
 
 type DescribeReq struct {
-	g.Meta `path:"/alias/describe" tags:"Alias" method:"Post" summary:"根据别名查找对应的集合信息"`
+	api.Meta `path:"/alias/describe" tags:"Alias" method:"Post" summary:"根据别名查找对应的集合信息"`
 	proto.GetAliasRequest
 }
 
@@ -33,7 +33,7 @@ type DescribeRes struct {
 }
 
 type ListReq struct {
-	g.Meta   `path:"/alias/list" tags:"Alias" method:"Post" summary:"列举指定db下的所有别名信息"`
+	api.Meta `path:"/alias/list" tags:"Alias" method:"Post" summary:"列举指定db下的所有别名信息"`
 	Database string `json:"database"`
 }
 

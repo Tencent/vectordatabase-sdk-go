@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/collection"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 )
@@ -14,7 +16,7 @@ var cli model.VectorDBClient
 
 func init() {
 	var err error
-	cli, err = tcvectordb.NewClient("http://11.141.218.159:8100", "root", "p193scgeHBYRlDWHKCVfIm5z8eI0Q96HyArkbqNg", &model.ClientOption{
+	cli, err = tcvectordb.NewClient("http://21.0.83.252:8100", "root", "DnaLc4dWFLh0YOV1Qk3qy80iclJCuWW38tlon13s", &model.ClientOption{
 		MaxIdldConnPerHost: 50,
 		IdleConnTimeout:    time.Second * 30,
 	})
@@ -26,6 +28,7 @@ func init() {
 func TestDatabase(t *testing.T) {
 	defer cli.Close()
 
+	cli.Debug(true)
 	_, err := cli.CreateDatabase(context.TODO(), "dbtest1")
 	printErr(err)
 
@@ -48,12 +51,19 @@ func TestDatabase(t *testing.T) {
 	}
 }
 
+func TestTmp(t *testing.T) {
+	m := collection.CreateReq{}
+	t.Logf("path: %s", api.Path(m))
+	t.Logf("method: %s", api.Method(m))
+}
+
 func TestCreateCollection(t *testing.T) {
 	defer cli.Close()
 
 	db := cli.Database("dbtest1")
 	_ = db.DropCollection(context.Background(), "col1")
 
+	db.CollectionInterface.WithTimeout(time.Second * 30)
 	_, err := db.CreateCollection(context.Background(), "col1", 2, 2, "desription doc", model.Indexes{
 		VectorIndex: []model.VectorIndex{
 			{

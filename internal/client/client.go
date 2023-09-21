@@ -12,11 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 
-	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/util/gmeta"
-	"github.com/gogf/gf/v2/util/gtag"
+	"github.com/pkg/errors"
 )
 
 type Client struct {
@@ -38,10 +37,10 @@ var defaultOption = model.ClientOption{
 // NewClient new http client with url, username and api key
 func NewClient(url, username, key string, options *model.ClientOption) (model.SdkClient, error) {
 	if !strings.HasPrefix(url, "http") {
-		return nil, gerror.Newf("invailid url param with: %s", url)
+		return nil, errors.Errorf("invailid url param with: %s", url)
 	}
 	if username == "" || key == "" {
-		return nil, gerror.New("username or key is empty")
+		return nil, errors.New("username or key is empty")
 	}
 	if options == nil {
 		options = &defaultOption
@@ -78,8 +77,8 @@ func NewClient(url, username, key string, options *model.ClientOption) (model.Sd
 // Request do request for client
 func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 	var (
-		method = gmeta.Get(req, gtag.Method).String()
-		path   = gmeta.Get(req, gtag.Path).String()
+		method = api.Method(req)
+		path   = api.Path(req)
 	)
 	reqBody := bytes.NewBuffer(nil)
 	encoder := json.NewEncoder(reqBody)
@@ -121,32 +120,32 @@ func (c *Client) Debug(v bool) {
 }
 
 func (c *Client) handleResponse(ctx context.Context, res *http.Response, out interface{}) error {
-	if res.StatusCode/100 != 2 {
-		return gerror.Newf("response code is not 200OK, %d", res.StatusCode)
-	}
 	responseBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	if c.debug {
-		log.Printf("[DEBUG] RESPONSE: %s", string(responseBytes))
+		log.Printf("[DEBUG] RESPONSE: %d %s", res.StatusCode, string(responseBytes))
+	}
+	if res.StatusCode/100 != 2 {
+		return errors.Errorf("response code is %d, %s", res.StatusCode, string(responseBytes))
 	}
 
 	if !json.Valid(responseBytes) {
-		return gerror.Newf(`invalid response content: %s`, responseBytes)
+		return errors.Errorf(`invalid response content: %s`, responseBytes)
 	}
 	var commenRes model.CommmonResponse
 
 	if err := json.Unmarshal(responseBytes, &commenRes); err != nil {
-		return gerror.Wrapf(err, `json.Unmarshal failed with content:%s`, responseBytes)
+		return errors.Wrapf(err, `json.Unmarshal failed with content:%s`, responseBytes)
 	}
 	if commenRes.Code != 0 {
-		return gerror.Newf("server internal error, code: %d, message: %s", commenRes.Code, commenRes.Msg)
+		return errors.Errorf("server internal error, code: %d, message: %s", commenRes.Code, commenRes.Msg)
 	}
 
 	if err := json.Unmarshal(responseBytes, &out); err != nil {
-		return gerror.Wrapf(err, `json.Unmarshal failed with content:%s`, responseBytes)
+		return errors.Wrapf(err, `json.Unmarshal failed with content:%s`, responseBytes)
 	}
 	return nil
 }

@@ -3,14 +3,13 @@ package document
 import (
 	"encoding/json"
 
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto"
-
-	"github.com/gogf/gf/v2/frame/g"
 )
 
 // UpsertReq upsert document request
 type UpsertReq struct {
-	g.Meta `path:"/document/upsert" tags:"Document" method:"Post" summary:"插入一条文档数据"`
+	api.Meta `path:"/document/upsert" tags:"Document" method:"Post" summary:"插入一条文档数据"`
 	proto.UpsertRequest
 	Documents []*Document `json:"documents,omitempty"`
 }
@@ -75,7 +74,7 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 
 // SearchReq search documents request
 type SearchReq struct {
-	g.Meta `path:"/document/search" tags:"Document" method:"Post" summary:"向量查询接口，支持向量检索以及向量+标量混合检索"`
+	api.Meta `path:"/document/search" tags:"Document" method:"Post" summary:"向量查询接口，支持向量检索以及向量+标量混合检索"`
 	proto.SearchRequest
 	Search *SearchCond `json:"search,omitempty"`
 }
@@ -96,7 +95,7 @@ type SearchCond struct {
 
 // QueryReq query document request
 type QueryReq struct {
-	g.Meta `path:"/document/query" tags:"Document" method:"Post" summary:"标量查询接口，当前仅支持主键id查询"`
+	api.Meta `path:"/document/query" tags:"Document" method:"Post" summary:"标量查询接口，当前仅支持主键id查询"`
 	proto.QueryRequest
 }
 
@@ -108,7 +107,7 @@ type QueryRes struct {
 
 // DeleteReq delete document request
 type DeleteReq struct {
-	g.Meta `path:"/document/delete" tags:"Document" method:"Post" summary:"删除指定id的文档,flat 索引不支持删除"`
+	api.Meta `path:"/document/delete" tags:"Document" method:"Post" summary:"删除指定id的文档,flat 索引不支持删除"`
 	proto.DeleteRequest
 }
 
@@ -118,7 +117,7 @@ type DeleteRes struct {
 }
 
 type UpdateReq struct {
-	g.Meta `path:"/document/update" tags:"Document" method:"Post" summary:"基于[主键查询]和[ Filter 过滤]的部分字段更新或者新增非索引字段"`
+	api.Meta `path:"/document/update" tags:"Document" method:"Post" summary:"基于[主键查询]和[ Filter 过滤]的部分字段更新或者新增非索引字段"`
 	proto.UpdateRequest
 	Update Document `json:"update,omitempty"`
 }
