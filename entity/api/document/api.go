@@ -21,6 +21,8 @@ package document
 import (
 	"encoding/json"
 
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 )
 
@@ -196,4 +198,34 @@ type UpdateRes struct {
 	Redirect      string `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
 	AffectedCount uint64 `protobuf:"varint,4,opt,name=affectedCount,proto3" json:"affectedCount,omitempty"`
 	Warning       string `protobuf:"bytes,5,opt,name=warning,proto3" json:"warning,omitempty"`
+}
+
+type UploadUrlReq struct {
+	api.Meta   `path:"/ai/document/uploadurl" tags:"Document" method:"Post" summary:"获取cos上传签名"`
+	Database   string          `json:"database,omitempty"`
+	Collection string          `json:"collection,omitempty"`
+	FileName   string          `json:"file_name,omitempty"`
+	FileType   entity.FileType `json:"file_type,omitempty"`
+}
+
+type UploadUrlRes struct {
+	Code     int32  `json:"code,omitempty"`
+	Msg      string `json:"msg,omitempty"`
+	Redirect string `json:"redirect,omitempty"`
+
+	CosEndpoint     string           `json:"cos_endpoint,omitempty"`
+	UploadPath      string           `json:"upload_path,omitempty"`
+	Credentials     *Credentials     `json:"credentials,omitempty"`
+	UploadCondition *UploadCondition `json:"upload_condition,omitempty"`
+	FileId          string           `json:"file_id,omitempty"`
+}
+
+type UploadCondition struct {
+	MaxSupportContentLength int64 `json:"max_support_content_length,omitempty"`
+}
+
+type Credentials struct {
+	TmpSecretID  string `json:"TmpSecretId,omitempty"`
+	TmpSecretKey string `json:"TmpSecretKey,omitempty"`
+	SessionToken string `json:"Token,omitempty"`
 }

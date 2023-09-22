@@ -39,7 +39,7 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("http://21.0.83.131:8100", "root", "214pFZBsOYegRCqwZ0IDkQJLkcazGnR3I8S4mroV", nil)
+	cli, err = tcvectordb.NewClient("http://9.134.243.196:8100", "root", "12345", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -512,4 +512,18 @@ func printErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func TestUploadFile(t *testing.T) {
+	defer cli.Close()
+	col := cli.Database("dbtest1").Collection("col1")
+	cli.Debug(true)
+
+	err := col.Upload(context.Background(), "./test.md", &entity.UploadDocumentOption{
+		FileType: "", MetaData: map[string]string{
+			"fileName":   "test.md",
+			"author":     "sam",
+			"uploadTime": time.Now().Format("2023-09-04 12:00:13")},
+	})
+	printErr(err)
 }

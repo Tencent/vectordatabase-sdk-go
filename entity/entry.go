@@ -30,7 +30,9 @@ type VectorDBClient interface {
 type DatabaseInterface interface {
 	SdkClient
 	CreateDatabase(ctx context.Context, name string, option *CreateDatabaseOption) (*Database, error)
+	CreateAiDatabase(ctx context.Context, name string, option *CreateDatabaseOption) (*Database, error)
 	DropDatabase(ctx context.Context, name string, option *DropDatabaseOption) (*DatabaseResult, error)
+	DropAiDatabase(ctx context.Context, name string, option *DropDatabaseOption) (*DatabaseResult, error)
 	ListDatabase(ctx context.Context, option *ListDatabaseOption) (databases []*Database, err error)
 	Database(name string) *Database
 }
@@ -70,4 +72,5 @@ type DocumentInterface interface {
 	SearchByText(ctx context.Context, text map[string][]string, option *SearchDocumentOption) ([][]Document, error)
 	Delete(ctx context.Context, option *DeleteDocumentOption) (*DocumentResult, error)
 	Update(ctx context.Context, option *UpdateDocumentOption) (*DocumentResult, error)
+	Upload(ctx context.Context, filePath string, option *UploadDocumentOption) (err error)
 }
