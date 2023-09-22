@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/document"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 )
 
@@ -41,7 +40,7 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, f
 	req := new(document.QueryReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
-	req.Query = &proto.QueryCond{
+	req.Query = &document.QueryCond{
 		DocumentIds:    documentIds,
 		RetrieveVector: retrieveVector,
 		Offset:         offset,
@@ -101,7 +100,7 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 	req.Search.RetrieveVector = retrieveVector
 	req.Search.Limit = uint32(limit)
 	if searchParam != nil {
-		req.Search.Params = &proto.SearchParams{
+		req.Search.Params = &document.SearchParams{
 			Ef:     searchParam.Ef,
 			Nprobe: searchParam.Nprobe,
 			Radius: searchParam.Radius,
@@ -143,7 +142,7 @@ func (i *implementerDocument) Delete(ctx context.Context, documentIds []string, 
 	req := new(document.DeleteReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
-	req.Query = &proto.QueryCond{
+	req.Query = &document.QueryCond{
 		DocumentIds: documentIds,
 		Filter:      filter.Cond(),
 	}
@@ -157,7 +156,7 @@ func (i *implementerDocument) Update(ctx context.Context, queryIds []string, que
 	req := new(document.UpdateReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
-	req.Query = &proto.QueryCond{
+	req.Query = &document.QueryCond{
 		DocumentIds: queryIds,
 	}
 	if queryFilter != nil {

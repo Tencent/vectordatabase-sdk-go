@@ -2,34 +2,51 @@ package alias
 
 import (
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto"
 )
 
 type SetReq struct {
-	api.Meta `path:"/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
-	proto.SetAliasRequest
+	api.Meta   `path:"/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
+	Database   string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Collection string `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
+	Alias      string `protobuf:"bytes,3,opt,name=alias,proto3" json:"alias,omitempty"`
 }
 
 type SetRes struct {
-	proto.UpdateAliasResponse
+	Code          int32  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Msg           string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	Redirect      string `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
+	AffectedCount int32  `protobuf:"varint,4,opt,name=affectedCount,proto3" json:"affectedCount,omitempty"`
 }
 
 type DeleteReq struct {
 	api.Meta `path:"/alias/delete" tags:"Alias" method:"Post" summary:"删除集合别名"`
-	proto.DropAliasRequest
+	Database string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Alias    string `protobuf:"bytes,2,opt,name=alias,proto3" json:"alias,omitempty"`
 }
 
 type DeleteRes struct {
-	proto.UpdateAliasResponse
+	Code          int32  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Msg           string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	Redirect      string `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
+	AffectedCount int32  `protobuf:"varint,4,opt,name=affectedCount,proto3" json:"affectedCount,omitempty"`
 }
 
 type DescribeReq struct {
 	api.Meta `path:"/alias/describe" tags:"Alias" method:"Post" summary:"根据别名查找对应的集合信息"`
-	proto.GetAliasRequest
+	Database string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Alias    string `protobuf:"bytes,2,opt,name=alias,proto3" json:"alias,omitempty"`
 }
 
 type DescribeRes struct {
-	proto.GetAliasResponse
+	Code     int32        `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Msg      string       `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	Redirect string       `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
+	Aliases  []*AliasItem `protobuf:"bytes,4,rep,name=aliases,proto3" json:"aliases,omitempty"`
+}
+
+type AliasItem struct {
+	Alias      string `protobuf:"bytes,1,opt,name=alias,proto3" json:"alias,omitempty"`
+	Collection string `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
 }
 
 type ListReq struct {
@@ -38,5 +55,8 @@ type ListReq struct {
 }
 
 type ListRes struct {
-	proto.GetAliasResponse
+	Code     int32        `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Msg      string       `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	Redirect string       `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
+	Aliases  []*AliasItem `protobuf:"bytes,4,rep,name=aliases,proto3" json:"aliases,omitempty"`
 }

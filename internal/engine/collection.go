@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/collection"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/proto"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 )
 
@@ -33,7 +32,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	}
 
 	for _, v := range indexes.VectorIndex {
-		var column proto.IndexColumn
+		var column collection.IndexColumn
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
@@ -45,7 +44,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		req.Indexes = append(req.Indexes, &column)
 	}
 	for _, v := range indexes.FilterIndex {
-		var column proto.IndexColumn
+		var column collection.IndexColumn
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
@@ -198,8 +197,8 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 }
 
 // optionParams option index parameters
-func optionParams(column *proto.IndexColumn, v model.VectorIndex) {
-	column.Params = new(proto.IndexParams)
+func optionParams(column *collection.IndexColumn, v model.VectorIndex) {
+	column.Params = new(collection.IndexParams)
 	if v.IndexType == model.HNSW {
 		if param, ok := v.Params.(*model.HNSWParam); ok && param != nil {
 			column.Params.M = param.M
