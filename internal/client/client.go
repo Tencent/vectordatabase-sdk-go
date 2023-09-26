@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 
 	"github.com/pkg/errors"
 )
@@ -24,19 +24,26 @@ type Client struct {
 	url      string
 	username string
 	key      string
-	option   model.ClientOption
+	option   entity.ClientOption
 	debug    bool
 }
 
-var defaultOption = model.ClientOption{
+type CommmonResponse struct {
+	// Code: 0 means success, other means failure.
+	Code int32 `json:"code,omitempty"`
+	// Msg: response msg
+	Msg string `json:"msg,omitempty"`
+}
+
+var defaultOption = entity.ClientOption{
 	Timeout:            time.Second * 5,
 	MaxIdldConnPerHost: 2,
 	IdleConnTimeout:    time.Minute,
-	ReadConsistency:    model.EventualConsistency,
+	ReadConsistency:    entity.EventualConsistency,
 }
 
 // NewClient new http client with url, username and api key
-func NewClient(url, username, key string, option *model.ClientOption) (*Client, error) {
+func NewClient(url, username, key string, option *entity.ClientOption) (*Client, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, errors.Errorf("invailid url param with: %s", url)
 	}
@@ -125,7 +132,7 @@ func (c *Client) handleResponse(ctx context.Context, res *http.Response, out int
 	if !json.Valid(responseBytes) {
 		return errors.Errorf(`invalid response content: %s`, responseBytes)
 	}
-	var commenRes model.CommmonResponse
+	var commenRes CommmonResponse
 
 	if err := json.Unmarshal(responseBytes, &commenRes); err != nil {
 		return errors.Wrapf(err, `json.Unmarshal failed with content:%s`, responseBytes)
@@ -145,11 +152,11 @@ func (c *Client) Close() {
 	c.cli.CloseIdleConnections()
 }
 
-func (c *Client) Options() model.ClientOption {
+func (c *Client) Options() entity.ClientOption {
 	return c.option
 }
 
-func optionMerge(option *model.ClientOption) *model.ClientOption {
+func optionMerge(option *entity.ClientOption) *entity.ClientOption {
 	if option == nil {
 		option = &defaultOption
 	}

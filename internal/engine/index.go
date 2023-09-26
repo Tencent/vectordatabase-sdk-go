@@ -3,18 +3,18 @@ package engine
 import (
 	"context"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entry"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/index"
 )
 
-var _ entry.IndexInterface = &implementerIndex{}
+var _ entity.IndexInterface = &implementerIndex{}
 
 type implementerIndex struct {
-	entry.SdkClient
+	entity.SdkClient
 	databaseName string
 }
 
-func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName string, option *entry.IndexRebuildOption) (*entry.IndexReBuildResult, error) {
+func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName string, option *entity.IndexRebuildOption) (*entity.IndexReBuildResult, error) {
 	req := new(index.RebuildReq)
 	req.Database = i.databaseName
 	req.Collection = collectionName
@@ -27,7 +27,7 @@ func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName stri
 	if err != nil {
 		return nil, err
 	}
-	result := new(entry.IndexReBuildResult)
+	result := new(entity.IndexReBuildResult)
 	result.TaskIds = res.TaskIds
 	return result, nil
 }

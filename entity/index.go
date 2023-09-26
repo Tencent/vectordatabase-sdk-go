@@ -1,9 +1,24 @@
-package model
+package entity
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 )
+
+type IndexInterface interface {
+	SdkClient
+	IndexRebuild(ctx context.Context, collectionName string, option *IndexRebuildOption) (result *IndexReBuildResult, err error)
+}
+
+type IndexReBuildResult struct {
+	TaskIds []string
+}
+
+type IndexRebuildOption struct {
+	DropBeforeRebuild bool
+	Throttle          int
+}
 
 type IndexParams interface {
 	MarshalJson() ([]byte, error)
@@ -95,4 +110,11 @@ type Indexes struct {
 type IndexStatus struct {
 	Status    string
 	StartTime time.Time
+}
+
+type Embedding struct {
+	Field       string         `json:"field,omitempty"`
+	VectorField string         `json:"vectorField,omitempty"`
+	Model       EmbeddingModel `json:"model,omitempty"`
+	Enabled     bool           `json:"enabled,omitempty"` // 返回数据
 }

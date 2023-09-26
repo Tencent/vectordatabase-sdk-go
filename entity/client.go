@@ -1,6 +1,7 @@
-package model
+package entity
 
 import (
+	"context"
 	"time"
 )
 
@@ -15,9 +16,11 @@ type ClientOption struct {
 	ReadConsistency ReadConsistency
 }
 
-type CommmonResponse struct {
-	// Code: 0 means success, other means failure.
-	Code int32 `json:"code,omitempty"`
-	// Msg: response msg
-	Msg string `json:"msg,omitempty"`
+// SdkClient the http client interface
+type SdkClient interface {
+	Request(ctx context.Context, req, res interface{}) error
+	Options() ClientOption
+	WithTimeout(d time.Duration)
+	Debug(v bool)
+	Close()
 }

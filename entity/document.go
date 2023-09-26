@@ -1,10 +1,53 @@
-package model
+package entity
 
 import (
 	"fmt"
 	"reflect"
 	"strconv"
 )
+
+type DocumentResult struct {
+	AffectedCount int
+	Total         int
+}
+
+type UpsertDocumentOption struct {
+	BuildIndex bool
+}
+
+type QueryDocumentOption struct {
+	Filter         *Filter
+	RetrieveVector bool
+	OutputFields   []string
+	Offset         int64
+	Limit          int64
+}
+
+type SearchDocumentOption struct {
+	Filter         *Filter
+	Params         *SearchDocParams
+	RetrieveVector bool
+	OutputFields   []string
+	Limit          int64
+}
+
+type SearchDocParams struct {
+	Nprobe uint32  `json:"nprobe,omitempty"` // 搜索时查找的聚类数量，使用索引默认值即可
+	Ef     uint32  `json:"ef,omitempty"`     // HNSW
+	Radius float32 `json:"radius,omitempty"` // 距离阈值,范围搜索时有效
+}
+
+type DeleteDocumentOption struct {
+	DocumentIds []string
+	Filter      *Filter
+}
+
+type UpdateDocumentOption struct {
+	QueryIds     []string
+	QueryFilter  *Filter
+	UpdateVector []float32
+	UpdateFields map[string]Field
+}
 
 type Document struct {
 	Id     string

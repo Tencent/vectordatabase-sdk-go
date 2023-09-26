@@ -4,25 +4,24 @@ import (
 	"context"
 	"errors"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entry"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/alias"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 )
 
-var _ entry.AliasInterface = &implementerAlias{}
+var _ entity.AliasInterface = &implementerAlias{}
 
 type implementerAlias struct {
-	entry.SdkClient
+	entity.SdkClient
 	databaseName string
 }
 
-func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option *entry.SetAliasOption) (*entry.AliasResult, error) {
+func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option *entity.SetAliasOption) (*entity.AliasResult, error) {
 	req := new(alias.SetReq)
 	req.Database = i.databaseName
 	req.Collection = collectionName
 	req.Alias = aliasName
 	res := new(alias.SetRes)
-	result := new(entry.AliasResult)
+	result := new(entity.AliasResult)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
 		return result, err
@@ -31,12 +30,12 @@ func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasNa
 	return result, nil
 }
 
-func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string, option *entry.DeleteAliasOption) (*entry.AliasResult, error) {
+func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string, option *entity.DeleteAliasOption) (*entity.AliasResult, error) {
 	req := new(alias.DeleteReq)
 	req.Database = i.databaseName
 	req.Alias = aliasName
 	res := new(alias.DeleteRes)
-	result := new(entry.AliasResult)
+	result := new(entity.AliasResult)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
 		return result, err
@@ -45,7 +44,7 @@ func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string, op
 	return result, nil
 }
 
-func (i *implementerAlias) DescribeAlias(ctx context.Context, aliasName string, option *entry.DescribeAliasOption) (*model.Alias, error) {
+func (i *implementerAlias) DescribeAlias(ctx context.Context, aliasName string, option *entity.DescribeAliasOption) (*entity.AliasResult, error) {
 	req := new(alias.DescribeReq)
 	req.Database = i.databaseName
 	req.Alias = aliasName
@@ -57,13 +56,13 @@ func (i *implementerAlias) DescribeAlias(ctx context.Context, aliasName string, 
 	if len(res.Aliases) == 0 {
 		return nil, errors.New("alias not found")
 	}
-	alias := &model.Alias{
+	alias := &entity.AliasResult{
 		Collection: res.Aliases[0].Collection,
 	}
 	return alias, nil
 }
 
-func (i *implementerAlias) ListAlias(ctx context.Context, option *entry.ListAliasOption) ([]*model.Alias, error) {
+func (i *implementerAlias) ListAlias(ctx context.Context, option *entity.ListAliasOption) ([]*entity.AliasResult, error) {
 	req := new(alias.ListReq)
 	req.Database = i.databaseName
 	res := new(alias.ListRes)
@@ -74,6 +73,6 @@ func (i *implementerAlias) ListAlias(ctx context.Context, option *entry.ListAlia
 	if len(res.Aliases) == 0 {
 		return nil, errors.New("alias not found")
 	}
-	var aliases []*model.Alias
+	var aliases []*entity.AliasResult
 	return aliases, nil
 }

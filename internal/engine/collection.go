@@ -6,24 +6,23 @@ import (
 	"strings"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entry"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/collection"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 )
 
-var _ entry.CollectionInterface = &implementerCollection{}
+var _ entity.CollectionInterface = &implementerCollection{}
 
 type implementerCollection struct {
-	entry.SdkClient
+	entity.SdkClient
 	databaseName string
 }
 
 // CreateCollection create a collection. It returns collection struct if err is nil.
 // The parameter `name` must be a unique string, otherwise an error will be returned.
 // The parameter `shardNum`, `replicasNum` must bigger than 0, `description` could be empty.
-// You can set the index field in model.Indexes, the vectorIndex must be set one currently, and
+// You can set the index field in entity.Indexes, the vectorIndex must be set one currently, and
 // the filterIndex sets at least one primaryKey value.
-func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes, option *entry.CreateCollectionOption) (*entry.Collection, error) {
+func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
 	req := new(collection.CreateReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -52,7 +51,9 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	}
 	if option != nil {
 		if option.Embedding != nil {
-			req.Embedding = *option.Embedding
+			req.Embedding.Field = option.Embedding.Field
+			req.Embedding.VectorField = option.Embedding.VectorField
+			req.Embedding.Model = string(option.Embedding.Model)
 		}
 	}
 
@@ -72,7 +73,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 }
 
 // DescribeCollection get a collection detail. It returns the collection object to get collecton parameters or operate document api
-func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entry.DescribeCollectionOption) (*entry.Collection, error) {
+func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeCollectionOption) (*entity.Collection, error) {
 	req := new(collection.DescribeReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -90,14 +91,14 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 }
 
 // DropCollection drop a collection. If collection not exist, it return nil.
-func (i *implementerCollection) DropCollection(ctx context.Context, name string, option *entry.DropCollectionOption) (result *entry.CollectionResult, err error) {
+func (i *implementerCollection) DropCollection(ctx context.Context, name string, option *entity.DropCollectionOption) (result *entity.CollectionResult, err error) {
 	req := new(collection.DropReq)
 	req.Database = i.databaseName
 	req.Collection = name
 
 	res := new(collection.DropRes)
 	err = i.Request(ctx, req, res)
-	result = new(entry.CollectionResult)
+	result = new(entity.CollectionResult)
 	if err != nil {
 		if strings.Contains(err.Error(), "not exist") {
 			return result, nil
@@ -108,7 +109,7 @@ func (i *implementerCollection) DropCollection(ctx context.Context, name string,
 	return
 }
 
-func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entry.TruncateCollectionOption) (result *entry.CollectionResult, err error) {
+func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateCollectionOption) (result *entity.CollectionResult, err error) {
 	req := new(collection.FlushReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -119,13 +120,13 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 	if err != nil {
 		return
 	}
-	result = new(entry.CollectionResult)
+	result = new(entity.CollectionResult)
 	result.AffectedCount = int(res.AffectedCount)
 	return
 }
 
 // ListCollection get collection list. It return the list of collection, each collection same as DescribeCollection return.
-func (i *implementerCollection) ListCollection(ctx context.Context, option *entry.ListCollectionOption) ([]*entry.Collection, error) {
+func (i *implementerCollection) ListCollection(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
 	req := new(collection.ListReq)
 	req.Database = i.databaseName
 	res := new(collection.ListRes)
@@ -133,7 +134,7 @@ func (i *implementerCollection) ListCollection(ctx context.Context, option *entr
 	if err != nil {
 		return nil, err
 	}
-	var collections []*entry.Collection
+	var collections []*entity.Collection
 	for _, collection := range res.Collections {
 		collections = append(collections, i.toCollection(collection))
 	}
@@ -142,8 +143,8 @@ func (i *implementerCollection) ListCollection(ctx context.Context, option *entr
 
 // Collection get a collection interface to operate the document api. It could not send http request to vectordb.
 // If you want to show collection parameters, use DescribeCollection.
-func (i *implementerCollection) Collection(name string) *entry.Collection {
-	coll := new(entry.Collection)
+func (i *implementerCollection) Collection(name string) *entity.Collection {
+	coll := new(entity.Collection)
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.databaseName = i.databaseName
@@ -154,7 +155,7 @@ func (i *implementerCollection) Collection(name string) *entry.Collection {
 	return coll
 }
 
-func (i *implementerCollection) toCollection(collectionItem *collection.DescribeCollectionItem) *entry.Collection {
+func (i *implementerCollection) toCollection(collectionItem *collection.DescribeCollectionItem) *entity.Collection {
 	coll := i.Collection(collectionItem.Collection)
 	coll.DocumentCount = collectionItem.DocumentCount
 	coll.Alias = collectionItem.Alias
@@ -162,11 +163,13 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	coll.ReplicasNum = collectionItem.ReplicaNum
 	coll.Description = collectionItem.Description
 	coll.Size = collectionItem.Size
-	coll.Embedding = collectionItem.Embedding.Embedding
+	coll.Embedding.Field = collectionItem.Embedding.Field
+	coll.Embedding.VectorField = collectionItem.Embedding.VectorField
+	coll.Embedding.Model = entity.EmbeddingModel(collectionItem.Embedding.Model)
 	coll.Embedding.Enabled = collectionItem.Embedding.Status == "enabled"
 
 	if collectionItem.IndexStatus != nil {
-		coll.IndexStatus = model.IndexStatus{
+		coll.IndexStatus = entity.IndexStatus{
 			Status: collectionItem.IndexStatus.Status,
 		}
 		coll.IndexStatus.StartTime, _ = time.Parse("2006-01-02 15:04:05", collectionItem.IndexStatus.StartTime)
@@ -175,31 +178,31 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 
 	for _, index := range collectionItem.Indexes {
 		switch index.FieldType {
-		case string(model.Vector):
-			vector := model.VectorIndex{}
+		case string(entity.Vector):
+			vector := entity.VectorIndex{}
 			vector.FieldName = index.FieldName
-			vector.FieldType = model.FieldType(index.FieldType)
-			vector.IndexType = model.IndexType(index.IndexType)
+			vector.FieldType = entity.FieldType(index.FieldType)
+			vector.IndexType = entity.IndexType(index.IndexType)
 			vector.Dimension = index.Dimension
-			vector.MetricType = model.MetricType(index.MetricType)
+			vector.MetricType = entity.MetricType(index.MetricType)
 			vector.IndexedCount = index.IndexedCount
 			switch vector.IndexType {
-			case model.HNSW:
-				vector.Params = &model.HNSWParam{M: index.Params.M, EfConstruction: index.Params.EfConstruction}
-			case model.IVF_FLAT:
-				vector.Params = &model.IVFFLATParams{NList: index.Params.Nlist}
-			case model.IVF_PQ:
-				vector.Params = &model.IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
-			case model.IVF_SQ8:
-				vector.Params = &model.IVFSQ8Params{NList: index.Params.Nlist}
+			case entity.HNSW:
+				vector.Params = &entity.HNSWParam{M: index.Params.M, EfConstruction: index.Params.EfConstruction}
+			case entity.IVF_FLAT:
+				vector.Params = &entity.IVFFLATParams{NList: index.Params.Nlist}
+			case entity.IVF_PQ:
+				vector.Params = &entity.IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
+			case entity.IVF_SQ8:
+				vector.Params = &entity.IVFSQ8Params{NList: index.Params.Nlist}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
 
 		default:
-			filter := model.FilterIndex{}
+			filter := entity.FilterIndex{}
 			filter.FieldName = index.FieldName
-			filter.FieldType = model.FieldType(index.FieldType)
-			filter.IndexType = model.IndexType(index.IndexType)
+			filter.FieldType = entity.FieldType(index.FieldType)
+			filter.IndexType = entity.IndexType(index.IndexType)
 
 			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 		}
@@ -208,23 +211,23 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 }
 
 // optionParams option index parameters
-func optionParams(column *collection.IndexColumn, v model.VectorIndex) {
+func optionParams(column *collection.IndexColumn, v entity.VectorIndex) {
 	column.Params = new(collection.IndexParams)
-	if v.IndexType == model.HNSW {
-		if param, ok := v.Params.(*model.HNSWParam); ok && param != nil {
+	if v.IndexType == entity.HNSW {
+		if param, ok := v.Params.(*entity.HNSWParam); ok && param != nil {
 			column.Params.M = param.M
 			column.Params.EfConstruction = param.EfConstruction
 		}
-	} else if v.IndexType == model.IVF_FLAT {
-		if param, ok := v.Params.(*model.IVFFLATParams); ok && param != nil {
+	} else if v.IndexType == entity.IVF_FLAT {
+		if param, ok := v.Params.(*entity.IVFFLATParams); ok && param != nil {
 			column.Params.Nlist = param.NList
 		}
-	} else if v.IndexType == model.IVF_SQ8 {
-		if param, ok := v.Params.(*model.IVFSQ8Params); ok && param != nil {
+	} else if v.IndexType == entity.IVF_SQ8 {
+		if param, ok := v.Params.(*entity.IVFSQ8Params); ok && param != nil {
 			column.Params.Nlist = param.NList
 		}
-	} else if v.IndexType == model.IVF_PQ {
-		if param, ok := v.Params.(*model.IVFPQParams); ok && param != nil {
+	} else if v.IndexType == entity.IVF_PQ {
+		if param, ok := v.Params.(*entity.IVFPQParams); ok && param != nil {
 			column.Params.M = param.M
 			column.Params.Nlist = param.NList
 		}

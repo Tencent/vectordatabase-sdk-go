@@ -2,23 +2,28 @@ package collection
 
 import (
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 )
 
 // CreateReq create collection request
 type CreateReq struct {
 	api.Meta    `path:"/collection/create" tags:"Collection" method:"Post" summary:"创建collection"`
-	Database    string          `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
-	Collection  string          `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
-	ReplicaNum  uint32          `protobuf:"varint,3,opt,name=replicaNum,proto3" json:"replicaNum,omitempty"`
-	ShardNum    uint32          `protobuf:"varint,4,opt,name=shardNum,proto3" json:"shardNum,omitempty"`
-	Size        uint64          `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
-	CreateTime  string          `protobuf:"bytes,6,opt,name=createTime,proto3" json:"createTime,omitempty"`
-	Description string          `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
-	Indexes     []*IndexColumn  `protobuf:"bytes,8,rep,name=indexes,proto3" json:"indexes,omitempty"`
-	IndexStatus *IndexStatus    `protobuf:"bytes,9,opt,name=indexStatus,proto3" json:"indexStatus,omitempty"`
-	AliasList   []string        `protobuf:"bytes,10,rep,name=alias_list,json=aliasList,proto3" json:"alias_list,omitempty"`
-	Embedding   model.Embedding `json:"embedding"`
+	Database    string         `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Collection  string         `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
+	ReplicaNum  uint32         `protobuf:"varint,3,opt,name=replicaNum,proto3" json:"replicaNum,omitempty"`
+	ShardNum    uint32         `protobuf:"varint,4,opt,name=shardNum,proto3" json:"shardNum,omitempty"`
+	Size        uint64         `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
+	CreateTime  string         `protobuf:"bytes,6,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	Description string         `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
+	Indexes     []*IndexColumn `protobuf:"bytes,8,rep,name=indexes,proto3" json:"indexes,omitempty"`
+	IndexStatus *IndexStatus   `protobuf:"bytes,9,opt,name=indexStatus,proto3" json:"indexStatus,omitempty"`
+	AliasList   []string       `protobuf:"bytes,10,rep,name=alias_list,json=aliasList,proto3" json:"alias_list,omitempty"`
+	Embedding   Embedding      `json:"embedding"`
+}
+
+type Embedding struct {
+	Field       string `json:"field,omitempty"`
+	VectorField string `json:"vectorField,omitempty"`
+	Model       string `json:"model,omitempty"`
 }
 
 type IndexColumn struct {
@@ -135,6 +140,6 @@ type ModifyRes struct {
 }
 
 type EmbeddingRes struct {
-	model.Embedding
+	Embedding
 	Status string
 }

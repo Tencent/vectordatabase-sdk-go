@@ -6,13 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entry"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 )
 
 var (
-	cli                 entry.VectorDBClient
+	cli                 entity.VectorDBClient
 	database            = "book"
 	collectionName      = "book_segments"
 	collectionAlias     = "book_segments_alias"
@@ -80,37 +79,37 @@ func TestCreateCollection(t *testing.T) {
 	//     id 为主键需要全局唯一，segment 为文本片段, vector 字段需要建立向量索引，假如我们在查询的时候要查询指定书籍
 	//     名称的内容，这个时候需要对 bookName 建立索引，其他字段没有条件查询的需要，无需建立索引。
 
-	index := model.Indexes{
-		VectorIndex: []model.VectorIndex{
+	index := entity.Indexes{
+		VectorIndex: []entity.VectorIndex{
 			{
-				FilterIndex: model.FilterIndex{
+				FilterIndex: entity.FilterIndex{
 					FieldName: "vector",
-					FieldType: model.Vector,
-					IndexType: model.HNSW,
+					FieldType: entity.Vector,
+					IndexType: entity.HNSW,
 				},
 				Dimension:  3,
-				MetricType: model.COSINE,
-				Params: &model.HNSWParam{
+				MetricType: entity.COSINE,
+				Params: &entity.HNSWParam{
 					M:              16,
 					EfConstruction: 200,
 				},
 			},
 		},
-		FilterIndex: []model.FilterIndex{
+		FilterIndex: []entity.FilterIndex{
 			{
 				FieldName: "id",
-				FieldType: model.String,
-				IndexType: model.PRIMARY,
+				FieldType: entity.String,
+				IndexType: entity.PRIMARY,
 			},
 			{
 				FieldName: "bookName",
-				FieldType: model.String,
-				IndexType: model.FILTER,
+				FieldType: entity.String,
+				IndexType: entity.FILTER,
 			},
 			{
 				FieldName: "page",
-				FieldType: model.Uint64,
-				IndexType: model.FILTER,
+				FieldType: entity.Uint64,
+				IndexType: entity.FILTER,
 			},
 		},
 	}
@@ -145,45 +144,45 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	db := cli.Database(database)
 
 	// 设置embedding字段和模型
-	option := &entry.CreateCollectionOption{
-		Embedding: &model.Embedding{
+	option := &entity.CreateCollectionOption{
+		Embedding: &entity.Embedding{
 			Field:       "segment",
 			VectorField: "vector",
-			Model:       model.BGE_BASE_ZH,
+			Model:       entity.BGE_BASE_ZH,
 		},
 	}
 
-	index := model.Indexes{
+	index := entity.Indexes{
 		// 指定embedding时，vector的维度可以不传，系统会使用embedding model的维度
-		VectorIndex: []model.VectorIndex{
+		VectorIndex: []entity.VectorIndex{
 			{
-				FilterIndex: model.FilterIndex{
+				FilterIndex: entity.FilterIndex{
 					FieldName: "vector",
-					FieldType: model.Vector,
-					IndexType: model.HNSW,
+					FieldType: entity.Vector,
+					IndexType: entity.HNSW,
 				},
-				MetricType: model.COSINE,
-				Params: &model.HNSWParam{
+				MetricType: entity.COSINE,
+				Params: &entity.HNSWParam{
 					M:              16,
 					EfConstruction: 200,
 				},
 			},
 		},
-		FilterIndex: []model.FilterIndex{
+		FilterIndex: []entity.FilterIndex{
 			{
 				FieldName: "id",
-				FieldType: model.String,
-				IndexType: model.PRIMARY,
+				FieldType: entity.String,
+				IndexType: entity.PRIMARY,
 			},
 			{
 				FieldName: "bookName",
-				FieldType: model.String,
-				IndexType: model.FILTER,
+				FieldType: entity.String,
+				IndexType: entity.FILTER,
 			},
 			{
 				FieldName: "page",
-				FieldType: model.Uint64,
-				IndexType: model.FILTER,
+				FieldType: entity.Uint64,
+				IndexType: entity.FILTER,
 			},
 		},
 	}
@@ -200,11 +199,11 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 func TestUpsertDocument(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	_, err := col.Upsert(context.Background(), []model.Document{
+	_, err := col.Upsert(context.Background(), []entity.Document{
 		{
 			Id:     "0001",
 			Vector: []float32{0.2123, 0.21, 0.213},
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 21},
@@ -214,7 +213,7 @@ func TestUpsertDocument(t *testing.T) {
 		{
 			Id:     "0002",
 			Vector: []float32{0.2123, 0.22, 0.213},
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 22},
@@ -224,7 +223,7 @@ func TestUpsertDocument(t *testing.T) {
 		{
 			Id:     "0003",
 			Vector: []float32{0.2123, 0.23, 0.213},
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 23},
@@ -234,7 +233,7 @@ func TestUpsertDocument(t *testing.T) {
 		{
 			Id:     "0004",
 			Vector: []float32{0.2123, 0.24, 0.213},
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 24},
@@ -244,14 +243,14 @@ func TestUpsertDocument(t *testing.T) {
 		{
 			Id:     "0005",
 			Vector: []float32{0.2123, 0.25, 0.213},
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 25},
 				"segment":  {Val: "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。"},
 			},
 		},
-	}, &entry.UpsertDocumentOption{BuildIndex: true})
+	}, &entity.UpsertDocumentOption{BuildIndex: true})
 
 	printErr(err)
 }
@@ -264,8 +263,8 @@ func TestQuery(t *testing.T) {
 	// 4. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
 
 	col := cli.Database(database).Collection(collectionName)
-	option := &entry.QueryDocumentOption{
-		Filter:         model.NewFilter(`bookName="三国演义"`),
+	option := &entity.QueryDocumentOption{
+		Filter:         entity.NewFilter(`bookName="三国演义"`),
 		OutputFields:   []string{"id", "bookName"},
 		RetrieveVector: true,
 		Limit:          2,
@@ -292,12 +291,12 @@ func TestSearch(t *testing.T) {
 
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
 
-	filter := model.NewFilter(`bookName="三国演义"`)
-	searchRes, err := col.SearchById(context.Background(), []string{"0003"}, &entry.SearchDocumentOption{
-		Filter:         filter,                          // 过滤获取到结果
-		Params:         &entry.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                           // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          2,                               // 指定 Top K 的 K 值
+	filter := entity.NewFilter(`bookName="三国演义"`)
+	searchRes, err := col.SearchById(context.Background(), []string{"0003"}, &entity.SearchDocumentOption{
+		Filter:         filter,                           // 过滤获取到结果
+		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
+		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
+		Limit:          2,                                // 指定 Top K 的 K 值
 	})
 	printErr(err)
 	t.Log("SearchById-----------------")
@@ -317,10 +316,10 @@ func TestSearch(t *testing.T) {
 	searchRes, err = col.Search(context.Background(), [][]float32{
 		{0.3123, 0.43, 0.213},
 		{0.233, 0.12, 0.97},
-	}, &entry.SearchDocumentOption{
-		Params:         &entry.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                           // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          10,                              // 指定 Top K 的 K 值
+	}, &entity.SearchDocumentOption{
+		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
+		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
+		Limit:          10,                               // 指定 Top K 的 K 值
 	})
 	printErr(err)
 	t.Logf("search by vector-----------------")
@@ -339,10 +338,10 @@ func TestUpdateAndDelete(t *testing.T) {
 	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
 
 	// filter 限制仅会更新 id = "0003"
-	result, err := col.Update(context.Background(), &entry.UpdateDocumentOption{
+	result, err := col.Update(context.Background(), &entity.UpdateDocumentOption{
 		QueryIds:    []string{"0001", "0003"},
-		QueryFilter: model.NewFilter(`bookName="三国演义"`),
-		UpdateFields: map[string]model.Field{
+		QueryFilter: entity.NewFilter(`bookName="三国演义"`),
+		UpdateFields: map[string]entity.Field{
 			"page": {Val: 24},
 		},
 	})
@@ -359,16 +358,16 @@ func TestUpdateAndDelete(t *testing.T) {
 	// 2. 删除功能会受限于 collection 的索引类型，部分索引类型不支持删除操作
 
 	// filter 限制只会删除 id="0001" 成功
-	col.Delete(context.Background(), &entry.DeleteDocumentOption{
+	col.Delete(context.Background(), &entity.DeleteDocumentOption{
 		DocumentIds: []string{"0001", "0003"},
-		Filter:      model.NewFilter(`bookName="西游记"`),
+		Filter:      entity.NewFilter(`bookName="西游记"`),
 	})
 }
 
 func TestBuildIndex(t *testing.T) {
 	db := cli.Database(database)
 	// 索引重建，重建期间不支持写入
-	_, err := db.IndexRebuild(context.Background(), collectionName, &entry.IndexRebuildOption{Throttle: 1})
+	_, err := db.IndexRebuild(context.Background(), collectionName, &entity.IndexRebuildOption{Throttle: 1})
 	printErr(err)
 }
 
@@ -382,10 +381,10 @@ func TestTruncateCollection(t *testing.T) {
 func TestUpsertEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	_, err := col.Upsert(context.Background(), []model.Document{
+	_, err := col.Upsert(context.Background(), []entity.Document{
 		{
 			Id: "0001",
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 21},
@@ -394,7 +393,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0002",
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 22},
@@ -403,7 +402,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0003",
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 23},
@@ -412,7 +411,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0004",
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 24},
@@ -421,7 +420,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0005",
-			Fields: map[string]model.Field{
+			Fields: map[string]entity.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 25},
@@ -436,8 +435,8 @@ func TestUpsertEmbedding(t *testing.T) {
 func TestQueryEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	option := &entry.QueryDocumentOption{
-		Filter:         model.NewFilter(`bookName="三国演义"`),
+	option := &entity.QueryDocumentOption{
+		Filter:         entity.NewFilter(`bookName="三国演义"`),
 		OutputFields:   []string{"id", "bookName"},
 		RetrieveVector: false,
 		Limit:          2,
@@ -453,12 +452,12 @@ func TestQueryEmbedding(t *testing.T) {
 
 func TestSearchEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
-	filter := model.NewFilter(`bookName="三国演义"`)
-	searchRes, err := col.SearchById(context.Background(), []string{"0003"}, &entry.SearchDocumentOption{
-		Filter:         filter,                          // 过滤获取到结果
-		Params:         &entry.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                           // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          2,                               // 指定 Top K 的 K 值
+	filter := entity.NewFilter(`bookName="三国演义"`)
+	searchRes, err := col.SearchById(context.Background(), []string{"0003"}, &entity.SearchDocumentOption{
+		Filter:         filter,                           // 过滤获取到结果
+		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
+		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
+		Limit:          2,                                // 指定 Top K 的 K 值
 	})
 	printErr(err)
 	t.Log("SearchById-----------------")
@@ -475,10 +474,10 @@ func TestSearchEmbedding(t *testing.T) {
 	// 3. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
 	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
 
-	searchRes, err = col.SearchByText(context.Background(), map[string][]string{"segment": {"吕布"}}, &entry.SearchDocumentOption{
-		Params:         &entry.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                           // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          2,                               // 指定 Top K 的 K 值
+	searchRes, err = col.SearchByText(context.Background(), map[string][]string{"segment": {"吕布"}}, &entity.SearchDocumentOption{
+		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
+		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
+		Limit:          2,                                // 指定 Top K 的 K 值
 	})
 	printErr(err)
 	t.Log("searchByText-----------------")
