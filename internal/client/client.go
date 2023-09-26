@@ -24,35 +24,24 @@ type Client struct {
 	url      string
 	username string
 	key      string
-	timeout  time.Duration
+	option   model.ClientOption
 	debug    bool
 }
 
 var defaultOption = model.ClientOption{
 	Timeout:            time.Second * 5,
-	MaxIdldConnPerHost: 10,
+	MaxIdldConnPerHost: 2,
 	IdleConnTimeout:    time.Minute,
+	ReadConsistency:    model.EventualConsistency,
 }
 
 // NewClient new http client with url, username and api key
-func NewClient(url, username, key string, options *model.ClientOption) (model.SdkClient, error) {
+func NewClient(url, username, key string, option *model.ClientOption) (*Client, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, errors.Errorf("invailid url param with: %s", url)
 	}
 	if username == "" || key == "" {
 		return nil, errors.New("username or key is empty")
-	}
-	if options == nil {
-		options = &defaultOption
-	}
-	if options.Timeout == 0 {
-		options.Timeout = defaultOption.Timeout
-	}
-	if options.IdleConnTimeout == 0 {
-		options.IdleConnTimeout = defaultOption.IdleConnTimeout
-	}
-	if options.MaxIdldConnPerHost == 0 {
-		options.MaxIdldConnPerHost = defaultOption.MaxIdldConnPerHost
 	}
 
 	cli := new(Client)
@@ -61,15 +50,17 @@ func NewClient(url, username, key string, options *model.ClientOption) (model.Sd
 	cli.key = key
 	cli.debug = false
 
+	cli.option = *optionMerge(option)
+
 	cli.cli = new(http.Client)
 	cli.cli.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
-		MaxIdleConnsPerHost: options.MaxIdldConnPerHost,
-		IdleConnTimeout:     options.IdleConnTimeout,
+		MaxIdleConnsPerHost: cli.option.MaxIdldConnPerHost,
+		IdleConnTimeout:     cli.option.IdleConnTimeout,
 	}
-	cli.cli.Timeout = options.Timeout
+	cli.cli.Timeout = cli.option.Timeout
 
 	return cli, nil
 }
@@ -101,7 +92,6 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 	request.Header.Add("Authorization", auth)
 	request.Header.Add("Content-Type", "application/json")
 	response, err := c.cli.Do(request)
-	// response, err := gclient.New().ContentJson().DoRequest(ctx, method, c.url+path, reqBody.String())
 	if err != nil {
 		return err
 	}
@@ -110,7 +100,7 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 
 // WithTimeout set client timeout
 func (c *Client) WithTimeout(d time.Duration) {
-	c.timeout = d
+	c.option.Timeout = d
 	c.cli.Timeout = d
 }
 
@@ -153,4 +143,27 @@ func (c *Client) handleResponse(ctx context.Context, res *http.Response, out int
 // Close wrap http.Client.CloseIdleConnections
 func (c *Client) Close() {
 	c.cli.CloseIdleConnections()
+}
+
+func (c *Client) Options() model.ClientOption {
+	return c.option
+}
+
+func optionMerge(option *model.ClientOption) *model.ClientOption {
+	if option == nil {
+		option = &defaultOption
+	}
+	if option.Timeout == 0 {
+		option.Timeout = defaultOption.Timeout
+	}
+	if option.IdleConnTimeout == 0 {
+		option.IdleConnTimeout = defaultOption.IdleConnTimeout
+	}
+	if option.MaxIdldConnPerHost == 0 {
+		option.MaxIdldConnPerHost = defaultOption.MaxIdldConnPerHost
+	}
+	if option.ReadConsistency == "" {
+		option.ReadConsistency = defaultOption.ReadConsistency
+	}
+	return option
 }

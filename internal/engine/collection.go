@@ -6,12 +6,15 @@ import (
 	"strings"
 	"time"
 
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entry"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/collection"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/model"
 )
 
+var _ entry.CollectionInterface = &implementerCollection{}
+
 type implementerCollection struct {
-	model.SdkClient
+	entry.SdkClient
 	databaseName string
 }
 
@@ -20,16 +23,13 @@ type implementerCollection struct {
 // The parameter `shardNum`, `replicasNum` must bigger than 0, `description` could be empty.
 // You can set the index field in model.Indexes, the vectorIndex must be set one currently, and
 // the filterIndex sets at least one primaryKey value.
-func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes, embedding *model.Embedding) (*model.Collection, error) {
+func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes model.Indexes, option *entry.CreateCollectionOption) (*entry.Collection, error) {
 	req := new(collection.CreateReq)
 	req.Database = i.databaseName
 	req.Collection = name
 	req.ShardNum = shardNum
 	req.ReplicaNum = replicasNum
 	req.Description = description
-	if embedding != nil {
-		req.Embedding = *embedding
-	}
 
 	for _, v := range indexes.VectorIndex {
 		var column collection.IndexColumn
@@ -50,6 +50,11 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		column.IndexType = string(v.IndexType)
 		req.Indexes = append(req.Indexes, &column)
 	}
+	if option != nil {
+		if option.Embedding != nil {
+			req.Embedding = *option.Embedding
+		}
+	}
 
 	res := new(collection.CreateRes)
 	err := i.Request(ctx, req, &res)
@@ -67,7 +72,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 }
 
 // DescribeCollection get a collection detail. It returns the collection object to get collecton parameters or operate document api
-func (i *implementerCollection) DescribeCollection(ctx context.Context, name string) (*model.Collection, error) {
+func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entry.DescribeCollectionOption) (*entry.Collection, error) {
 	req := new(collection.DescribeReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -85,21 +90,25 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 }
 
 // DropCollection drop a collection. If collection not exist, it return nil.
-func (i *implementerCollection) DropCollection(ctx context.Context, name string) (err error) {
+func (i *implementerCollection) DropCollection(ctx context.Context, name string, option *entry.DropCollectionOption) (result *entry.CollectionResult, err error) {
 	req := new(collection.DropReq)
 	req.Database = i.databaseName
 	req.Collection = name
 
 	res := new(collection.DropRes)
 	err = i.Request(ctx, req, res)
-
-	if err != nil && strings.Contains(err.Error(), "not exist") {
-		return nil
+	result = new(entry.CollectionResult)
+	if err != nil {
+		if strings.Contains(err.Error(), "not exist") {
+			return result, nil
+		}
+		return
 	}
-	return err
+	result.AffectedCount = int(res.AffectedCount)
+	return
 }
 
-func (i *implementerCollection) TruncateCollection(ctx context.Context, name string) (affectedCount int, err error) {
+func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entry.TruncateCollectionOption) (result *entry.CollectionResult, err error) {
 	req := new(collection.FlushReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -108,13 +117,15 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 	err = i.Request(ctx, req, res)
 
 	if err != nil {
-		return 0, err
+		return
 	}
-	return int(res.AffectedCount), nil
+	result = new(entry.CollectionResult)
+	result.AffectedCount = int(res.AffectedCount)
+	return
 }
 
 // ListCollection get collection list. It return the list of collection, each collection same as DescribeCollection return.
-func (i *implementerCollection) ListCollection(ctx context.Context) ([]*model.Collection, error) {
+func (i *implementerCollection) ListCollection(ctx context.Context, option *entry.ListCollectionOption) ([]*entry.Collection, error) {
 	req := new(collection.ListReq)
 	req.Database = i.databaseName
 	res := new(collection.ListRes)
@@ -122,7 +133,7 @@ func (i *implementerCollection) ListCollection(ctx context.Context) ([]*model.Co
 	if err != nil {
 		return nil, err
 	}
-	var collections []*model.Collection
+	var collections []*entry.Collection
 	for _, collection := range res.Collections {
 		collections = append(collections, i.toCollection(collection))
 	}
@@ -131,8 +142,8 @@ func (i *implementerCollection) ListCollection(ctx context.Context) ([]*model.Co
 
 // Collection get a collection interface to operate the document api. It could not send http request to vectordb.
 // If you want to show collection parameters, use DescribeCollection.
-func (i *implementerCollection) Collection(name string) *model.Collection {
-	coll := new(model.Collection)
+func (i *implementerCollection) Collection(name string) *entry.Collection {
+	coll := new(entry.Collection)
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.databaseName = i.databaseName
@@ -143,7 +154,7 @@ func (i *implementerCollection) Collection(name string) *model.Collection {
 	return coll
 }
 
-func (i *implementerCollection) toCollection(collectionItem *collection.DescribeCollectionItem) *model.Collection {
+func (i *implementerCollection) toCollection(collectionItem *collection.DescribeCollectionItem) *entry.Collection {
 	coll := i.Collection(collectionItem.Collection)
 	coll.DocumentCount = collectionItem.DocumentCount
 	coll.Alias = collectionItem.Alias

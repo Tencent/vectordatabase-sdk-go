@@ -93,6 +93,9 @@ func In(key string, list interface{}) string {
 }
 
 func (f *Filter) Cond() string {
+	if f == nil {
+		return ""
+	}
 	f.RLock()
 	defer f.RUnlock()
 	return f.cond

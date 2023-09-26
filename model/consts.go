@@ -22,7 +22,7 @@ type MetricType string
 const (
 	L2     MetricType = "L2"
 	IP     MetricType = "IP"
-	CONINE MetricType = "COSINE"
+	COSINE MetricType = "COSINE"
 )
 
 type FieldType string

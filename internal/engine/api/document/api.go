@@ -79,7 +79,6 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 	}
 	delete(temp.Fields, "vector")
 
-	d = new(Document)
 	*d = Document(temp)
 	return nil
 }
@@ -107,8 +106,8 @@ type SearchCond struct {
 	DocumentIds    []string      `protobuf:"bytes,2,rep,name=documentIds,proto3" json:"documentIds,omitempty"` // 使用向量id检索
 	Params         *SearchParams `protobuf:"bytes,3,opt,name=params,proto3" json:"params,omitempty"`
 	RetrieveVector bool          `protobuf:"varint,5,opt,name=retrieveVector,proto3" json:"retrieveVector,omitempty"` // 是否返回原始向量，注意设置为true时会降低性能
-	Limit          uint32        `protobuf:"varint,6,opt,name=limit,proto3" json:"limit,omitempty"`                   // 结果数量
-	Outputfields   []string      `protobuf:"bytes,7,rep,name=outputfields,proto3" json:"outputfields,omitempty"`      // 输出字段
+	Limit          int64         `protobuf:"varint,6,opt,name=limit,proto3" json:"limit,omitempty"`                   // 结果数量
+	OutputFields   []string      `protobuf:"bytes,7,rep,name=outputfields,proto3" json:"outputfields,omitempty"`      // 输出字段
 	Retrieves      []string      `protobuf:"bytes,8,rep,name=retrieves,proto3" json:"retrieves,omitempty"`            // 使用字符串检索
 	Vectors        [][]float32   `json:"vectors,omitempty"`
 	Filter         string        `json:"filter,omitempty"`

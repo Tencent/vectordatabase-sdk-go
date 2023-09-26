@@ -7,10 +7,12 @@ import (
 type ClientOption struct {
 	// Timeout: default 5s
 	Timeout time.Duration
-	// MaxIdldConnPerHost: default 10
+	// MaxIdldConnPerHost: default 2
 	MaxIdldConnPerHost int
-	// IdleConnTimeout: default 1m
+	// IdleConnTimeout: default 0 means no limit
 	IdleConnTimeout time.Duration
+	// ReadConsistency: default: EventualConsistency
+	ReadConsistency ReadConsistency
 }
 
 type CommmonResponse struct {
@@ -18,10 +20,4 @@ type CommmonResponse struct {
 	Code int32 `json:"code,omitempty"`
 	// Msg: response msg
 	Msg string `json:"msg,omitempty"`
-}
-
-type SearchParams struct {
-	Nprobe uint32  `json:"nprobe,omitempty"` // 搜索时查找的聚类数量，使用索引默认值即可
-	Ef     uint32  `json:"ef,omitempty"`     // HNSW
-	Radius float32 `json:"radius,omitempty"` // 距离阈值,范围搜索时有效
 }
