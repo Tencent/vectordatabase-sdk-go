@@ -90,7 +90,8 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	return coll, nil
 }
 
-// DescribeCollection get a collection detail. It returns the collection object to get collecton parameters or operate document api
+// DescribeCollection get a collection detail.
+// It returns the collection object to get collecton parameters or operate document api
 func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeCollectionOption) (*entity.Collection, error) {
 	req := new(collection.DescribeReq)
 	req.Database = i.databaseName
@@ -143,7 +144,8 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 	return
 }
 
-// ListCollection get collection list. It return the list of collection, each collection same as DescribeCollection return.
+// ListCollection get collection list.
+// It return the list of collection, each collection same as DescribeCollection return.
 func (i *implementerCollection) ListCollection(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
 	req := new(collection.ListReq)
 	req.Database = i.databaseName

@@ -63,7 +63,8 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Doc
 	return
 }
 
-// Query query the document by document ids. The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
+// Query query the document by document ids.
+// The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
 func (i *implementerDocument) Query(ctx context.Context, documentIds []string, option *entity.QueryDocumentOption) ([]entity.Document, *entity.DocumentResult, error) {
 	req := new(document.QueryReq)
 	req.Database = i.databaseName

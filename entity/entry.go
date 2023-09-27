@@ -38,10 +38,11 @@ type DatabaseInterface interface {
 // CollectionInterface collection api
 type CollectionInterface interface {
 	SdkClient
-	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes Indexes, option *CreateCollectionOption) (*Collection, error)
+	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
+		indexes Indexes, option *CreateCollectionOption) (*Collection, error)
 	DescribeCollection(ctx context.Context, name string, option *DescribeCollectionOption) (*Collection, error)
-	DropCollection(ctx context.Context, collectionName string, option *DropCollectionOption) (result *CollectionResult, err error)
-	TruncateCollection(ctx context.Context, name string, option *TruncateCollectionOption) (result *CollectionResult, err error)
+	DropCollection(ctx context.Context, name string, option *DropCollectionOption) (*CollectionResult, error)
+	TruncateCollection(ctx context.Context, name string, option *TruncateCollectionOption) (*CollectionResult, error)
 	ListCollection(ctx context.Context, option *ListCollectionOption) ([]*Collection, error)
 	Collection(name string) *Collection
 }
@@ -54,14 +55,19 @@ type AliasInterface interface {
 	ListAlias(ctx context.Context, option *ListAliasOption) ([]*AliasResult, error)
 }
 
+type IndexInterface interface {
+	SdkClient
+	IndexRebuild(ctx context.Context, collectionName string, option *IndexRebuildOption) (*IndexReBuildResult, error)
+}
+
 // DocumentInterface document api
 type DocumentInterface interface {
 	SdkClient
-	Upsert(ctx context.Context, documents []Document, option *UpsertDocumentOption) (result *DocumentResult, err error)
-	Query(ctx context.Context, documentIds []string, option *QueryDocumentOption) (docs []Document, result *DocumentResult, err error)
+	Upsert(ctx context.Context, documents []Document, option *UpsertDocumentOption) (*DocumentResult, error)
+	Query(ctx context.Context, documentIds []string, option *QueryDocumentOption) ([]Document, *DocumentResult, error)
 	Search(ctx context.Context, vectors [][]float32, option *SearchDocumentOption) ([][]Document, error)
 	SearchById(ctx context.Context, documentIds []string, option *SearchDocumentOption) ([][]Document, error)
 	SearchByText(ctx context.Context, text map[string][]string, option *SearchDocumentOption) ([][]Document, error)
-	Delete(ctx context.Context, option *DeleteDocumentOption) (result *DocumentResult, err error)
-	Update(ctx context.Context, option *UpdateDocumentOption) (result *DocumentResult, err error)
+	Delete(ctx context.Context, option *DeleteDocumentOption) (*DocumentResult, error)
+	Update(ctx context.Context, option *UpdateDocumentOption) (*DocumentResult, error)
 }

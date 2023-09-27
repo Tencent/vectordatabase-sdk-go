@@ -84,7 +84,8 @@ func (f *Filter) OrNot(cond string) *Filter {
 	return f
 }
 
-// In `in` condition function, use with other condition. eg: And(In("key1", []string{"value1"})).And(In("key2", []int{2}))
+// In `in` condition function,
+// use with other condition. eg: And(In("key1", []string{"value1"})).And(In("key2", []int{2}))
 func In(key string, list interface{}) string {
 	if reflect.TypeOf(list).Kind() != reflect.Slice &&
 		reflect.TypeOf(list).Kind() != reflect.Array {
