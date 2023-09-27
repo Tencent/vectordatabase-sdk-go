@@ -16,18 +16,6 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package entity
+package client
 
-type AliasResult struct {
-	AffectedCount int
-	Collection    string
-	Alias         []string
-}
-
-type SetAliasOption struct{}
-
-type DeleteAliasOption struct{}
-
-type DescribeAliasOption struct{}
-
-type ListAliasOption struct{}
+const SDKVersion = "v1.1.0"
