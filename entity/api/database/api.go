@@ -18,9 +18,7 @@
 
 package database
 
-import (
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
-)
+import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 
 // CreateReq create database request
 type CreateReq struct {

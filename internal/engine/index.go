@@ -22,7 +22,7 @@ import (
 	"context"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/index"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/index"
 )
 
 var _ entity.IndexInterface = &implementerIndex{}

@@ -22,7 +22,7 @@ import (
 	"context"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/document"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/document"
 )
 
 var _ entity.DocumentInterface = &implementerDocument{}

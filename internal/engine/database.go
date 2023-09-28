@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/database"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/client"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/database"
 )
 
 var _ entity.DatabaseInterface = &implementerDatabase{}

@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 
 	"github.com/pkg/errors"
 )

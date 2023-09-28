@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/collection"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/collection"
 )
 
 var _ entity.CollectionInterface = &implementerCollection{}
@@ -129,11 +129,11 @@ func (i *implementerCollection) DropCollection(ctx context.Context, name string,
 }
 
 func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateCollectionOption) (result *entity.CollectionResult, err error) {
-	req := new(collection.FlushReq)
+	req := new(collection.TruncateReq)
 	req.Database = i.databaseName
 	req.Collection = name
 
-	res := new(collection.FlushRes)
+	res := new(collection.TruncateRes)
 	err = i.Request(ctx, req, res)
 
 	if err != nil {

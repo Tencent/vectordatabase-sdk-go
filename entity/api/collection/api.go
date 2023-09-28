@@ -18,9 +18,7 @@
 
 package collection
 
-import (
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
-)
+import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 
 // CreateReq create collection request
 type CreateReq struct {
@@ -136,14 +134,14 @@ type DescribeCollectionItem struct {
 	Embedding     EmbeddingRes   `json:"embedding"`
 }
 
-type FlushReq struct {
+type TruncateReq struct {
 	api.Meta          `path:"/collection/truncate" tags:"Collection" method:"Post" summary:"清空 collection 中的所有数据和索引"`
 	Database          string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Collection        string `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
 	OnlyFlushAnnIndex bool   `protobuf:"varint,3,opt,name=only_flush_ann_index,json=onlyFlushAnnIndex,proto3" json:"only_flush_ann_index,omitempty"`
 }
 
-type FlushRes struct {
+type TruncateRes struct {
 	Code          int32  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
 	Msg           string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 	Redirect      string `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`

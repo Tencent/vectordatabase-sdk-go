@@ -21,7 +21,7 @@ package document
 import (
 	"encoding/json"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 )
 
 // UpsertReq upsert document request

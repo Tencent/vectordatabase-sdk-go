@@ -18,9 +18,7 @@
 
 package alias
 
-import (
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api"
-)
+import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 
 type SetReq struct {
 	api.Meta   `path:"/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`

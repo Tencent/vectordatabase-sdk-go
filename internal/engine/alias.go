@@ -23,7 +23,7 @@ import (
 	"errors"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/engine/api/alias"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/alias"
 )
 
 var _ entity.AliasInterface = &implementerAlias{}
