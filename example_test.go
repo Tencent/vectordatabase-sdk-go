@@ -217,6 +217,7 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 func TestUpsertDocument(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
+	buildIndex := true
 	_, err := col.Upsert(context.Background(), []entity.Document{
 		{
 			Id:     "0001",
@@ -268,7 +269,7 @@ func TestUpsertDocument(t *testing.T) {
 				"segment":  {Val: "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。"},
 			},
 		},
-	}, &entity.UpsertDocumentOption{BuildIndex: true})
+	}, &entity.UpsertDocumentOption{BuildIndex: &buildIndex})
 
 	printErr(err)
 }

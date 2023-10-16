@@ -30,7 +30,7 @@ type DocumentResult struct {
 }
 
 type UpsertDocumentOption struct {
-	BuildIndex bool
+	BuildIndex *bool
 }
 
 type QueryDocumentOption struct {

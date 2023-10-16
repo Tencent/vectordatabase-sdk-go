@@ -49,7 +49,7 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Doc
 		req.Documents = append(req.Documents, d)
 	}
 
-	if option != nil {
+	if option != nil && option.BuildIndex != nil {
 		req.BuildIndex = option.BuildIndex
 	}
 

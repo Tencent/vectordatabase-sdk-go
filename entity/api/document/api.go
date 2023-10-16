@@ -29,7 +29,7 @@ type UpsertReq struct {
 	api.Meta   `path:"/document/upsert" tags:"Document" method:"Post" summary:"插入一条文档数据"`
 	Database   string      `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Collection string      `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
-	BuildIndex bool        `protobuf:"varint,3,opt,name=buildIndex,proto3" json:"buildIndex,omitempty"` // 是否立即构建索引
+	BuildIndex *bool       `protobuf:"varint,3,opt,name=buildIndex,proto3" json:"buildIndex,omitempty"` // 是否立即构建索引
 	Documents  []*Document `json:"documents,omitempty"`
 }
 
