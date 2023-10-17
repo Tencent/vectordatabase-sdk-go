@@ -40,7 +40,21 @@ type implementerCollection struct {
 // The parameter `shardNum`, `replicasNum` must bigger than 0, `description` could be empty.
 // You can set the index field in entity.Indexes, the vectorIndex must be set one currently, and
 // the filterIndex sets at least one primaryKey value.
-func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
+func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32,
+	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
+	if IsAiDatabase(name) {
+		return i.createCollection2AiDB(ctx, name, shardNum, replicasNum, description, indexes, option)
+	} else {
+		return i.createCollection2CommonDB(ctx, name, shardNum, replicasNum, description, indexes, option)
+	}
+}
+
+func IsAiDatabase(name string) bool {
+	return true
+}
+
+func (i *implementerCollection) createCollection2CommonDB(ctx context.Context, name string, shardNum, replicasNum uint32,
+	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
 	req := new(collection.CreateReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -84,6 +98,60 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	coll := i.Collection(req.Collection)
 	coll.ShardNum = req.ShardNum
 	coll.ReplicasNum = req.ReplicaNum
+	coll.Description = req.Description
+	coll.Indexes = indexes
+
+	return coll, nil
+}
+
+func (i *implementerCollection) createCollection2AiDB(ctx context.Context, name string, shardNum, replicasNum uint32,
+	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
+	req := new(collection.CreateAiCollectionReq)
+	req.Database = i.databaseName
+	req.Collection = name
+
+	req.Description = description
+
+	if len(indexes.VectorIndex) > 0 {
+		fmt.Printf("ai collection not support VectorIndex")
+	}
+
+	for _, v := range indexes.FilterIndex {
+		var column collection.IndexColumn
+		column.FieldName = v.FieldName
+		column.FieldType = string(v.FieldType)
+		column.IndexType = string(v.IndexType)
+		req.Indexes = append(req.Indexes, &column)
+	}
+
+	defaultEnableWordsSimilarity := true
+	if option != nil {
+		if option.AiEmbedding != nil {
+			req.MaxFiles = option.AiEmbedding.MaxFiles
+			req.AverageFileSize = option.AiEmbedding.AverageFileSize
+			req.Language = option.AiEmbedding.Language
+			if option.AiEmbedding.DocumentPreprocess != nil {
+				req.DocumentPreprocess = option.AiEmbedding.DocumentPreprocess
+			}
+			if option.AiEmbedding.DocumentIndex != nil && option.AiEmbedding.DocumentIndex.EnableWordsSimilarity != nil {
+				req.DocumentIndex = option.AiEmbedding.DocumentIndex
+			} else {
+				req.DocumentIndex = &entity.DocumentIndex{
+					EnableWordsSimilarity: &defaultEnableWordsSimilarity,
+				}
+			}
+		}
+	}
+
+	res := new(collection.CreateRes)
+	err := i.Request(ctx, req, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	coll := i.Collection(req.Collection)
+	coll.ShardNum = shardNum
+	coll.ReplicasNum = replicasNum
 	coll.Description = req.Description
 	coll.Indexes = indexes
 

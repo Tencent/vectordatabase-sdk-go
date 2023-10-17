@@ -20,6 +20,15 @@ package engine
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+
+	"github.com/tencentyun/cos-go-sdk-v5"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/document"
@@ -220,4 +229,105 @@ func (i *implementerDocument) Update(ctx context.Context, option *entity.UpdateD
 	}
 	result.AffectedCount = int(res.AffectedCount)
 	return result, nil
+}
+
+func (i *implementerDocument) Upload(ctx context.Context, localFilePath string, option *entity.UploadDocumentOption) (err error) {
+
+	// localFilePath string, fileName string, fileType entity.FileType,
+	//	metaData map[string]string
+
+	cosUploadFileName := path.Base(localFilePath)
+
+	fileType := getFileTypeFromFileName(localFilePath)
+	if option != nil && option.FileType != "" {
+		fileType = option.FileType
+	}
+
+	if fileType != entity.MarkdownFileType {
+		return fmt.Errorf("only support markdown fileType when uploading")
+	}
+
+	req := new(document.UploadUrlReq)
+	req.Database = i.databaseName
+	req.Collection = i.collectionName
+	req.FileName = cosUploadFileName
+	req.FileType = fileType
+
+	res := new(document.UploadUrlRes)
+	err = i.Request(ctx, req, res)
+	if err != nil {
+		return err
+	}
+	fileSizeIsOk, err := checkFileSize(localFilePath, res.UploadCondition.MaxSupportContentLength)
+	if err != nil {
+		return err
+	}
+	if !fileSizeIsOk {
+		return fmt.Errorf("%v fileSize is invalid, support max content length is %v bytes",
+			localFilePath, res.UploadCondition.MaxSupportContentLength)
+	}
+
+	u, _ := url.Parse(res.CosEndpoint)
+	b := &cos.BaseURL{BucketURL: u}
+
+	c := cos.NewClient(b, &http.Client{
+		Transport: &cos.AuthorizationTransport{
+			SecretID:     res.Credentials.TmpSecretID,  // 用户的 SecretId，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参考 https://cloud.tencent.com/document/product/598/37140
+			SecretKey:    res.Credentials.TmpSecretKey, // 用户的 SecretKey，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参考 https://cloud.tencent.com/document/product/598/37140
+			SessionToken: res.Credentials.SessionToken,
+		},
+	})
+
+	header := make(http.Header)
+	if option != nil && option.MetaData != nil {
+		for k, v := range option.MetaData {
+			header.Add("x-cos-meta-"+k, v)
+		}
+	}
+
+	header.Add("x-cos-meta-fileType", string(fileType))
+	header.Add("x-cos-meta-id", string(res.FileId))
+
+	opt := &cos.ObjectPutOptions{
+		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
+			XCosMetaXXX: &header,
+		},
+	}
+
+	_, err = c.Object.PutFromFile(ctx, res.UploadPath, localFilePath, opt)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getFileTypeFromFileName(fileName string) entity.FileType {
+	extension := filepath.Ext(fileName)
+	extension = strings.ToLower(extension)
+	// 不带后缀的文件，默认为markdown文件
+	if extension == "" {
+		return entity.MarkdownFileType
+	} else if extension == ".md" || extension == ".markdown" {
+		return entity.MarkdownFileType
+	} else {
+		return entity.UnSupportFileType
+	}
+}
+
+func isMarkdownFile(localFilePath string) bool {
+	extension := filepath.Ext(localFilePath)
+	extension = strings.ToLower(extension)
+	return extension == ".md" || extension == ".markdown"
+}
+
+func checkFileSize(localFilePath string, maxContentLength int64) (bool, error) {
+	fileInfo, err := os.Stat(localFilePath)
+	if err != nil {
+		return false, err
+	}
+
+	if fileInfo.Size() <= maxContentLength {
+		return true, nil
+	}
+	return false, nil
 }

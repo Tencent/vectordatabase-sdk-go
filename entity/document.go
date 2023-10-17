@@ -67,6 +67,11 @@ type UpdateDocumentOption struct {
 	UpdateFields map[string]Field
 }
 
+type UploadDocumentOption struct {
+	FileType FileType
+	MetaData map[string]string
+}
+
 type Document struct {
 	Id     string
 	Vector []float32

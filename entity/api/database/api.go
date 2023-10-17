@@ -26,18 +26,28 @@ type CreateReq struct {
 	Database string `json:"database,omitempty"`
 }
 
+type CreateAiDBReq struct {
+	api.Meta `path:"/ai/database/create" tags:"Database" method:"Post" summary:"创建ai database，如果database已经存在返回成功"`
+	Database string `json:"database,omitempty"`
+}
+
 // CreateRes create database response
 type CreateRes struct {
-	Code          int32    `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Msg           string   `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
-	Redirect      string   `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
-	Databases     []string `protobuf:"bytes,4,rep,name=databases,proto3" json:"databases,omitempty"`
-	AffectedCount int32    `protobuf:"varint,5,opt,name=affectedCount,proto3" json:"affectedCount,omitempty"`
+	Code          int32    `json:"code,omitempty"`
+	Msg           string   `json:"msg,omitempty"`
+	Redirect      string   `json:"redirect,omitempty"`
+	Databases     []string `json:"databases,omitempty"`
+	AffectedCount int32    `json:"affectedCount,omitempty"`
 }
 
 // DropReq drop database request
 type DropReq struct {
 	api.Meta `path:"/database/drop" tags:"Database" method:"Post" summary:"删除database，并删除database中的所有collection以及数据，如果database不经存在返回成本"`
+	Database string `json:"database,omitempty"`
+}
+
+type DropAiDBReq struct {
+	api.Meta `path:"/ai/database/drop" tags:"Database" method:"Post" summary:"删除ai database，并删除database中的所有collection以及数据，如果database不经存在返回成本"`
 	Database string `json:"database,omitempty"`
 }
 

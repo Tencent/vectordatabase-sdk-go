@@ -18,7 +18,23 @@
 
 package collection
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
+import (
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
+)
+
+type CreateAiCollectionReq struct {
+	api.Meta           `path:"/ai/collection/create" tags:"ai" method:"Post" summary:"创建collection存储embedding文件集合"`
+	Database           string                     `json:"database,omitempty"`
+	Collection         string                     `json:"collection,omitempty"`
+	Description        string                     `json:"description,omitempty"`
+	Indexes            []*IndexColumn             `json:"indexes,omitempty"`
+	MaxFiles           uint64                     `json:"max_files,omitempty"`
+	AverageFileSize    uint64                     `json:"average_file_size,omitempty"`
+	Language           entity.Language            `json:"language,omitempty"`
+	DocumentPreprocess *entity.DocumentPreprocess `json:"document_preprocess,omitempty"`
+	DocumentIndex      *entity.DocumentIndex      `json:"document_index,omitempty"`
+}
 
 // CreateReq create collection request
 type CreateReq struct {

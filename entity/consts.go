@@ -73,3 +73,33 @@ const (
 	EventualConsistency ReadConsistency = "eventualConsistency"
 	StrongConsistency   ReadConsistency = "strongConsistency"
 )
+
+type Language string
+
+const (
+	LanguageChinese Language = "zh"
+	LanguageEnglish Language = "en"
+	LanguageMulti   Language = "multi"
+)
+
+type AppendTitleToChunkType uint32
+
+const (
+	NoTitleToChunk          AppendTitleToChunkType = 0
+	TopTitleToChunk         AppendTitleToChunkType = 1
+	MultiLevelTitlesToChunk AppendTitleToChunkType = 2
+)
+
+type AppendKeywordsToChunk uint32
+
+const (
+	NoKeywordsToChunk   AppendKeywordsToChunk = 0
+	FileKeywordsToChunk AppendKeywordsToChunk = 1
+)
+
+type FileType string
+
+const (
+	MarkdownFileType  FileType = "markdown"
+	UnSupportFileType FileType = "unSupport"
+)
