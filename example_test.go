@@ -30,7 +30,7 @@ import (
 
 var (
 	cli                 entity.VectorDBClient
-	database            = "book"
+	database            = "ai-db-test"
 	collectionName      = "book_segments"
 	collectionAlias     = "book_segments_alias"
 	embeddingCollection = "book_segments_em"
@@ -39,7 +39,7 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("http://9.134.243.196:8100", "root", "12345", nil)
+	cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "VrxSDKKAzcHxULq7wDxZYfkPoggbYf8JBbtfCLiG", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -135,7 +135,7 @@ func TestCreateCollection(t *testing.T) {
 	// 第二步：创建 Collection
 	// 创建collection耗时较长，需要调整客户端的timeout
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(context.Background(), collectionName, 3, 2, "test collection", index, nil)
+	_, err := db.CreateCollection(context.Background(), collectionName, 1, 1, "test collection", index, nil)
 	printErr(err)
 
 	// 列出所有 Collection
@@ -512,18 +512,4 @@ func printErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func TestUploadFile(t *testing.T) {
-	defer cli.Close()
-	col := cli.Database("dbtest1").Collection("col1")
-	cli.Debug(true)
-
-	err := col.Upload(context.Background(), "./test.md", &entity.UploadDocumentOption{
-		FileType: "", MetaData: map[string]string{
-			"fileName":   "test.md",
-			"author":     "sam",
-			"uploadTime": time.Now().Format("2023-09-04 12:00:13")},
-	})
-	printErr(err)
 }

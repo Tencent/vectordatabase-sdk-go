@@ -103,3 +103,8 @@ const (
 	MarkdownFileType  FileType = "markdown"
 	UnSupportFileType FileType = "unSupport"
 )
+
+const (
+	BASEDbType  = "BASE"
+	AIDOCDbType = "AI_DOC"
+)

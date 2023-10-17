@@ -43,17 +43,17 @@ type implementerCollection struct {
 func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32,
 	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
 	if IsAiDatabase(name) {
-		return i.createCollection2AiDB(ctx, name, shardNum, replicasNum, description, indexes, option)
+		return i.createCollectionInAiDB(ctx, name, shardNum, replicasNum, description, indexes, option)
 	} else {
-		return i.createCollection2CommonDB(ctx, name, shardNum, replicasNum, description, indexes, option)
+		return i.createCollectionInBaseDB(ctx, name, shardNum, replicasNum, description, indexes, option)
 	}
 }
 
 func IsAiDatabase(name string) bool {
-	return false
+	return true
 }
 
-func (i *implementerCollection) createCollection2CommonDB(ctx context.Context, name string, shardNum, replicasNum uint32,
+func (i *implementerCollection) createCollectionInBaseDB(ctx context.Context, name string, shardNum, replicasNum uint32,
 	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
 	req := new(collection.CreateReq)
 	req.Database = i.databaseName
@@ -104,7 +104,7 @@ func (i *implementerCollection) createCollection2CommonDB(ctx context.Context, n
 	return coll, nil
 }
 
-func (i *implementerCollection) createCollection2AiDB(ctx context.Context, name string, shardNum, replicasNum uint32,
+func (i *implementerCollection) createCollectionInAiDB(ctx context.Context, name string, shardNum, replicasNum uint32,
 	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
 	req := new(collection.CreateAiCollectionReq)
 	req.Database = i.databaseName
@@ -126,15 +126,15 @@ func (i *implementerCollection) createCollection2AiDB(ctx context.Context, name 
 
 	defaultEnableWordsSimilarity := true
 	if option != nil {
-		if option.AiEmbedding != nil {
-			req.MaxFiles = option.AiEmbedding.MaxFiles
-			req.AverageFileSize = option.AiEmbedding.AverageFileSize
-			req.Language = option.AiEmbedding.Language
-			if option.AiEmbedding.DocumentPreprocess != nil {
-				req.DocumentPreprocess = option.AiEmbedding.DocumentPreprocess
+		if option.AiConfig != nil {
+			req.MaxFiles = option.AiConfig.MaxFiles
+			req.AverageFileSize = option.AiConfig.AverageFileSize
+			req.Language = entity.Language(option.AiConfig.Language)
+			if option.AiConfig.DocumentPreprocess != nil {
+				req.DocumentPreprocess = option.AiConfig.DocumentPreprocess
 			}
-			if option.AiEmbedding.DocumentIndex != nil && option.AiEmbedding.DocumentIndex.EnableWordsSimilarity != nil {
-				req.DocumentIndex = option.AiEmbedding.DocumentIndex
+			if option.AiConfig.DocumentIndex != nil && option.AiConfig.DocumentIndex.EnableWordsSimilarity != nil {
+				req.DocumentIndex = option.AiConfig.DocumentIndex
 			} else {
 				req.DocumentIndex = &entity.DocumentIndex{
 					EnableWordsSimilarity: &defaultEnableWordsSimilarity,
@@ -215,7 +215,30 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 // ListCollection get collection list.
 // It return the list of collection, each collection same as DescribeCollection return.
 func (i *implementerCollection) ListCollection(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
+	if IsAiDatabase(i.databaseName) {
+		return i.listCollectionInAiDB(ctx, option)
+	} else {
+		return i.listCollectionInBaseDB(ctx, option)
+	}
+}
+
+func (i *implementerCollection) listCollectionInBaseDB(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
 	req := new(collection.ListReq)
+	req.Database = i.databaseName
+	res := new(collection.ListRes)
+	err := i.Request(ctx, req, &res)
+	if err != nil {
+		return nil, err
+	}
+	var collections []*entity.Collection
+	for _, collection := range res.Collections {
+		collections = append(collections, i.toCollection(collection))
+	}
+	return collections, nil
+}
+
+func (i *implementerCollection) listCollectionInAiDB(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
+	req := new(collection.ListAiReq)
 	req.Database = i.databaseName
 	res := new(collection.ListRes)
 	err := i.Request(ctx, req, &res)

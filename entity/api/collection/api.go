@@ -122,6 +122,12 @@ type DropRes struct {
 	AffectedCount int32  `protobuf:"varint,4,opt,name=affectedCount,proto3" json:"affectedCount,omitempty"`
 }
 
+type ListAiReq struct {
+	api.Meta `path:"/ai/collection/list" tags:"Collection" method:"Post" summary:"列出指定database中的所有collection"`
+	Database string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Transfer bool   `protobuf:"varint,2,opt,name=transfer,proto3" json:"transfer,omitempty"`
+}
+
 type ListReq struct {
 	api.Meta `path:"/collection/list" tags:"Collection" method:"Post" summary:"列出指定database中的所有collection"`
 	Database string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
@@ -136,18 +142,26 @@ type ListRes struct {
 }
 
 type DescribeCollectionItem struct {
-	Database      string         `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
-	Collection    string         `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
-	ReplicaNum    uint32         `protobuf:"varint,3,opt,name=replicaNum,proto3" json:"replicaNum,omitempty"`
-	ShardNum      uint32         `protobuf:"varint,4,opt,name=shardNum,proto3" json:"shardNum,omitempty"`
-	Size          uint64         `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
-	CreateTime    string         `protobuf:"bytes,6,opt,name=createTime,proto3" json:"createTime,omitempty"`
-	Description   string         `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
-	Indexes       []*IndexColumn `protobuf:"bytes,8,rep,name=indexes,proto3" json:"indexes,omitempty"`
-	IndexStatus   *IndexStatus   `protobuf:"bytes,9,opt,name=indexStatus,proto3" json:"indexStatus,omitempty"`
-	Alias         []string       `json:"alias"`
-	DocumentCount int64          `json:"documentCount,omitempty"`
-	Embedding     *EmbeddingRes  `json:"embedding,omitempty"`
+	Database      string           `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Collection    string           `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
+	ReplicaNum    uint32           `protobuf:"varint,3,opt,name=replicaNum,proto3" json:"replicaNum,omitempty"`
+	ShardNum      uint32           `protobuf:"varint,4,opt,name=shardNum,proto3" json:"shardNum,omitempty"`
+	Size          uint64           `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
+	CreateTime    string           `protobuf:"bytes,6,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	Description   string           `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
+	Indexes       []*IndexColumn   `protobuf:"bytes,8,rep,name=indexes,proto3" json:"indexes,omitempty"`
+	IndexStatus   *IndexStatus     `protobuf:"bytes,9,opt,name=indexStatus,proto3" json:"indexStatus,omitempty"`
+	Alias         []string         `json:"alias"`
+	DocumentCount int64            `json:"documentCount,omitempty"`
+	Embedding     *EmbeddingRes    `json:"embedding,omitempty"`
+	AiConfig      *entity.AiConfig `json:"aiConfig,omitempty"`
+	AiStatus      *AiStatus        `json:"aiStatus,omitempty"`
+}
+
+type AiStatus struct {
+	IndexedDocuments   uint64 `json:"indexedDocuments"`
+	TotalDocuments     uint64 `json:"totalDocuments"`
+	UnIndexedDocuments uint64 `json:"unIndexedDocuments"`
 }
 
 type TruncateReq struct {

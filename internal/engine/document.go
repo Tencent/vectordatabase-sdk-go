@@ -26,6 +26,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -258,6 +259,10 @@ func (i *implementerDocument) Upload(ctx context.Context, localFilePath string, 
 	if err != nil {
 		return err
 	}
+
+	if res == nil || res.UploadCondition == nil || res.Credentials == nil {
+		return fmt.Errorf("get file upload url failed")
+	}
 	fileSizeIsOk, err := checkFileSize(localFilePath, res.UploadCondition.MaxSupportContentLength)
 	if err != nil {
 		return err
@@ -279,14 +284,19 @@ func (i *implementerDocument) Upload(ctx context.Context, localFilePath string, 
 	})
 
 	header := make(http.Header)
-	if option != nil && option.MetaData != nil {
-		for k, v := range option.MetaData {
-			header.Add("x-cos-meta-"+k, v)
-		}
+	if option == nil {
+		option = new(entity.UploadDocumentOption)
 	}
+	if option.MetaData == nil {
+		option.MetaData = make(map[string]entity.Field)
+	}
+	option.MetaData["-fileType"] = entity.Field{Val: string(fileType)}
+	option.MetaData["-id"] = entity.Field{Val: res.FileId}
 
-	header.Add("x-cos-meta-fileType", string(fileType))
-	header.Add("x-cos-meta-id", string(res.FileId))
+	for k, v := range option.MetaData {
+		str, fieldType := GetFieldInfo(v)
+		header.Add("x-cos-meta-"+string(fieldType)+"-"+k, url.QueryEscape(str))
+	}
 
 	opt := &cos.ObjectPutOptions{
 		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
@@ -299,6 +309,16 @@ func (i *implementerDocument) Upload(ctx context.Context, localFilePath string, 
 		return err
 	}
 	return nil
+}
+
+func GetFieldInfo(field entity.Field) (string, entity.FieldType) {
+	switch field.Val.(type) {
+	case string:
+		return field.String(), entity.String
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return strconv.FormatInt(field.Int(), 10), entity.Uint64
+	}
+	return "", entity.String
 }
 
 func getFileTypeFromFileName(fileName string) entity.FileType {

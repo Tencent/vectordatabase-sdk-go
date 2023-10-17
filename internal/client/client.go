@@ -24,7 +24,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -136,7 +136,7 @@ func (c *Client) Debug(v bool) {
 }
 
 func (c *Client) handleResponse(ctx context.Context, res *http.Response, out interface{}) error {
-	responseBytes, err := ioutil.ReadAll(res.Body)
+	responseBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
@@ -156,6 +156,7 @@ func (c *Client) handleResponse(ctx context.Context, res *http.Response, out int
 	if err := json.Unmarshal(responseBytes, &commenRes); err != nil {
 		return errors.Wrapf(err, `json.Unmarshal failed with content:%s`, responseBytes)
 	}
+
 	if commenRes.Code != 0 {
 		return errors.Errorf("server internal error, code: %d, message: %s", commenRes.Code, commenRes.Msg)
 	}

@@ -44,8 +44,8 @@ type CollectionResult struct {
 }
 
 type CreateCollectionOption struct {
-	Embedding   *Embedding
-	AiEmbedding *AiEmbedding
+	Embedding *Embedding
+	AiConfig  *AiConfig
 }
 
 type DescribeCollectionOption struct{}

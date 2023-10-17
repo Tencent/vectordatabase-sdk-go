@@ -20,14 +20,20 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"strings"
+
+	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/database"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/client"
+	"github.com/patrickmn/go-cache"
 )
 
 var _ entity.DatabaseInterface = &implementerDatabase{}
+
+var DBCache *cache.Cache = cache.New(30*time.Second, 1*time.Minute)
 
 type implementerDatabase struct {
 	entity.SdkClient
@@ -134,5 +140,39 @@ func (i *implementerDatabase) Database(name string) *entity.Database {
 	database.IndexInterface = indexImpl
 
 	database.DatabaseName = name
+
+	database.Info = entity.DatabaseItem{
+		DbType: entity.BASEDbType,
+	}
+	info, err := i.GetDatabaseInfo(context.Background(), name)
+	if err == nil && info != nil {
+		database.Info = *info
+	}
+
 	return database
+}
+
+func (i *implementerDatabase) GetDatabaseInfo(ctx context.Context, name string) (*entity.DatabaseItem, error) {
+	dbItem, exist := DBCache.Get(name)
+	if exist {
+		return dbItem.(*entity.DatabaseItem), nil
+	}
+	req := database.ListReq{}
+	res := new(database.ListRes)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("cache list update")
+	for dbName, dbItem := range res.Info {
+		DBCache.Set(dbName, dbItem, cache.DefaultExpiration)
+	}
+
+	dbItem, exist = DBCache.Get(name)
+	if exist {
+		return dbItem.(*entity.DatabaseItem), nil
+	}
+
+	return nil, nil
 }

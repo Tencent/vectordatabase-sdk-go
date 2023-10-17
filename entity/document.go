@@ -69,7 +69,7 @@ type UpdateDocumentOption struct {
 
 type UploadDocumentOption struct {
 	FileType FileType
-	MetaData map[string]string
+	MetaData map[string]Field
 }
 
 type Document struct {
@@ -81,7 +81,7 @@ type Document struct {
 }
 
 type Field struct {
-	Val interface{}
+	Val interface{} `json:"val,omitempty"`
 }
 
 func (f Field) String() string {

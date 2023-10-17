@@ -131,19 +131,19 @@ type Embedding struct {
 	Enabled     bool           `json:"enabled,omitempty"` // 返回数据
 }
 
-type AiEmbedding struct {
-	MaxFiles           uint64              `json:"max_files,omitempty"`
-	AverageFileSize    uint64              `json:"average_file_size,omitempty"`
-	Language           Language            `json:"language,omitempty"`
-	DocumentPreprocess *DocumentPreprocess `json:"document_preprocess,omitempty"`
-	DocumentIndex      *DocumentIndex      `json:"document_index,omitempty"`
+type AiConfig struct {
+	MaxFiles           uint64              `json:"maxFiles,omitempty"`
+	AverageFileSize    uint64              `json:"averageFileSize,omitempty"`
+	Language           string              `json:"language,omitempty"`
+	DocumentPreprocess *DocumentPreprocess `json:"documentPreprocess,omitempty"`
+	DocumentIndex      *DocumentIndex      `json:"documentIndex,omitempty"`
 }
 
 type DocumentPreprocess struct {
-	AppendTitleToChunk    AppendTitleToChunkType `json:"append_title_to_chunk,omitempty"`
-	AppendKeywordsToChunk AppendTitleToChunkType `json:"append_keywords_to_chunk,omitempty"`
+	AppendTitleToChunk    string `json:"appendTitleToChunk,omitempty"`
+	AppendKeywordsToChunk string `json:"appendKeywordsToChunk,omitempty"`
 }
 
 type DocumentIndex struct {
-	EnableWordsSimilarity *bool `json:"enable_words_similarity,omitempty"`
+	EnableWordsSimilarity *bool `json:"enableWordsSimilarity,omitempty"`
 }

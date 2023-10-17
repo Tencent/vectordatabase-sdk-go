@@ -98,6 +98,8 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	delete(temp.Fields, "vector")
+	delete(temp.Fields, "id")
+	delete(temp.Fields, "score")
 
 	*d = Document(temp)
 	return nil
@@ -204,8 +206,8 @@ type UploadUrlReq struct {
 	api.Meta   `path:"/ai/document/uploadurl" tags:"Document" method:"Post" summary:"获取cos上传签名"`
 	Database   string          `json:"database,omitempty"`
 	Collection string          `json:"collection,omitempty"`
-	FileName   string          `json:"file_name,omitempty"`
-	FileType   entity.FileType `json:"file_type,omitempty"`
+	FileName   string          `json:"fileName,omitempty"`
+	FileType   entity.FileType `json:"fileType,omitempty"`
 }
 
 type UploadUrlRes struct {
@@ -213,15 +215,15 @@ type UploadUrlRes struct {
 	Msg      string `json:"msg,omitempty"`
 	Redirect string `json:"redirect,omitempty"`
 
-	CosEndpoint     string           `json:"cos_endpoint,omitempty"`
-	UploadPath      string           `json:"upload_path,omitempty"`
+	CosEndpoint     string           `json:"cosEndpoint,omitempty"`
+	UploadPath      string           `json:"uploadPath,omitempty"`
 	Credentials     *Credentials     `json:"credentials,omitempty"`
-	UploadCondition *UploadCondition `json:"upload_condition,omitempty"`
-	FileId          string           `json:"file_id,omitempty"`
+	UploadCondition *UploadCondition `json:"uploadCondition,omitempty"`
+	FileId          string           `json:"fileId,omitempty"`
 }
 
 type UploadCondition struct {
-	MaxSupportContentLength int64 `json:"max_support_content_length,omitempty"`
+	MaxSupportContentLength int64 `json:"maxSupportContentLength,omitempty"`
 }
 
 type Credentials struct {

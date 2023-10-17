@@ -28,6 +28,12 @@ type Database struct {
 	AliasInterface
 	IndexInterface
 	DatabaseName string
+	Info         DatabaseItem
+}
+
+type DatabaseItem struct {
+	CreateTime string `json:"createTime,omitempty"`
+	DbType     string `json:"dbType,omitempty"`
 }
 
 func (d *Database) Debug(v bool) {
