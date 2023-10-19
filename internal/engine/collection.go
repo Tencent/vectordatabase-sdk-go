@@ -50,7 +50,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 }
 
 func IsAiDatabase(name string) bool {
-	return true
+	return false
 }
 
 func (i *implementerCollection) createCollection2CommonDB(ctx context.Context, name string, shardNum, replicasNum uint32,
