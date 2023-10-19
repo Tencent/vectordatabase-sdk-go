@@ -147,7 +147,7 @@ type DescribeCollectionItem struct {
 	IndexStatus   *IndexStatus   `protobuf:"bytes,9,opt,name=indexStatus,proto3" json:"indexStatus,omitempty"`
 	Alias         []string       `json:"alias"`
 	DocumentCount int64          `json:"documentCount,omitempty"`
-	Embedding     EmbeddingRes   `json:"embedding"`
+	Embedding     *EmbeddingRes  `json:"embedding,omitempty"`
 }
 
 type TruncateReq struct {
