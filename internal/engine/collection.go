@@ -251,10 +251,12 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	coll.ReplicasNum = collectionItem.ReplicaNum
 	coll.Description = collectionItem.Description
 	coll.Size = collectionItem.Size
-	coll.Embedding.Field = collectionItem.Embedding.Field
-	coll.Embedding.VectorField = collectionItem.Embedding.VectorField
-	coll.Embedding.Model = entity.EmbeddingModel(collectionItem.Embedding.Model)
-	coll.Embedding.Enabled = collectionItem.Embedding.Status == "enabled"
+	if collectionItem.Embedding != nil {
+		coll.Embedding.Field = collectionItem.Embedding.Field
+		coll.Embedding.VectorField = collectionItem.Embedding.VectorField
+		coll.Embedding.Model = entity.EmbeddingModel(collectionItem.Embedding.Model)
+		coll.Embedding.Enabled = collectionItem.Embedding.Status == "enabled"
+	}
 
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = entity.IndexStatus{
