@@ -98,6 +98,8 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	delete(temp.Fields, "vector")
+	delete(temp.Fields, "id")
+	delete(temp.Fields, "score")
 
 	*d = Document(temp)
 	return nil
