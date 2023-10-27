@@ -145,7 +145,7 @@ type DescribeCollectionItem struct {
 	Description   string         `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
 	Indexes       []*IndexColumn `protobuf:"bytes,8,rep,name=indexes,proto3" json:"indexes,omitempty"`
 	IndexStatus   *IndexStatus   `protobuf:"bytes,9,opt,name=indexStatus,proto3" json:"indexStatus,omitempty"`
-	Alias         []string       `json:"alias"`
+	Alias         []string       `json:"alias,omitempty"`
 	DocumentCount int64          `json:"documentCount,omitempty"`
 	Embedding     *EmbeddingRes  `json:"embedding,omitempty"`
 }
