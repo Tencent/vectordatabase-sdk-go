@@ -130,20 +130,3 @@ type Embedding struct {
 	Model       EmbeddingModel `json:"model,omitempty"`
 	Enabled     bool           `json:"enabled,omitempty"` // 返回数据
 }
-
-type AiConfig struct {
-	MaxFiles           uint64              `json:"maxFiles,omitempty"`
-	AverageFileSize    uint64              `json:"averageFileSize,omitempty"`
-	Language           string              `json:"language,omitempty"`
-	DocumentPreprocess *DocumentPreprocess `json:"documentPreprocess,omitempty"`
-	DocumentIndex      *DocumentIndex      `json:"documentIndex,omitempty"`
-}
-
-type DocumentPreprocess struct {
-	AppendTitleToChunk    string `json:"appendTitleToChunk,omitempty"`
-	AppendKeywordsToChunk string `json:"appendKeywordsToChunk,omitempty"`
-}
-
-type DocumentIndex struct {
-	EnableWordsSimilarity *bool `json:"enableWordsSimilarity,omitempty"`
-}

@@ -16,21 +16,14 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package index
+package entity
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
-
-type RebuildReq struct {
-	api.Meta          `path:"/index/rebuild" tags:"Index" method:"Post" summary:"重建整个collection的所有索引"`
-	Database          string `json:"database,omitempty"`
-	Collection        string `json:"collection,omitempty"`
-	DropBeforeRebuild bool   `json:"dropBeforeRebuild,omitempty"`
-	Throttle          int32  `json:"throttle,omitempty"`
-	DisableTrain      bool   `json:"disable_train,omitempty"`
-	ForceRebuild      bool   `json:"force_rebuild,omitempty"`
+type SetAIAliasOption struct{}
+type SetAIAliasResult struct {
+	AffectedCount int
 }
 
-type RebuildRes struct {
-	api.CommonRes
-	TaskIds []string `json:"task_ids,omitempty"`
+type DeleteAIAliasOption struct{}
+type DeleteAIAliasResult struct {
+	AffectedCount int
 }

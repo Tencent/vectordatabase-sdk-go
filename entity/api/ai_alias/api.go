@@ -16,12 +16,12 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package alias
+package ai_alias
 
 import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 
 type SetReq struct {
-	api.Meta   `path:"/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
+	api.Meta   `path:"/ai/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
 	Database   string `json:"database,omitempty"`
 	Collection string `json:"collection,omitempty"`
 	Alias      string `json:"alias,omitempty"`
@@ -33,7 +33,7 @@ type SetRes struct {
 }
 
 type DeleteReq struct {
-	api.Meta `path:"/alias/delete" tags:"Alias" method:"Post" summary:"删除集合别名"`
+	api.Meta `path:"/ai/alias/delete" tags:"Alias" method:"Post" summary:"删除集合别名"`
 	Database string `json:"database,omitempty"`
 	Alias    string `json:"alias,omitempty"`
 }
@@ -44,9 +44,9 @@ type DeleteRes struct {
 }
 
 type DescribeReq struct {
-	api.Meta `path:"/alias/describe" tags:"Alias" method:"Post" summary:"根据别名查找对应的集合信息"`
-	Database string `json:"database,omitempty"`
-	Alias    string `json:"alias,omitempty"`
+	api.Meta `path:"/ai/alias/describe" tags:"Alias" method:"Post" summary:"根据别名查找对应的集合信息"`
+	Database string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Alias    string `protobuf:"bytes,2,opt,name=alias,proto3" json:"alias,omitempty"`
 }
 
 type DescribeRes struct {
@@ -60,7 +60,7 @@ type AliasItem struct {
 }
 
 type ListReq struct {
-	api.Meta `path:"/alias/list" tags:"Alias" method:"Post" summary:"列举指定db下的所有别名信息"`
+	api.Meta `path:"/ai/alias/list" tags:"Alias" method:"Post" summary:"列举指定db下的所有别名信息"`
 	Database string `json:"database"`
 }
 

@@ -39,19 +39,33 @@ type Collection struct {
 	CreateTime     time.Time
 }
 
-type CollectionResult struct {
-	AffectedCount int
-}
-
 type CreateCollectionOption struct {
 	Embedding *Embedding
-	AiConfig  *AiConfig
 }
 
-type DescribeCollectionOption struct{}
+type CreateCollectionResult struct{}
+
+type DescribeCollectionOption struct {
+}
+
+type DescribeCollectionResult struct {
+	Collection
+}
+
+type ListCollectionOption struct{}
+
+type ListCollectionResult struct {
+	Collections []*Collection
+}
 
 type DropCollectionOption struct{}
 
+type DropCollectionResult struct {
+	AffectedCount int
+}
+
 type TruncateCollectionOption struct{}
 
-type ListCollectionOption struct{}
+type TruncateCollectionResult struct {
+	AffectedCount int
+}

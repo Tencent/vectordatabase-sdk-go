@@ -50,6 +50,18 @@ type DatabaseResult struct {
 
 type CreateDatabaseOption struct{}
 
+type CreateDatabaseResult struct {
+	AffectedCount int
+}
+
 type DropDatabaseOption struct{}
 
+type DropDatabaseResult struct {
+	AffectedCount int
+}
+
 type ListDatabaseOption struct{}
+
+type ListDatabaseResult struct {
+	Databases []Database
+}

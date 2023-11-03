@@ -20,16 +20,10 @@ package engine
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/tencentyun/cos-go-sdk-v5"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/document"
@@ -44,7 +38,7 @@ type implementerDocument struct {
 }
 
 // Upsert upsert documents into collection. Support for repeated insertion
-func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Document, option *entity.UpsertDocumentOption) (result *entity.DocumentResult, err error) {
+func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Document, option *entity.UpsertDocumentOption) (result *entity.UpsertDocumentResult, err error) {
 	req := new(document.UpsertReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
@@ -64,7 +58,7 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Doc
 	}
 
 	res := new(document.UpsertRes)
-	result = new(entity.DocumentResult)
+	result = new(entity.UpsertDocumentResult)
 	err = i.Request(ctx, req, res)
 	if err != nil {
 		return
@@ -75,7 +69,7 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Doc
 
 // Query query the document by document ids.
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
-func (i *implementerDocument) Query(ctx context.Context, documentIds []string, option *entity.QueryDocumentOption) ([]entity.Document, *entity.DocumentResult, error) {
+func (i *implementerDocument) Query(ctx context.Context, documentIds []string, option *entity.QueryDocumentOption) (*entity.QueryDocumentResult, error) {
 	req := new(document.QueryReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
@@ -92,11 +86,12 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, o
 	}
 
 	res := new(document.QueryRes)
-	result := new(entity.DocumentResult)
 	err := i.Request(ctx, req, res)
 	if err != nil {
-		return nil, result, err
+		return nil, err
 	}
+
+	result := new(entity.QueryDocumentResult)
 	var documents []entity.Document
 	for _, doc := range res.Documents {
 		var d entity.Document
@@ -109,28 +104,29 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, o
 		}
 		documents = append(documents, d)
 	}
+	result.Documents = documents
 	result.AffectedCount = len(documents)
-	result.Total = int(res.Count)
-	return documents, result, nil
+	result.Total = res.Count
+	return result, nil
 }
 
 // Search search document topK by vector. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, option *entity.SearchDocumentOption) ([][]entity.Document, error) {
+func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
 	return i.search(ctx, nil, vectors, nil, option)
 }
 
 // Search search document topK by document ids. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, option *entity.SearchDocumentOption) ([][]entity.Document, error) {
+func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
 	return i.search(ctx, documentIds, nil, nil, option)
 }
 
-func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, option *entity.SearchDocumentOption) ([][]entity.Document, error) {
+func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
 	return i.search(ctx, nil, nil, text, option)
 }
 
-func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, option *entity.SearchDocumentOption) ([][]entity.Document, error) {
+func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
 	req := new(document.SearchReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
@@ -178,12 +174,13 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 		}
 		documents = append(documents, vecDoc)
 	}
-
-	return documents, nil
+	result := new(entity.SearchDocumentResult)
+	result.Documents = documents
+	return result, nil
 }
 
 // Delete delete document by document ids
-func (i *implementerDocument) Delete(ctx context.Context, option *entity.DeleteDocumentOption) (result *entity.DocumentResult, err error) {
+func (i *implementerDocument) Delete(ctx context.Context, option *entity.DeleteDocumentOption) (result *entity.DeleteDocumentResult, err error) {
 	req := new(document.DeleteReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
@@ -195,16 +192,16 @@ func (i *implementerDocument) Delete(ctx context.Context, option *entity.DeleteD
 	}
 
 	res := new(document.DeleteRes)
-	result = new(entity.DocumentResult)
+	result = new(entity.DeleteDocumentResult)
 	err = i.Request(ctx, req, res)
 	if err != nil {
 		return
 	}
-	result.AffectedCount = int(res.AffectedCount)
+	result.AffectedCount = res.AffectedCount
 	return
 }
 
-func (i *implementerDocument) Update(ctx context.Context, option *entity.UpdateDocumentOption) (*entity.DocumentResult, error) {
+func (i *implementerDocument) Update(ctx context.Context, option *entity.UpdateDocumentOption) (*entity.UpdateDocumentResult, error) {
 	req := new(document.UpdateReq)
 	req.Database = i.databaseName
 	req.Collection = i.collectionName
@@ -223,92 +220,13 @@ func (i *implementerDocument) Update(ctx context.Context, option *entity.UpdateD
 	}
 
 	res := new(document.UpdateRes)
-	result := new(entity.DocumentResult)
+	result := new(entity.UpdateDocumentResult)
 	err := i.Request(ctx, req, res)
 	if err != nil {
 		return result, err
 	}
 	result.AffectedCount = int(res.AffectedCount)
 	return result, nil
-}
-
-func (i *implementerDocument) Upload(ctx context.Context, localFilePath string, option *entity.UploadDocumentOption) (err error) {
-
-	// localFilePath string, fileName string, fileType entity.FileType,
-	//	metaData map[string]string
-
-	cosUploadFileName := path.Base(localFilePath)
-
-	fileType := getFileTypeFromFileName(localFilePath)
-	if option != nil && option.FileType != "" {
-		fileType = option.FileType
-	}
-
-	if fileType != entity.MarkdownFileType {
-		return fmt.Errorf("only support markdown fileType when uploading")
-	}
-
-	req := new(document.UploadUrlReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
-	req.FileName = cosUploadFileName
-	req.FileType = fileType
-
-	res := new(document.UploadUrlRes)
-	err = i.Request(ctx, req, res)
-	if err != nil {
-		return err
-	}
-
-	if res == nil || res.UploadCondition == nil || res.Credentials == nil {
-		return fmt.Errorf("get file upload url failed")
-	}
-	fileSizeIsOk, err := checkFileSize(localFilePath, res.UploadCondition.MaxSupportContentLength)
-	if err != nil {
-		return err
-	}
-	if !fileSizeIsOk {
-		return fmt.Errorf("%v fileSize is invalid, support max content length is %v bytes",
-			localFilePath, res.UploadCondition.MaxSupportContentLength)
-	}
-
-	u, _ := url.Parse(res.CosEndpoint)
-	b := &cos.BaseURL{BucketURL: u}
-
-	c := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:     res.Credentials.TmpSecretID,  // 用户的 SecretId，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参考 https://cloud.tencent.com/document/product/598/37140
-			SecretKey:    res.Credentials.TmpSecretKey, // 用户的 SecretKey，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参考 https://cloud.tencent.com/document/product/598/37140
-			SessionToken: res.Credentials.SessionToken,
-		},
-	})
-
-	header := make(http.Header)
-	if option == nil {
-		option = new(entity.UploadDocumentOption)
-	}
-	if option.MetaData == nil {
-		option.MetaData = make(map[string]entity.Field)
-	}
-	option.MetaData["-fileType"] = entity.Field{Val: string(fileType)}
-	option.MetaData["-id"] = entity.Field{Val: res.FileId}
-
-	for k, v := range option.MetaData {
-		str, fieldType := GetFieldInfo(v)
-		header.Add("x-cos-meta-"+string(fieldType)+"-"+k, url.QueryEscape(str))
-	}
-
-	opt := &cos.ObjectPutOptions{
-		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
-			XCosMetaXXX: &header,
-		},
-	}
-
-	_, err = c.Object.PutFromFile(ctx, res.UploadPath, localFilePath, opt)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func GetFieldInfo(field entity.Field) (string, entity.FieldType) {

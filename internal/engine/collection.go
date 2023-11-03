@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/collection"
 )
 
@@ -42,19 +43,6 @@ type implementerCollection struct {
 // the filterIndex sets at least one primaryKey value.
 func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32,
 	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
-	if IsAiDatabase(name) {
-		return i.createCollectionInAiDB(ctx, name, shardNum, replicasNum, description, indexes, option)
-	} else {
-		return i.createCollectionInBaseDB(ctx, name, shardNum, replicasNum, description, indexes, option)
-	}
-}
-
-func IsAiDatabase(name string) bool {
-	return true
-}
-
-func (i *implementerCollection) createCollectionInBaseDB(ctx context.Context, name string, shardNum, replicasNum uint32,
-	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
 	req := new(collection.CreateReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -63,7 +51,7 @@ func (i *implementerCollection) createCollectionInBaseDB(ctx context.Context, na
 	req.Description = description
 
 	for _, v := range indexes.VectorIndex {
-		var column collection.IndexColumn
+		var column api.IndexColumn
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
@@ -75,7 +63,7 @@ func (i *implementerCollection) createCollectionInBaseDB(ctx context.Context, na
 		req.Indexes = append(req.Indexes, &column)
 	}
 	for _, v := range indexes.FilterIndex {
-		var column collection.IndexColumn
+		var column api.IndexColumn
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
@@ -104,63 +92,9 @@ func (i *implementerCollection) createCollectionInBaseDB(ctx context.Context, na
 	return coll, nil
 }
 
-func (i *implementerCollection) createCollectionInAiDB(ctx context.Context, name string, shardNum, replicasNum uint32,
-	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
-	req := new(collection.CreateAiCollectionReq)
-	req.Database = i.databaseName
-	req.Collection = name
-
-	req.Description = description
-
-	if len(indexes.VectorIndex) > 0 {
-		fmt.Printf("ai collection not support VectorIndex")
-	}
-
-	for _, v := range indexes.FilterIndex {
-		var column collection.IndexColumn
-		column.FieldName = v.FieldName
-		column.FieldType = string(v.FieldType)
-		column.IndexType = string(v.IndexType)
-		req.Indexes = append(req.Indexes, &column)
-	}
-
-	defaultEnableWordsSimilarity := true
-	if option != nil {
-		if option.AiConfig != nil {
-			req.MaxFiles = option.AiConfig.MaxFiles
-			req.AverageFileSize = option.AiConfig.AverageFileSize
-			req.Language = entity.Language(option.AiConfig.Language)
-			if option.AiConfig.DocumentPreprocess != nil {
-				req.DocumentPreprocess = option.AiConfig.DocumentPreprocess
-			}
-			if option.AiConfig.DocumentIndex != nil && option.AiConfig.DocumentIndex.EnableWordsSimilarity != nil {
-				req.DocumentIndex = option.AiConfig.DocumentIndex
-			} else {
-				req.DocumentIndex = &entity.DocumentIndex{
-					EnableWordsSimilarity: &defaultEnableWordsSimilarity,
-				}
-			}
-		}
-	}
-
-	res := new(collection.CreateRes)
-	err := i.Request(ctx, req, &res)
-	if err != nil {
-		return nil, err
-	}
-
-	coll := i.Collection(req.Collection)
-	coll.ShardNum = shardNum
-	coll.ReplicasNum = replicasNum
-	coll.Description = req.Description
-	coll.Indexes = indexes
-
-	return coll, nil
-}
-
 // DescribeCollection get a collection detail.
 // It returns the collection object to get collecton parameters or operate document api
-func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeCollectionOption) (*entity.Collection, error) {
+func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeCollectionOption) (*entity.DescribeCollectionResult, error) {
 	req := new(collection.DescribeReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -173,30 +107,31 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 		return nil, fmt.Errorf("get collection %s failed", name)
 	}
 	coll := i.toCollection(res.Collection)
-
-	return coll, nil
+	result := new(entity.DescribeCollectionResult)
+	result.Collection = *coll
+	return result, nil
 }
 
 // DropCollection drop a collection. If collection not exist, it return nil.
-func (i *implementerCollection) DropCollection(ctx context.Context, name string, option *entity.DropCollectionOption) (result *entity.CollectionResult, err error) {
+func (i *implementerCollection) DropCollection(ctx context.Context, name string, option *entity.DropCollectionOption) (result *entity.DropCollectionResult, err error) {
 	req := new(collection.DropReq)
 	req.Database = i.databaseName
 	req.Collection = name
 
 	res := new(collection.DropRes)
 	err = i.Request(ctx, req, res)
-	result = new(entity.CollectionResult)
+	result = new(entity.DropCollectionResult)
 	if err != nil {
 		if strings.Contains(err.Error(), "not exist") {
 			return result, nil
 		}
 		return
 	}
-	result.AffectedCount = int(res.AffectedCount)
+	result.AffectedCount = res.AffectedCount
 	return
 }
 
-func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateCollectionOption) (result *entity.CollectionResult, err error) {
+func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateCollectionOption) (result *entity.TruncateCollectionResult, err error) {
 	req := new(collection.TruncateReq)
 	req.Database = i.databaseName
 	req.Collection = name
@@ -207,22 +142,14 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 	if err != nil {
 		return
 	}
-	result = new(entity.CollectionResult)
-	result.AffectedCount = int(res.AffectedCount)
+	result = new(entity.TruncateCollectionResult)
+	result.AffectedCount = res.AffectedCount
 	return
 }
 
 // ListCollection get collection list.
 // It return the list of collection, each collection same as DescribeCollection return.
-func (i *implementerCollection) ListCollection(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
-	if IsAiDatabase(i.databaseName) {
-		return i.listCollectionInAiDB(ctx, option)
-	} else {
-		return i.listCollectionInBaseDB(ctx, option)
-	}
-}
-
-func (i *implementerCollection) listCollectionInBaseDB(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
+func (i *implementerCollection) ListCollection(ctx context.Context, option *entity.ListCollectionOption) (*entity.ListCollectionResult, error) {
 	req := new(collection.ListReq)
 	req.Database = i.databaseName
 	res := new(collection.ListRes)
@@ -234,22 +161,9 @@ func (i *implementerCollection) listCollectionInBaseDB(ctx context.Context, opti
 	for _, collection := range res.Collections {
 		collections = append(collections, i.toCollection(collection))
 	}
-	return collections, nil
-}
-
-func (i *implementerCollection) listCollectionInAiDB(ctx context.Context, option *entity.ListCollectionOption) ([]*entity.Collection, error) {
-	req := new(collection.ListAiReq)
-	req.Database = i.databaseName
-	res := new(collection.ListRes)
-	err := i.Request(ctx, req, &res)
-	if err != nil {
-		return nil, err
-	}
-	var collections []*entity.Collection
-	for _, collection := range res.Collections {
-		collections = append(collections, i.toCollection(collection))
-	}
-	return collections, nil
+	result := new(entity.ListCollectionResult)
+	result.Collections = collections
+	return result, nil
 }
 
 // Collection get a collection interface to operate the document api. It could not send http request to vectordb.
@@ -324,8 +238,8 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 }
 
 // optionParams option index parameters
-func optionParams(column *collection.IndexColumn, v entity.VectorIndex) {
-	column.Params = new(collection.IndexParams)
+func optionParams(column *api.IndexColumn, v entity.VectorIndex) {
+	column.Params = new(api.IndexParams)
 	if v.IndexType == entity.HNSW {
 		if param, ok := v.Params.(*entity.HNSWParam); ok && param != nil {
 			column.Params.M = param.M

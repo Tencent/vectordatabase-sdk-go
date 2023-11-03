@@ -34,7 +34,7 @@ var (
 )
 
 func TestCreateAIDatabase(t *testing.T) {
-	db, err := cli.CreateAiDatabase(context.Background(), AIDatabase, nil)
+	db, err := cli.CreateAIDatabase(context.Background(), AIDatabase, nil)
 	printErr(err)
 	t.Logf("create database success, %s", db.DatabaseName)
 }
@@ -49,7 +49,7 @@ func TestListDatabase(t *testing.T) {
 }
 
 func TestDropAIDatabase(t *testing.T) {
-	result, err := cli.DropAiDatabase(context.Background(), AIDatabase, nil)
+	result, err := cli.DropAIDatabase(context.Background(), AIDatabase, nil)
 	printErr(err)
 
 	t.Logf("drop collection result: %+v", result)
@@ -95,7 +95,7 @@ func TestCreateCollectionInAIDB(t *testing.T) {
 	// 列出所有 Collection
 	colList, err := db.ListCollection(context.Background(), nil)
 	printErr(err)
-	for _, col := range colList {
+	for _, col := range colList.Collections {
 		t.Logf("%+v", col)
 	}
 
@@ -114,16 +114,17 @@ func TestCreateCollectionInAIDB(t *testing.T) {
 
 func TestUploadFile(t *testing.T) {
 	defer cli.Close()
-	col := cli.Database(AIDatabase).Collection(AICollectionName)
+	col := cli.AIDatabase(AIDatabase).Collection(AICollectionName)
 	cli.Debug(true)
 
 	metaData := map[string]entity.Field{
 		"fileName": {Val: "召回率从0.48提升至0.92_back116.md"},
 		"author":   {Val: "sam"},
 		"fileKey":  {Val: 1024}}
-	err := col.Upload(context.Background(), "./召回率从0.48提升至0.92_back116.md", &entity.UploadDocumentOption{
+	result, err := col.Upload(context.Background(), "./召回率从0.48提升至0.92_back116.md", &entity.UploadAIDocumentOption{
 		FileType: "", MetaData: metaData})
 	printErr(err)
+	t.Logf("%+v", result)
 }
 
 func TestAIQuery(t *testing.T) {
@@ -142,10 +143,10 @@ func TestAIQuery(t *testing.T) {
 		Offset:         0,
 	}
 	col.Debug(true)
-	docs, result, err := col.Query(context.Background(), []string{"0001", "0002", "0003", "0004", "0005"}, option)
+	result, err := col.Query(context.Background(), []string{"0001", "0002", "0003", "0004", "0005"}, option)
 	printErr(err)
 	t.Logf("total doc: %d", result.Total)
-	for _, doc := range docs {
+	for _, doc := range result.Documents {
 		t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
 	}
 }

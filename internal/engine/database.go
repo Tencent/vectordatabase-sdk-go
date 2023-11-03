@@ -27,7 +27,6 @@ import (
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/database"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/client"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -37,25 +36,6 @@ var DBCache *cache.Cache = cache.New(30*time.Second, 1*time.Minute)
 
 type implementerDatabase struct {
 	entity.SdkClient
-}
-
-// VectorDB new a vectordbClient interface
-func VectorDB(sdkClient *client.Client) entity.VectorDBClient {
-	databaseImpl := new(implementerDatabase)
-	databaseImpl.SdkClient = sdkClient
-	return databaseImpl
-}
-
-func (i *implementerDatabase) CreateAiDatabase(ctx context.Context, name string, option *entity.CreateDatabaseOption) (*entity.Database, error) {
-	req := database.CreateAiDBReq{
-		Database: name,
-	}
-	res := new(database.CreateRes)
-	err := i.Request(ctx, req, res)
-	if err != nil {
-		return nil, err
-	}
-	return i.Database(name), err
 }
 
 // CreateDatabase create database with database name. It returns error if name exist.
@@ -76,24 +56,6 @@ func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, opt
 	result = new(entity.DatabaseResult)
 
 	req := database.DropReq{Database: name}
-	res := new(database.DropRes)
-	err = i.Request(ctx, req, res)
-	if err != nil {
-		if strings.Contains(err.Error(), "not exist") {
-			return result, nil
-		}
-		return
-	}
-	result.AffectedCount = int(res.AffectedCount)
-	return
-}
-
-// DropDatabase drop database with database name. If database not exist, it return nil.
-func (i *implementerDatabase) DropAiDatabase(ctx context.Context, name string, option *entity.DropDatabaseOption) (result *entity.DatabaseResult, err error) {
-	result = new(entity.DatabaseResult)
-
-	// todo 需要先判断ai是不是ai db
-	req := database.DropAiDBReq{Database: name}
 	res := new(database.DropRes)
 	err = i.Request(ctx, req, res)
 	if err != nil {
@@ -144,10 +106,10 @@ func (i *implementerDatabase) Database(name string) *entity.Database {
 	database.Info = entity.DatabaseItem{
 		DbType: entity.BASEDbType,
 	}
-	info, err := i.GetDatabaseInfo(context.Background(), name)
-	if err == nil && info != nil {
-		database.Info = *info
-	}
+	// info, err := i.GetDatabaseInfo(context.Background(), name)
+	// if err == nil && info != nil {
+	// 	database.Info = *info
+	// }
 
 	return database
 }

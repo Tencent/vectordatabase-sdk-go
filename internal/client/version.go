@@ -18,4 +18,4 @@
 
 package client
 
-const SDKVersion = "v1.1.0"
+const SDKVersion = "v1.2.1"

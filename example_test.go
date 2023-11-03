@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	cli                 entity.VectorDBClient
+	cli                 *entity.VectorDBClient
 	database            = "ai-db-test"
 	collectionName      = "book_segments"
 	collectionAlias     = "book_segments_alias"
@@ -39,7 +39,7 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "VrxSDKKAzcHxULq7wDxZYfkPoggbYf8JBbtfCLiG", nil)
+	cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "RPo223wN2yXyUq16dmHcGyzXHaYfWCZWNMGwBC01", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -139,9 +139,9 @@ func TestCreateCollection(t *testing.T) {
 	printErr(err)
 
 	// 列出所有 Collection
-	colList, err := db.ListCollection(context.Background(), nil)
+	result, err := db.ListCollection(context.Background(), nil)
 	printErr(err)
-	for _, col := range colList {
+	for _, col := range result.Collections {
 		t.Logf("%+v", col)
 	}
 
@@ -290,10 +290,10 @@ func TestQuery(t *testing.T) {
 		Offset:         1,
 	}
 	col.Debug(true)
-	docs, result, err := col.Query(context.Background(), []string{"0001", "0002", "0003", "0004", "0005"}, option)
+	result, err := col.Query(context.Background(), []string{"0001", "0002", "0003", "0004", "0005"}, option)
 	printErr(err)
 	t.Logf("total doc: %d", result.Total)
-	for _, doc := range docs {
+	for _, doc := range result.Documents {
 		t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
 	}
 }
@@ -319,7 +319,7 @@ func TestSearch(t *testing.T) {
 	})
 	printErr(err)
 	t.Log("SearchById-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
@@ -342,7 +342,7 @@ func TestSearch(t *testing.T) {
 	})
 	printErr(err)
 	t.Logf("search by vector-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
@@ -366,9 +366,9 @@ func TestUpdateAndDelete(t *testing.T) {
 	})
 	printErr(err)
 	t.Logf("affect count: %d", result.AffectedCount)
-	docs, _, err := col.Query(context.Background(), []string{"0003"}, nil)
+	docs, err := col.Query(context.Background(), []string{"0003"}, nil)
 	printErr(err)
-	for _, doc := range docs {
+	for _, doc := range docs.Documents {
 		t.Logf("query document is: %+v", doc.Fields)
 	}
 
@@ -456,15 +456,16 @@ func TestQueryEmbedding(t *testing.T) {
 
 	option := &entity.QueryDocumentOption{
 		Filter:         entity.NewFilter(`bookName="三国演义"`),
-		OutputFields:   []string{"id", "bookName"},
+		OutputFields:   []string{"id", "bookName", "segment"},
 		RetrieveVector: false,
 		Limit:          2,
 		Offset:         1,
 	}
-	docs, result, err := col.Query(context.Background(), []string{"0001", "0002", "0003"}, option)
+	col.Debug(true)
+	docs, err := col.Query(context.Background(), []string{"0001", "0002", "0003"}, option)
 	printErr(err)
-	t.Logf("total doc: %d", result.Total)
-	for _, doc := range docs {
+	t.Logf("total doc: %d", docs.Total)
+	for _, doc := range docs.Documents {
 		t.Logf("%+v", doc)
 	}
 }
@@ -480,7 +481,7 @@ func TestSearchEmbedding(t *testing.T) {
 	})
 	printErr(err)
 	t.Log("SearchById-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
@@ -500,7 +501,7 @@ func TestSearchEmbedding(t *testing.T) {
 	})
 	printErr(err)
 	t.Log("searchByText-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %v", doc.Id, doc.Vector, doc.Fields)
