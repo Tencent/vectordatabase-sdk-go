@@ -33,15 +33,15 @@ var _ entity.DocumentInterface = &implementerDocument{}
 
 type implementerDocument struct {
 	entity.SdkClient
-	databaseName   string
-	collectionName string
+	database   entity.Database
+	collection entity.Collection
 }
 
 // Upsert upsert documents into collection. Support for repeated insertion
 func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Document, option *entity.UpsertDocumentOption) (result *entity.UpsertDocumentResult, err error) {
 	req := new(document.UpsertReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	for _, doc := range documents {
 		d := &document.Document{}
 		d.Id = doc.Id
@@ -71,8 +71,8 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Doc
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
 func (i *implementerDocument) Query(ctx context.Context, documentIds []string, option *entity.QueryDocumentOption) (*entity.QueryDocumentResult, error) {
 	req := new(document.QueryReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	req.Query = &document.QueryCond{
 		DocumentIds: documentIds,
 	}
@@ -128,8 +128,8 @@ func (i *implementerDocument) SearchByText(ctx context.Context, text map[string]
 
 func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
 	req := new(document.SearchReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Search = new(document.SearchCond)
 	req.Search.DocumentIds = documentIds
@@ -182,8 +182,8 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 // Delete delete document by document ids
 func (i *implementerDocument) Delete(ctx context.Context, option *entity.DeleteDocumentOption) (result *entity.DeleteDocumentResult, err error) {
 	req := new(document.DeleteReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	if option != nil {
 		req.Query = &document.QueryCond{
 			DocumentIds: option.DocumentIds,
@@ -203,8 +203,8 @@ func (i *implementerDocument) Delete(ctx context.Context, option *entity.DeleteD
 
 func (i *implementerDocument) Update(ctx context.Context, option *entity.UpdateDocumentOption) (*entity.UpdateDocumentResult, error) {
 	req := new(document.UpdateReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	req.Query = new(document.QueryCond)
 
 	if option != nil {

@@ -29,12 +29,15 @@ var _ entity.IndexInterface = &implementerIndex{}
 
 type implementerIndex struct {
 	entity.SdkClient
-	databaseName string
+	database entity.Database
 }
 
 func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName string, option *entity.IndexRebuildOption) (*entity.IndexReBuildResult, error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(index.RebuildReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = collectionName
 
 	req.DropBeforeRebuild = option.DropBeforeRebuild

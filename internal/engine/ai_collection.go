@@ -34,7 +34,7 @@ var _ entity.AICollectionInterface = &implementerAICollection{}
 
 type implementerAICollection struct {
 	entity.SdkClient
-	databaseName string
+	database entity.AIDatabase
 }
 
 // CreateCollection create a collection. It returns collection struct if err is nil.
@@ -43,8 +43,11 @@ type implementerAICollection struct {
 // You can set the index field in entity.Indexes, the vectorIndex must be set one currently, and
 // the filterIndex sets at least one primaryKey value.
 func (i *implementerAICollection) CreateCollection(ctx context.Context, name string, option *entity.CreateAICollectionOption) (*entity.CreateAICollectionResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_collection.CreateReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 
 	if option != nil {
@@ -88,7 +91,7 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 		Language:           req.Language,
 		Description:        req.Description,
 		FilterIndexes:      req.Indexes,
-		DocumentPreprocess: *req.DocumentPreprocess,
+		DocumentPreprocess: req.DocumentPreprocess,
 		// DocumentIndex:      *req.DocumentIndex,
 	})
 	result := new(entity.CreateAICollectionResult)
@@ -100,8 +103,11 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 // DescribeCollection get a collection detail.
 // It returns the collection object to get collecton parameters or operate document api
 func (i *implementerAICollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeAICollectionOption) (*entity.DescribeAICollectionResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_collection.DescribeReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 	res := new(ai_collection.DescribeRes)
 	err := i.Request(ctx, req, &res)
@@ -119,8 +125,11 @@ func (i *implementerAICollection) DescribeCollection(ctx context.Context, name s
 
 // DropCollection drop a collection. If collection not exist, it return nil.
 func (i *implementerAICollection) DropCollection(ctx context.Context, name string, option *entity.DropAICollectionOption) (result *entity.DropAICollectionResult, err error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_collection.DropReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 
 	res := new(ai_collection.DropRes)
@@ -137,8 +146,11 @@ func (i *implementerAICollection) DropCollection(ctx context.Context, name strin
 }
 
 func (i *implementerAICollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateAICollectionOption) (result *entity.TruncateAICollectionResult, err error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_collection.TruncateReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 
 	res := new(ai_collection.TruncateRes)
@@ -155,8 +167,11 @@ func (i *implementerAICollection) TruncateCollection(ctx context.Context, name s
 // ListCollection get collection list.
 // It return the list of collection, each collection same as DescribeCollection return.
 func (i *implementerAICollection) ListCollection(ctx context.Context, option *entity.ListAICollectionOption) (*entity.ListAICollectionResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_collection.ListReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	res := new(ai_collection.ListRes)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
@@ -173,25 +188,31 @@ func (i *implementerAICollection) ListCollection(ctx context.Context, option *en
 // If you want to show collection parameters, use DescribeCollection.
 func (i *implementerAICollection) Collection(name string) *entity.AICollection {
 	coll := new(entity.AICollection)
+	coll.DatabaseName = i.database.DatabaseName
+	coll.CollectionName = name
+
 	docImpl := new(implementerAIDocument)
 	docImpl.SdkClient = i.SdkClient
-	docImpl.databaseName = i.databaseName
-	docImpl.collectionName = name
+	docImpl.database = i.database
+	docImpl.collection = *coll
+
 	coll.AIDocumentInterface = docImpl
-	coll.DatabaseName = i.databaseName
-	coll.CollectionName = name
 	return coll
 }
 
 func (i *implementerAICollection) toCollection(item *ai_collection.DescribeAICollectionItem) *entity.AICollection {
-	coll := i.Collection(item.Collection)
+	coll := new(entity.AICollection)
+	coll.DatabaseName = i.database.DatabaseName
+	coll.CollectionName = item.Collection
 	coll.Description = item.Description
 	coll.Alias = item.Alias
 	coll.CreateTime, _ = time.Parse("2006-01-02 15:04:05", item.CreateTime)
 
 	coll.AiConfig = entity.AiConfig{
+		MaxFiles:           item.MaxFiles,
+		AverageFileSize:    item.AverageFileSize,
 		Language:           entity.Language(item.Language),
-		DocumentPreprocess: &item.DocumentPreprocess,
+		DocumentPreprocess: item.DocumentPreprocess,
 		// DocumentIndex:      &item.DocumentIndex,
 	}
 	if item.AiStatus != nil {
@@ -207,5 +228,11 @@ func (i *implementerAICollection) toCollection(item *ai_collection.DescribeAICol
 
 		coll.FilterIndexes = append(coll.FilterIndexes, filter)
 	}
+
+	docImpl := new(implementerAIDocument)
+	docImpl.SdkClient = i.SdkClient
+	docImpl.database = i.database
+	docImpl.collection = *coll
+	coll.AIDocumentInterface = docImpl
 	return coll
 }

@@ -3,17 +3,17 @@ package entity
 import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/ai_document"
 
 type QueryAIDocumentOption struct {
-	DocumentIds  []string `json:"documentIds,omitempty"`
-	Filter       string   `json:"filter,omitempty"`
-	Limit        int64    `json:"limit,omitempty"`
-	Offset       int64    `json:"offset,omitempty"`
-	OutputFields []string `json:"outputFields,omitempty"`
+	DocumentIds  []string
+	Filter       *Filter
+	Limit        int64
+	Offset       int64
+	OutputFields []string
 }
 
 type QueryAIDocumentsResult struct {
 	AffectedCount int
 	Total         int
-	Items         []ai_document.QueryDocument
+	Documents     []ai_document.QueryDocument
 }
 
 type SearchAIDocumentOption struct {
@@ -61,6 +61,8 @@ type GetCosTmpSecretOption struct {
 
 type GetCosTmpSecretResult struct {
 	CosEndpoint             string `json:"cosEndpoint"`
+	CosRegion               string `json:"cosRegion,omitempty"`
+	CosBucket               string `json:"cosBucket,omitempty"`
 	UploadPath              string `json:"uploadPath"`
 	TmpSecretID             string `json:"tmpSecretId"`
 	TmpSecretKey            string `json:"tmpSecretKey"`

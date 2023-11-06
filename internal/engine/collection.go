@@ -33,7 +33,7 @@ var _ entity.CollectionInterface = &implementerCollection{}
 
 type implementerCollection struct {
 	entity.SdkClient
-	databaseName string
+	database entity.Database
 }
 
 // CreateCollection create a collection. It returns collection struct if err is nil.
@@ -43,8 +43,11 @@ type implementerCollection struct {
 // the filterIndex sets at least one primaryKey value.
 func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32,
 	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(collection.CreateReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 	req.ShardNum = shardNum
 	req.ReplicaNum = replicasNum
@@ -95,8 +98,11 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 // DescribeCollection get a collection detail.
 // It returns the collection object to get collecton parameters or operate document api
 func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeCollectionOption) (*entity.DescribeCollectionResult, error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(collection.DescribeReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 	res := new(collection.DescribeRes)
 	err := i.Request(ctx, req, &res)
@@ -114,8 +120,11 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 
 // DropCollection drop a collection. If collection not exist, it return nil.
 func (i *implementerCollection) DropCollection(ctx context.Context, name string, option *entity.DropCollectionOption) (result *entity.DropCollectionResult, err error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(collection.DropReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 
 	res := new(collection.DropRes)
@@ -132,8 +141,11 @@ func (i *implementerCollection) DropCollection(ctx context.Context, name string,
 }
 
 func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateCollectionOption) (result *entity.TruncateCollectionResult, err error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(collection.TruncateReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = name
 
 	res := new(collection.TruncateRes)
@@ -150,8 +162,11 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 // ListCollection get collection list.
 // It return the list of collection, each collection same as DescribeCollection return.
 func (i *implementerCollection) ListCollection(ctx context.Context, option *entity.ListCollectionOption) (*entity.ListCollectionResult, error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(collection.ListReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	res := new(collection.ListRes)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
@@ -170,18 +185,23 @@ func (i *implementerCollection) ListCollection(ctx context.Context, option *enti
 // If you want to show collection parameters, use DescribeCollection.
 func (i *implementerCollection) Collection(name string) *entity.Collection {
 	coll := new(entity.Collection)
+	coll.DatabaseName = i.database.DatabaseName
+	coll.CollectionName = name
+
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
-	docImpl.databaseName = i.databaseName
-	docImpl.collectionName = name
+	docImpl.database = i.database
+	docImpl.collection = *coll
+
 	coll.DocumentInterface = docImpl
-	coll.DatabaseName = i.databaseName
-	coll.CollectionName = name
+
 	return coll
 }
 
 func (i *implementerCollection) toCollection(collectionItem *collection.DescribeCollectionItem) *entity.Collection {
-	coll := i.Collection(collectionItem.Collection)
+	coll := new(entity.Collection)
+	coll.DatabaseName = i.database.DatabaseName
+	coll.CollectionName = collectionItem.Collection
 	coll.DocumentCount = collectionItem.DocumentCount
 	coll.Alias = collectionItem.Alias
 	coll.ShardNum = collectionItem.ShardNum
@@ -234,6 +254,12 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 		}
 	}
+
+	docImpl := new(implementerDocument)
+	docImpl.SdkClient = i.SdkClient
+	docImpl.database = i.database
+	docImpl.collection = *coll
+	coll.DocumentInterface = docImpl
 	return coll
 }
 

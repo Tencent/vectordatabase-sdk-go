@@ -30,10 +30,6 @@ func VectorDB(sdkClient *client.Client) *entity.VectorDBClient {
 	databaseImpl := new(implementerDatabase)
 	databaseImpl.SdkClient = sdkClient
 
-	aiDatabaseImpl := new(implementerAIDatabase)
-	aiDatabaseImpl.SdkClient = sdkClient
-
 	client.DatabaseInterface = databaseImpl
-	client.AIDatabaseInterface = aiDatabaseImpl
 	return client
 }

@@ -136,6 +136,8 @@ type UploadUrlReq struct {
 type UploadUrlRes struct {
 	api.CommonRes
 	CosEndpoint     string           `json:"cosEndpoint"`
+	CosRegion       string           `json:"cosRegion,omitempty"`
+	CosBucket       string           `json:"cosBucket,omitempty"`
 	UploadPath      string           `json:"uploadPath"`
 	Credentials     *Credentials     `json:"credentials"`
 	UploadCondition *UploadCondition `json:"uploadCondition"`

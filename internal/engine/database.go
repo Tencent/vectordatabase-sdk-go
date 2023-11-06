@@ -20,46 +20,60 @@ package engine
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"time"
-
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/ai_database"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/database"
-	"github.com/patrickmn/go-cache"
 )
 
 var _ entity.DatabaseInterface = &implementerDatabase{}
-
-var DBCache *cache.Cache = cache.New(30*time.Second, 1*time.Minute)
 
 type implementerDatabase struct {
 	entity.SdkClient
 }
 
 // CreateDatabase create database with database name. It returns error if name exist.
-func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string, option *entity.CreateDatabaseOption) (*entity.Database, error) {
+func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string, option *entity.CreateDatabaseOption) (result *entity.CreateDatabaseResult, err error) {
 	req := database.CreateReq{
 		Database: name,
 	}
 	res := new(database.CreateRes)
-	err := i.Request(ctx, req, res)
+	err = i.Request(ctx, req, res)
 	if err != nil {
 		return nil, err
 	}
-	return i.Database(name), err
+	result = new(entity.CreateDatabaseResult)
+	result.AffectedCount = res.AffectedCount
+	result.Database = *(i.Database(name))
+	return result, err
+}
+
+// CreateAIDatabase create ai database with database name. It returns error if name exist.
+func (i *implementerDatabase) CreateAIDatabase(ctx context.Context, name string, option *entity.CreateAIDatabaseOption) (result *entity.CreateAIDatabaseResult, err error) {
+	req := ai_database.CreateReq{
+		Database: name,
+	}
+	res := new(ai_database.CreateRes)
+	err = i.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+	result = new(entity.CreateAIDatabaseResult)
+	result.AffectedCount = res.AffectedCount
+	result.AIDatabase = *(i.AIDatabase(name))
+	return result, err
 }
 
 // DropDatabase drop database with database name. If database not exist, it return nil.
-func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, option *entity.DropDatabaseOption) (result *entity.DatabaseResult, err error) {
-	result = new(entity.DatabaseResult)
+func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, option *entity.DropDatabaseOption) (result *entity.DropDatabaseResult, err error) {
+	result = new(entity.DropDatabaseResult)
 
 	req := database.DropReq{Database: name}
 	res := new(database.DropRes)
 	err = i.Request(ctx, req, res)
 	if err != nil {
-		if strings.Contains(err.Error(), "not exist") {
+		if strings.Contains(err.Error(), "not exist") || strings.Contains(err.Error(), "can not find database") {
 			return result, nil
 		}
 		return
@@ -68,8 +82,25 @@ func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, opt
 	return
 }
 
+// DropAIDatabase drop ai database with database name. If database not exist, it return nil.
+func (i *implementerDatabase) DropAIDatabase(ctx context.Context, name string, option *entity.DropAIDatabaseOption) (result *entity.DropAIDatabaseResult, err error) {
+	result = new(entity.DropAIDatabaseResult)
+
+	req := ai_database.DropReq{Database: name}
+	res := new(ai_database.DropRes)
+	err = i.Request(ctx, req, res)
+	if err != nil {
+		if strings.Contains(err.Error(), "not exist") {
+			return result, nil
+		}
+		return
+	}
+	result.AffectedCount = res.AffectedCount
+	return
+}
+
 // ListDatabase get database list. It returns the database list to operate the collection.
-func (i *implementerDatabase) ListDatabase(ctx context.Context, option *entity.ListDatabaseOption) (databases []*entity.Database, err error) {
+func (i *implementerDatabase) ListDatabase(ctx context.Context, option *entity.ListDatabaseOption) (result *entity.ListDatabaseResult, err error) {
 	req := database.ListReq{}
 	res := new(database.ListRes)
 	err = i.Request(ctx, req, res)
@@ -77,64 +108,66 @@ func (i *implementerDatabase) ListDatabase(ctx context.Context, option *entity.L
 		return nil, err
 	}
 
+	result = new(entity.ListDatabaseResult)
 	for _, v := range res.Databases {
-		databases = append(databases, i.Database(v))
+		if res.Info[v].DbType == entity.AIDOCDbType {
+			db := i.AIDatabase(v)
+			db.Info.CreateTime = res.Info[v].CreateTime
+			result.AIDatabases = append(result.AIDatabases, *db)
+		} else {
+			db := i.Database(v)
+			db.Info.CreateTime = res.Info[v].CreateTime
+			db.Info.DbType = res.Info[v].DbType
+			result.Databases = append(result.Databases, *db)
+		}
 	}
-	return
+	return result, nil
 }
 
 // Database get a database interface to operate collection.  It could not send http request to vectordb.
 func (i *implementerDatabase) Database(name string) *entity.Database {
 	database := new(entity.Database)
-	collImpl := new(implementerCollection)
-	collImpl.SdkClient = i.SdkClient
-	collImpl.databaseName = name
-	database.CollectionInterface = collImpl
-
-	aliasImpl := new(implementerAlias)
-	aliasImpl.databaseName = name
-	aliasImpl.SdkClient = i.SdkClient
-	database.AliasInterface = aliasImpl
-
-	indexImpl := new(implementerIndex)
-	indexImpl.databaseName = name
-	indexImpl.SdkClient = i.SdkClient
-	database.IndexInterface = indexImpl
-
 	database.DatabaseName = name
-
 	database.Info = entity.DatabaseItem{
 		DbType: entity.BASEDbType,
 	}
-	// info, err := i.GetDatabaseInfo(context.Background(), name)
-	// if err == nil && info != nil {
-	// 	database.Info = *info
-	// }
 
+	collImpl := new(implementerCollection)
+	collImpl.SdkClient = i.SdkClient
+	collImpl.database = *database
+
+	aliasImpl := new(implementerAlias)
+	aliasImpl.database = *database
+	aliasImpl.SdkClient = i.SdkClient
+
+	indexImpl := new(implementerIndex)
+	indexImpl.database = *database
+	indexImpl.SdkClient = i.SdkClient
+
+	database.CollectionInterface = collImpl
+	database.AliasInterface = aliasImpl
+	database.IndexInterface = indexImpl
 	return database
 }
 
-func (i *implementerDatabase) GetDatabaseInfo(ctx context.Context, name string) (*entity.DatabaseItem, error) {
-	dbItem, exist := DBCache.Get(name)
-	if exist {
-		return dbItem.(*entity.DatabaseItem), nil
-	}
-	req := database.ListReq{}
-	res := new(database.ListRes)
-	err := i.Request(ctx, req, res)
-	if err != nil {
-		return nil, err
+// Database get a ai_database interface to operate collection.  It could not send http request to vectordb.
+func (i *implementerDatabase) AIDatabase(name string) *entity.AIDatabase {
+	database := new(entity.AIDatabase)
+	database.DatabaseName = name
+	database.Info = entity.DatabaseItem{
+		DbType: entity.AIDOCDbType,
 	}
 
-	fmt.Println("cache list update")
-	for dbName, dbItem := range res.Info {
-		DBCache.Set(dbName, dbItem, cache.DefaultExpiration)
-	}
+	collImpl := new(implementerAICollection)
+	collImpl.SdkClient = i.SdkClient
+	collImpl.database = *database
 
-	dbItem, exist = DBCache.Get(name)
-	if exist {
-		return dbItem.(*entity.DatabaseItem), nil
-	}
+	aliasImpl := new(implementerAIAlias)
+	aliasImpl.database = *database
+	aliasImpl.SdkClient = i.SdkClient
 
-	return nil, nil
+	database.AICollectionInterface = collImpl
+	database.AIAliasInterface = aliasImpl
+
+	return database
 }

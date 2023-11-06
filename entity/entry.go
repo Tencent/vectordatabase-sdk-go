@@ -24,22 +24,17 @@ import (
 
 type VectorDBClient struct {
 	DatabaseInterface
-	AIDatabaseInterface
 }
 
 // DatabaseInterface database api
 type DatabaseInterface interface {
 	SdkClient
-	CreateDatabase(ctx context.Context, name string, option *CreateDatabaseOption) (*Database, error)
-	DropDatabase(ctx context.Context, name string, option *DropDatabaseOption) (*DatabaseResult, error)
-	ListDatabase(ctx context.Context, option *ListDatabaseOption) (databases []*Database, err error)
-	Database(name string) *Database
-}
-
-type AIDatabaseInterface interface {
+	CreateDatabase(ctx context.Context, name string, option *CreateDatabaseOption) (*CreateDatabaseResult, error)
+	DropDatabase(ctx context.Context, name string, option *DropDatabaseOption) (*DropDatabaseResult, error)
+	ListDatabase(ctx context.Context, option *ListDatabaseOption) (result *ListDatabaseResult, err error)
 	CreateAIDatabase(ctx context.Context, name string, option *CreateAIDatabaseOption) (result *CreateAIDatabaseResult, err error)
 	DropAIDatabase(ctx context.Context, name string, option *DropAIDatabaseOption) (result *DropAIDatabaseResult, err error)
-	ListAIDatabase(ctx context.Context, option *ListAIDatabaseOption) (result *ListAIDatabaseResult, err error)
+	Database(name string) *Database
 	AIDatabase(name string) *AIDatabase
 }
 

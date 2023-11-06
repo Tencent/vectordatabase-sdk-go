@@ -34,7 +34,7 @@ type CreateRes struct {
 	Msg           string   `json:"msg,omitempty"`
 	Redirect      string   `json:"redirect,omitempty"`
 	Databases     []string `json:"databases,omitempty"`
-	AffectedCount int32    `json:"affectedCount,omitempty"`
+	AffectedCount int      `json:"affectedCount,omitempty"`
 }
 
 // DropReq drop database request

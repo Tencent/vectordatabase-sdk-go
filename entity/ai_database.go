@@ -18,12 +18,26 @@
 
 package entity
 
+import "time"
+
 // AIDatabase wrap the database parameters and collection interface to operating the ai_collection api
 type AIDatabase struct {
 	AICollectionInterface
 	AIAliasInterface
 	DatabaseName string
 	Info         DatabaseItem
+}
+
+func (d AIDatabase) IsAIDatabase() bool {
+	return d.Info.DbType == AIDOCDbType
+}
+
+func (d *AIDatabase) Debug(v bool) {
+	d.AICollectionInterface.Debug(v)
+}
+
+func (d *AIDatabase) WithTimeout(t time.Duration) {
+	d.AICollectionInterface.WithTimeout(t)
 }
 
 type CreateAIDatabaseOption struct{}

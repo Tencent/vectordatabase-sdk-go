@@ -35,20 +35,23 @@ var _ entity.AIDocumentInterface = &implementerAIDocument{}
 
 type implementerAIDocument struct {
 	entity.SdkClient
-	databaseName   string
-	collectionName string
+	database   entity.AIDatabase
+	collection entity.AICollection
 }
 
 // Query query the ai_document by ai_document ids.
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
 func (i *implementerAIDocument) Query(ctx context.Context, option *entity.QueryAIDocumentOption) (*entity.QueryAIDocumentsResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_document.QueryReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	if option != nil {
 		req.Query = &ai_document.QueryCond{
 			DocumentIds:  option.DocumentIds,
-			Filter:       option.Filter,
+			Filter:       option.Filter.Cond(),
 			Limit:        option.Limit,
 			Offset:       option.Offset,
 			OutputFields: option.OutputFields,
@@ -63,16 +66,19 @@ func (i *implementerAIDocument) Query(ctx context.Context, option *entity.QueryA
 	}
 	result.AffectedCount = len(res.Documents)
 	result.Total = int(res.Count)
-	result.Items = res.Documents
+	result.Documents = res.Documents
 	return result, nil
 }
 
 // Search search ai_document topK by vector. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
 func (i *implementerAIDocument) Search(ctx context.Context, text string, option *entity.SearchAIDocumentOption) (*entity.SearchAIDocumentResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_document.SearchReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.DatabaseName
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Search = new(ai_document.SearchCond)
 	req.Search.Content = text
@@ -103,9 +109,12 @@ func (i *implementerAIDocument) Search(ctx context.Context, text string, option 
 
 // Delete delete ai_document by ai_document ids
 func (i *implementerAIDocument) Delete(ctx context.Context, option *entity.DeleteAIDocumentOption) (result *entity.DeleteAIDocumentResult, err error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_document.DeleteReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	if option != nil {
 		req.Query = &ai_document.DeleteQueryCond{
 			DocumentIds: option.DocumentIds,
@@ -124,9 +133,12 @@ func (i *implementerAIDocument) Delete(ctx context.Context, option *entity.Delet
 }
 
 func (i *implementerAIDocument) Update(ctx context.Context, option *entity.UpdateAIDocumentOption) (*entity.UpdateAIDocumentResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	req := new(ai_document.UpdateReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	req.Query = ai_document.UpdateQueryCond{
 		DocumentIds: option.QueryIds,
 		Filter:      option.QueryFilter.Cond(),
@@ -144,6 +156,9 @@ func (i *implementerAIDocument) Update(ctx context.Context, option *entity.Updat
 }
 
 func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePath string, option *entity.GetCosTmpSecretOption) (*entity.GetCosTmpSecretResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 	fileType := getFileTypeFromFileName(localFilePath)
 	if option != nil && option.FileType != "" {
 		fileType = option.FileType
@@ -154,8 +169,8 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 	}
 
 	req := new(ai_document.UploadUrlReq)
-	req.Database = i.databaseName
-	req.Collection = i.collectionName
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 	req.FileName = filepath.Base(localFilePath)
 	req.FileType = string(fileType)
 
@@ -170,6 +185,8 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 	}
 	result := new(entity.GetCosTmpSecretResult)
 	result.CosEndpoint = res.CosEndpoint
+	result.CosBucket = res.CosBucket
+	result.CosRegion = res.CosRegion
 	result.UploadPath = res.UploadPath
 	result.TmpSecretID = res.Credentials.TmpSecretID
 	result.TmpSecretKey = res.Credentials.TmpSecretKey
@@ -181,6 +198,9 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 }
 
 func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string, option *entity.UploadAIDocumentOption) (result *entity.UploadAIDocumentResult, err error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
+	}
 
 	// localFilePath string, fileName string, fileType entity.FileType,
 	//	metaData map[string]string

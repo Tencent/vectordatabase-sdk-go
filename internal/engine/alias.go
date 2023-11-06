@@ -29,12 +29,15 @@ var _ entity.AliasInterface = &implementerAlias{}
 
 type implementerAlias struct {
 	entity.SdkClient
-	databaseName string
+	database entity.Database
 }
 
 func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option *entity.SetAliasOption) (*entity.SetAliasResult, error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(alias.SetReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Collection = collectionName
 	req.Alias = aliasName
 	res := new(alias.SetRes)
@@ -49,8 +52,11 @@ func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasNa
 }
 
 func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string, option *entity.DeleteAliasOption) (*entity.DeleteAliasResult, error) {
+	if i.database.IsAIDatabase() {
+		return nil, entity.AIDbTypeError
+	}
 	req := new(alias.DeleteReq)
-	req.Database = i.databaseName
+	req.Database = i.database.DatabaseName
 	req.Alias = aliasName
 	res := new(alias.DeleteRes)
 

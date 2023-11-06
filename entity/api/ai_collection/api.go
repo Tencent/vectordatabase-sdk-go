@@ -28,10 +28,10 @@ type CreateReq struct {
 	Database           string              `json:"database"`
 	Collection         string              `json:"collection"`
 	Description        string              `json:"description"`
-	MaxFiles           uint64              `json:"max_files"`
-	AverageFileSize    uint64              `json:"average_file_size"`
+	MaxFiles           uint64              `json:"maxFiles"`
+	AverageFileSize    uint64              `json:"averageFileSize"`
 	Language           string              `json:"language"`
-	DocumentPreprocess *DocumentPreprocess `json:"document_preprocess"`
+	DocumentPreprocess *DocumentPreprocess `json:"documentPreprocess"`
 	// DocumentIndex      *DocumentIndex      `json:"document_index"`
 	Indexes []api.IndexColumn `json:"indexes"`
 }
@@ -42,8 +42,8 @@ type CreateRes struct {
 }
 
 type DocumentPreprocess struct {
-	AppendTitleToChunk    string `json:"appendTitleToChunk"`
-	AppendKeywordsToChunk string `json:"appendKeywordsToChunk"`
+	AppendTitleToChunk    uint64 `json:"appendTitleToChunk"`
+	AppendKeywordsToChunk uint64 `json:"appendKeywordsToChunk"`
 }
 
 type DocumentIndex struct {
@@ -98,15 +98,17 @@ type TruncateRes struct {
 }
 
 type DescribeAICollectionItem struct {
-	Database           string             `json:"database"`
-	Collection         string             `json:"collection"`
-	Language           string             `json:"language"`
-	CreateTime         string             `json:"createTime"`
-	Description        string             `json:"description"`
-	FilterIndexes      []api.IndexColumn  `json:"indexes"`
-	Alias              []string           `json:"alias"`
-	AiStatus           *AiStatus          `json:"aiStatus"`
-	DocumentPreprocess DocumentPreprocess `json:"document_preprocess"`
+	Database           string              `json:"database"`
+	Collection         string              `json:"collection"`
+	Language           string              `json:"language"`
+	MaxFiles           uint64              `json:"maxFiles"`
+	AverageFileSize    uint64              `json:"averageFileSize"`
+	CreateTime         string              `json:"createTime"`
+	Description        string              `json:"description"`
+	FilterIndexes      []api.IndexColumn   `json:"indexes"`
+	Alias              []string            `json:"alias"`
+	AiStatus           *AiStatus           `json:"aiStatus"`
+	DocumentPreprocess *DocumentPreprocess `json:"document_preprocess"`
 	// DocumentIndex      DocumentIndex      `json:"document_index"`
 }
 

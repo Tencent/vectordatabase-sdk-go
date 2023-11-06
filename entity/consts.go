@@ -18,6 +18,8 @@
 
 package entity
 
+import "errors"
+
 type IndexType string
 
 const (
@@ -107,4 +109,9 @@ const (
 const (
 	BASEDbType  = "BASE"
 	AIDOCDbType = "AI_DOC"
+)
+
+var (
+	BaseDbTypeError = errors.New("This database type is base, use base database sdk")
+	AIDbTypeError   = errors.New("This database type is ai, use ai database sdk")
 )

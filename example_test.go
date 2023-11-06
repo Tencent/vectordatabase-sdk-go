@@ -30,23 +30,24 @@ import (
 
 var (
 	cli                 *entity.VectorDBClient
-	database            = "ai-db-test"
-	collectionName      = "book_segments"
-	collectionAlias     = "book_segments_alias"
-	embeddingCollection = "book_segments_em"
+	database            = "db-test-lqs"
+	collectionName      = "book_segments-lqs"
+	collectionAlias     = "book_segments_alias-lqs"
+	embeddingCollection = "book_segments_em-lqs"
 )
 
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "RPo223wN2yXyUq16dmHcGyzXHaYfWCZWNMGwBC01", nil)
+	// cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "VrxSDKKAzcHxULq7wDxZYfkPoggbYf8JBbtfCLiG", &entity.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "RPo223wN2yXyUq16dmHcGyzXHaYfWCZWNMGwBC01", &entity.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
 }
 
 func TestClear(t *testing.T) {
-	_, err := cli.DropDatabase(context.Background(), "book", nil)
+	_, err := cli.DropDatabase(context.Background(), database, nil)
 	printErr(err)
 }
 
@@ -77,8 +78,8 @@ func TestCreateDatabase(t *testing.T) {
 	dbList, err := cli.ListDatabase(context.Background(), nil)
 	printErr(err)
 
-	for _, db := range dbList {
-		t.Logf("database: %s", db.DatabaseName)
+	for _, db := range dbList.Databases {
+		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
 	}
 }
 
@@ -206,7 +207,8 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	}
 
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(context.Background(), embeddingCollection, 3, 2, "desription doc", index, option)
+	db.Debug(true)
+	_, err := db.CreateCollection(context.Background(), embeddingCollection, 1, 1, "desription doc", index, option)
 	printErr(err)
 
 	col, err := db.DescribeCollection(context.Background(), embeddingCollection, nil)
