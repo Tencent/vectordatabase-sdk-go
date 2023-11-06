@@ -25,7 +25,7 @@ import (
 )
 
 // New
-func NewClient(url, username, key string, option *entity.ClientOption) (entity.VectorDBClient, error) {
+func NewClient(url, username, key string, option *entity.ClientOption) (*entity.VectorDBClient, error) {
 	sdkCli, err := client.NewClient(url, username, key, option)
 	if err != nil {
 		return nil, err

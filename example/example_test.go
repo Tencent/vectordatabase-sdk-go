@@ -16,7 +16,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package main
+package example
 
 import (
 	"context"
@@ -29,8 +29,8 @@ import (
 )
 
 var (
-	cli                 entity.VectorDBClient
-	database            = "book"
+	cli                 *entity.VectorDBClient
+	database            = "db-test"
 	collectionName      = "book_segments"
 	collectionAlias     = "book_segments_alias"
 	embeddingCollection = "book_segments_em"
@@ -39,14 +39,14 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("http://9.134.243.196:8100", "root", "12345", nil)
+	cli, err = tcvectordb.NewClient("", "root", "", &entity.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
 }
 
 func TestClear(t *testing.T) {
-	_, err := cli.DropDatabase(context.Background(), "book", nil)
+	_, err := cli.DropDatabase(context.Background(), database, nil)
 	printErr(err)
 }
 
@@ -77,8 +77,8 @@ func TestCreateDatabase(t *testing.T) {
 	dbList, err := cli.ListDatabase(context.Background(), nil)
 	printErr(err)
 
-	for _, db := range dbList {
-		t.Logf("database: %s", db.DatabaseName)
+	for _, db := range dbList.Databases {
+		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
 	}
 }
 
@@ -135,13 +135,13 @@ func TestCreateCollection(t *testing.T) {
 	// 第二步：创建 Collection
 	// 创建collection耗时较长，需要调整客户端的timeout
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(context.Background(), collectionName, 3, 2, "test collection", index, nil)
+	_, err := db.CreateCollection(context.Background(), collectionName, 1, 1, "test collection", index, nil)
 	printErr(err)
 
 	// 列出所有 Collection
-	colList, err := db.ListCollection(context.Background(), nil)
+	result, err := db.ListCollection(context.Background(), nil)
 	printErr(err)
-	for _, col := range colList {
+	for _, col := range result.Collections {
 		t.Logf("%+v", col)
 	}
 
@@ -206,7 +206,8 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	}
 
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(context.Background(), embeddingCollection, 3, 2, "desription doc", index, option)
+	db.Debug(true)
+	_, err := db.CreateCollection(context.Background(), embeddingCollection, 1, 1, "desription doc", index, option)
 	printErr(err)
 
 	col, err := db.DescribeCollection(context.Background(), embeddingCollection, nil)
@@ -290,10 +291,10 @@ func TestQuery(t *testing.T) {
 		Offset:         1,
 	}
 	col.Debug(true)
-	docs, result, err := col.Query(context.Background(), []string{"0001", "0002", "0003", "0004", "0005"}, option)
+	result, err := col.Query(context.Background(), []string{"0001", "0002", "0003", "0004", "0005"}, option)
 	printErr(err)
 	t.Logf("total doc: %d", result.Total)
-	for _, doc := range docs {
+	for _, doc := range result.Documents {
 		t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
 	}
 }
@@ -319,7 +320,7 @@ func TestSearch(t *testing.T) {
 	})
 	printErr(err)
 	t.Log("SearchById-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
@@ -342,7 +343,7 @@ func TestSearch(t *testing.T) {
 	})
 	printErr(err)
 	t.Logf("search by vector-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
@@ -366,9 +367,9 @@ func TestUpdateAndDelete(t *testing.T) {
 	})
 	printErr(err)
 	t.Logf("affect count: %d", result.AffectedCount)
-	docs, _, err := col.Query(context.Background(), []string{"0003"}, nil)
+	docs, err := col.Query(context.Background(), []string{"0003"}, nil)
 	printErr(err)
-	for _, doc := range docs {
+	for _, doc := range docs.Documents {
 		t.Logf("query document is: %+v", doc.Fields)
 	}
 
@@ -456,15 +457,16 @@ func TestQueryEmbedding(t *testing.T) {
 
 	option := &entity.QueryDocumentOption{
 		Filter:         entity.NewFilter(`bookName="三国演义"`),
-		OutputFields:   []string{"id", "bookName"},
+		OutputFields:   []string{"id", "bookName", "segment"},
 		RetrieveVector: false,
 		Limit:          2,
 		Offset:         1,
 	}
-	docs, result, err := col.Query(context.Background(), []string{"0001", "0002", "0003"}, option)
+	col.Debug(true)
+	docs, err := col.Query(context.Background(), []string{"0001", "0002", "0003"}, option)
 	printErr(err)
-	t.Logf("total doc: %d", result.Total)
-	for _, doc := range docs {
+	t.Logf("total doc: %d", docs.Total)
+	for _, doc := range docs.Documents {
 		t.Logf("%+v", doc)
 	}
 }
@@ -480,7 +482,7 @@ func TestSearchEmbedding(t *testing.T) {
 	})
 	printErr(err)
 	t.Log("SearchById-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
@@ -500,7 +502,7 @@ func TestSearchEmbedding(t *testing.T) {
 	})
 	printErr(err)
 	t.Log("searchByText-----------------")
-	for i, docs := range searchRes {
+	for i, docs := range searchRes.Documents {
 		t.Logf("doc %d result: ", i)
 		for _, doc := range docs {
 			t.Logf("id: %s, vector: %v, field: %v", doc.Id, doc.Vector, doc.Fields)
@@ -512,18 +514,4 @@ func printErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func TestUploadFile(t *testing.T) {
-	defer cli.Close()
-	col := cli.Database("dbtest1").Collection("col1")
-	cli.Debug(true)
-
-	err := col.Upload(context.Background(), "./test.md", &entity.UploadDocumentOption{
-		FileType: "", MetaData: map[string]string{
-			"fileName":   "test.md",
-			"author":     "sam",
-			"uploadTime": time.Now().Format("2023-09-04 12:00:13")},
-	})
-	printErr(err)
 }

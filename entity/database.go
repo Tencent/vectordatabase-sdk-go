@@ -28,6 +28,16 @@ type Database struct {
 	AliasInterface
 	IndexInterface
 	DatabaseName string
+	Info         DatabaseItem
+}
+
+func (d Database) IsAIDatabase() bool {
+	return d.Info.DbType == AIDOCDbType
+}
+
+type DatabaseItem struct {
+	CreateTime string `json:"createTime,omitempty"`
+	DbType     string `json:"dbType,omitempty"`
 }
 
 func (d *Database) Debug(v bool) {
@@ -38,12 +48,22 @@ func (d *Database) WithTimeout(t time.Duration) {
 	d.CollectionInterface.WithTimeout(t)
 }
 
-type DatabaseResult struct {
+type CreateDatabaseOption struct{}
+
+type CreateDatabaseResult struct {
+	Database
 	AffectedCount int
 }
 
-type CreateDatabaseOption struct{}
-
 type DropDatabaseOption struct{}
 
+type DropDatabaseResult struct {
+	AffectedCount int
+}
+
 type ListDatabaseOption struct{}
+
+type ListDatabaseResult struct {
+	Databases   []Database
+	AIDatabases []AIDatabase
+}

@@ -33,6 +33,10 @@ type UpsertDocumentOption struct {
 	BuildIndex *bool
 }
 
+type UpsertDocumentResult struct {
+	AffectedCount int
+}
+
 type QueryDocumentOption struct {
 	Filter         *Filter
 	RetrieveVector bool
@@ -41,12 +45,22 @@ type QueryDocumentOption struct {
 	Limit          int64
 }
 
+type QueryDocumentResult struct {
+	Documents     []Document
+	AffectedCount int
+	Total         uint64
+}
+
 type SearchDocumentOption struct {
 	Filter         *Filter
 	Params         *SearchDocParams
 	RetrieveVector bool
 	OutputFields   []string
 	Limit          int64
+}
+
+type SearchDocumentResult struct {
+	Documents [][]Document
 }
 
 type SearchDocParams struct {
@@ -60,6 +74,10 @@ type DeleteDocumentOption struct {
 	Filter      *Filter
 }
 
+type DeleteDocumentResult struct {
+	AffectedCount int
+}
+
 type UpdateDocumentOption struct {
 	QueryIds     []string
 	QueryFilter  *Filter
@@ -67,9 +85,8 @@ type UpdateDocumentOption struct {
 	UpdateFields map[string]Field
 }
 
-type UploadDocumentOption struct {
-	FileType FileType
-	MetaData map[string]string
+type UpdateDocumentResult struct {
+	AffectedCount int
 }
 
 type Document struct {
@@ -81,7 +98,7 @@ type Document struct {
 }
 
 type Field struct {
-	Val interface{}
+	Val interface{} `json:"val,omitempty"`
 }
 
 func (f Field) String() string {
@@ -116,4 +133,16 @@ func (f Field) Float() float64 {
 		return reflect.ValueOf(v).Float()
 	}
 	return 0
+}
+
+func (f Field) Type() FieldType {
+	switch f.Val.(type) {
+	case int, int8, int16, int32, int64:
+		return Uint64
+	case uint, uint8, uint16, uint32, uint64:
+		return Uint64
+	case string:
+		return String
+	}
+	return ""
 }

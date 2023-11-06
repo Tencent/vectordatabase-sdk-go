@@ -16,21 +16,20 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package index
+package engine
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
+import (
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/internal/client"
+)
 
-type RebuildReq struct {
-	api.Meta          `path:"/index/rebuild" tags:"Index" method:"Post" summary:"重建整个collection的所有索引"`
-	Database          string `json:"database,omitempty"`
-	Collection        string `json:"collection,omitempty"`
-	DropBeforeRebuild bool   `json:"dropBeforeRebuild,omitempty"`
-	Throttle          int32  `json:"throttle,omitempty"`
-	DisableTrain      bool   `json:"disable_train,omitempty"`
-	ForceRebuild      bool   `json:"force_rebuild,omitempty"`
-}
+// VectorDB new a vectordbClient interface
+func VectorDB(sdkClient *client.Client) *entity.VectorDBClient {
+	client := new(entity.VectorDBClient)
 
-type RebuildRes struct {
-	api.CommonRes
-	TaskIds []string `json:"task_ids,omitempty"`
+	databaseImpl := new(implementerDatabase)
+	databaseImpl.SdkClient = sdkClient
+
+	client.DatabaseInterface = databaseImpl
+	return client
 }

@@ -18,16 +18,12 @@
 
 package entity
 
-type AliasResult struct {
+type SetAliasOption struct{}
+type SetAliasResult struct {
 	AffectedCount int
-	Collection    string
-	Alias         []string
 }
 
-type SetAliasOption struct{}
-
 type DeleteAliasOption struct{}
-
-type DescribeAliasOption struct{}
-
-type ListAliasOption struct{}
+type DeleteAliasResult struct {
+	AffectedCount int
+}

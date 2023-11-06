@@ -22,27 +22,27 @@ import (
 	"context"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/alias"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/ai_alias"
 )
 
-var _ entity.AliasInterface = &implementerAlias{}
+var _ entity.AIAliasInterface = &implementerAIAlias{}
 
-type implementerAlias struct {
+type implementerAIAlias struct {
 	entity.SdkClient
-	database entity.Database
+	database entity.AIDatabase
 }
 
-func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option *entity.SetAliasOption) (*entity.SetAliasResult, error) {
-	if i.database.IsAIDatabase() {
-		return nil, entity.AIDbTypeError
+func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option *entity.SetAIAliasOption) (*entity.SetAIAliasResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
 	}
-	req := new(alias.SetReq)
+	req := new(ai_alias.SetReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = collectionName
 	req.Alias = aliasName
-	res := new(alias.SetRes)
+	res := new(ai_alias.SetRes)
 
-	result := new(entity.SetAliasResult)
+	result := new(entity.SetAIAliasResult)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
 		return result, err
@@ -51,16 +51,16 @@ func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasNa
 	return result, nil
 }
 
-func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string, option *entity.DeleteAliasOption) (*entity.DeleteAliasResult, error) {
-	if i.database.IsAIDatabase() {
-		return nil, entity.AIDbTypeError
+func (i *implementerAIAlias) DeleteAlias(ctx context.Context, aliasName string, option *entity.DeleteAIAliasOption) (*entity.DeleteAIAliasResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, entity.BaseDbTypeError
 	}
-	req := new(alias.DeleteReq)
+	req := new(ai_alias.DeleteReq)
 	req.Database = i.database.DatabaseName
 	req.Alias = aliasName
-	res := new(alias.DeleteRes)
+	res := new(ai_alias.DeleteRes)
 
-	result := new(entity.DeleteAliasResult)
+	result := new(entity.DeleteAIAliasResult)
 	err := i.Request(ctx, req, &res)
 	if err != nil {
 		return result, err

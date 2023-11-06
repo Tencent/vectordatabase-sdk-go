@@ -16,21 +16,45 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package index
+package entity
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api"
+import "time"
 
-type RebuildReq struct {
-	api.Meta          `path:"/index/rebuild" tags:"Index" method:"Post" summary:"重建整个collection的所有索引"`
-	Database          string `json:"database,omitempty"`
-	Collection        string `json:"collection,omitempty"`
-	DropBeforeRebuild bool   `json:"dropBeforeRebuild,omitempty"`
-	Throttle          int32  `json:"throttle,omitempty"`
-	DisableTrain      bool   `json:"disable_train,omitempty"`
-	ForceRebuild      bool   `json:"force_rebuild,omitempty"`
+// AIDatabase wrap the database parameters and collection interface to operating the ai_collection api
+type AIDatabase struct {
+	AICollectionInterface
+	AIAliasInterface
+	DatabaseName string
+	Info         DatabaseItem
 }
 
-type RebuildRes struct {
-	api.CommonRes
-	TaskIds []string `json:"task_ids,omitempty"`
+func (d AIDatabase) IsAIDatabase() bool {
+	return d.Info.DbType == AIDOCDbType
+}
+
+func (d *AIDatabase) Debug(v bool) {
+	d.AICollectionInterface.Debug(v)
+}
+
+func (d *AIDatabase) WithTimeout(t time.Duration) {
+	d.AICollectionInterface.WithTimeout(t)
+}
+
+type CreateAIDatabaseOption struct{}
+
+type CreateAIDatabaseResult struct {
+	AIDatabase
+	AffectedCount int32
+}
+
+type DropAIDatabaseOption struct{}
+
+type DropAIDatabaseResult struct {
+	AffectedCount int32
+}
+
+type ListAIDatabaseOption struct{}
+
+type ListAIDatabaseResult struct {
+	Databases []AIDatabase
 }
