@@ -49,12 +49,23 @@ func (i *implementerAIDocument) Query(ctx context.Context, option *entity.QueryA
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
 	if option != nil {
+		filter := option.Filter
+		if filter == nil {
+			filter = entity.NewFilter("")
+		}
+		if option.FileName != "" {
+			filter.And(fmt.Sprintf(`_file_name="%s"`, option.FileName))
+		}
+
 		req.Query = &ai_document.QueryCond{
 			DocumentIds:  option.DocumentIds,
-			Filter:       option.Filter.Cond(),
+			Filter:       filter.Cond(),
 			Limit:        option.Limit,
 			Offset:       option.Offset,
 			OutputFields: option.OutputFields,
+		}
+		if req.Query.Limit == 0 {
+			req.Query.Limit = 1
 		}
 	}
 
@@ -78,13 +89,21 @@ func (i *implementerAIDocument) Search(ctx context.Context, text string, option 
 	}
 	req := new(ai_document.SearchReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = i.collection.DatabaseName
+	req.Collection = i.collection.CollectionName
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Search = new(ai_document.SearchCond)
 	req.Search.Content = text
 
 	if option != nil {
-		req.Search.Filter = option.Filter.Cond()
+		filter := option.Filter
+		if filter == nil {
+			filter = entity.NewFilter("")
+		}
+
+		if option.FileName != "" {
+			filter.And(fmt.Sprintf(`_file_name="%s"`, option.FileName))
+		}
+		req.Search.Filter = filter.Cond()
 		req.Search.Options = ai_document.SearchOption{
 			ResultType:  option.ResultType,
 			ChunkExpand: option.ChunkExpand,
@@ -95,6 +114,8 @@ func (i *implementerAIDocument) Search(ctx context.Context, text string, option 
 			// 	WordBm25:        option.Weights.WordBm25,
 			// },
 		}
+		req.Search.OutputFields = option.OutputFields
+		req.Search.Limit = option.Limit
 	}
 
 	res := new(ai_document.SearchRes)
@@ -116,9 +137,16 @@ func (i *implementerAIDocument) Delete(ctx context.Context, option *entity.Delet
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
 	if option != nil {
+		filter := option.Filter
+		if filter == nil {
+			filter = entity.NewFilter("")
+		}
+		if option.FileName != "" {
+			filter.And(fmt.Sprintf(`_file_name="%s"`, option.FileName))
+		}
 		req.Query = &ai_document.DeleteQueryCond{
 			DocumentIds: option.DocumentIds,
-			Filter:      option.Filter.Cond(),
+			Filter:      filter.Cond(),
 		}
 	}
 
@@ -139,11 +167,21 @@ func (i *implementerAIDocument) Update(ctx context.Context, option *entity.Updat
 	req := new(ai_document.UpdateReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
-	req.Query = ai_document.UpdateQueryCond{
-		DocumentIds: option.QueryIds,
-		Filter:      option.QueryFilter.Cond(),
+
+	if option != nil {
+		filter := option.QueryFilter
+		if filter == nil {
+			filter = entity.NewFilter("")
+		}
+		if option.FileName != "" {
+			filter = filter.And(fmt.Sprintf(`_file_name="%s"`, option.FileName))
+		}
+		req.Query = ai_document.UpdateQueryCond{
+			DocumentIds: option.QueryIds,
+			Filter:      filter.Cond(),
+		}
+		req.Update = option.UpdateFields
 	}
-	req.Update = option.UpdateFields
 
 	res := new(ai_document.UpdateRes)
 	result := new(entity.UpdateAIDocumentResult)
@@ -264,8 +302,14 @@ func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string
 		return nil, err
 	}
 	result = new(entity.UploadAIDocumentResult)
-	result.FileId = res.FileId
 	result.CosEndpoint = res.CosEndpoint
+	result.CosRegion = res.CosRegion
+	result.CosBucket = res.CosBucket
 	result.UploadPath = res.UploadPath
+	result.TmpSecretID = res.TmpSecretID
+	result.TmpSecretKey = res.TmpSecretKey
+	result.SessionToken = res.SessionToken
+	result.MaxSupportContentLength = res.MaxSupportContentLength
+	result.FileId = res.FileId
 	return result, nil
 }

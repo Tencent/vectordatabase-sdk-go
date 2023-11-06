@@ -28,7 +28,7 @@ type CreateReq struct {
 	Database           string              `json:"database"`
 	Collection         string              `json:"collection"`
 	Description        string              `json:"description"`
-	MaxFiles           uint64              `json:"maxFiles"`
+	ExpectedFileNum    uint64              `json:"expectedFileNum"`
 	AverageFileSize    uint64              `json:"averageFileSize"`
 	Language           string              `json:"language"`
 	DocumentPreprocess *DocumentPreprocess `json:"documentPreprocess"`
@@ -42,8 +42,8 @@ type CreateRes struct {
 }
 
 type DocumentPreprocess struct {
-	AppendTitleToChunk    uint64 `json:"appendTitleToChunk"`
-	AppendKeywordsToChunk uint64 `json:"appendKeywordsToChunk"`
+	AppendTitleToChunk    string `json:"appendTitleToChunk"`
+	AppendKeywordsToChunk string `json:"appendKeywordsToChunk"`
 }
 
 type DocumentIndex struct {
@@ -101,14 +101,14 @@ type DescribeAICollectionItem struct {
 	Database           string              `json:"database"`
 	Collection         string              `json:"collection"`
 	Language           string              `json:"language"`
-	MaxFiles           uint64              `json:"maxFiles"`
+	ExpectedFileNum    uint64              `json:"expectedFileNum"`
 	AverageFileSize    uint64              `json:"averageFileSize"`
 	CreateTime         string              `json:"createTime"`
 	Description        string              `json:"description"`
 	FilterIndexes      []api.IndexColumn   `json:"indexes"`
 	Alias              []string            `json:"alias"`
 	AiStatus           *AiStatus           `json:"aiStatus"`
-	DocumentPreprocess *DocumentPreprocess `json:"document_preprocess"`
+	DocumentPreprocess *DocumentPreprocess `json:"documentPreprocess"`
 	// DocumentIndex      DocumentIndex      `json:"document_index"`
 }
 

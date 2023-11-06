@@ -16,7 +16,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package main
+package example
 
 import (
 	"context"
@@ -30,17 +30,16 @@ import (
 
 var (
 	cli                 *entity.VectorDBClient
-	database            = "db-test-lqs"
-	collectionName      = "book_segments-lqs"
-	collectionAlias     = "book_segments_alias-lqs"
-	embeddingCollection = "book_segments_em-lqs"
+	database            = "db-test"
+	collectionName      = "book_segments"
+	collectionAlias     = "book_segments_alias"
+	embeddingCollection = "book_segments_em"
 )
 
 func init() {
 	// 初始化客户端
 	var err error
-	// cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "VrxSDKKAzcHxULq7wDxZYfkPoggbYf8JBbtfCLiG", &entity.ClientOption{Timeout: 10 * time.Second})
-	cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "RPo223wN2yXyUq16dmHcGyzXHaYfWCZWNMGwBC01", &entity.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewClient("", "root", "", &entity.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}

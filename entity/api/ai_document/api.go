@@ -31,11 +31,11 @@ type QueryReq struct {
 }
 
 type QueryCond struct {
-	DocumentIds  []string `json:"documentIds"`
-	Filter       string   `json:"filter"`
-	Limit        int64    `json:"limit"`
-	Offset       int64    `json:"offset"`
-	OutputFields []string `json:"outputFields"`
+	DocumentIds  []string `json:"documentIds,omitempty"`
+	Filter       string   `json:"filter,omitempty"`
+	Limit        int64    `json:"limit,omitempty"`
+	Offset       int64    `json:"offset,omitempty"`
+	OutputFields []string `json:"outputFields,omitempty"`
 }
 
 // QueryRes query document response
@@ -65,8 +65,8 @@ type SearchCond struct {
 	Content      string       `json:"content"`
 	Filter       string       `json:"filter"`
 	Options      SearchOption `json:"options"`
-	OutputFields []string     `json:"outputfields"` // 输出字段
-	Limit        int64        `json:"limit"`        // 结果数量
+	OutputFields []string     `json:"outputfields"`    // 输出字段
+	Limit        int64        `json:"limit,omitempty"` // 结果数量
 }
 
 type SearchOption struct {

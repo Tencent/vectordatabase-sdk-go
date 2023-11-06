@@ -11,11 +11,13 @@ type QueryDocument struct {
 	Id             string                 `json:"id"`
 	ContentLength  uint64                 `json:"_content_length"`
 	FileName       string                 `json:"_file_name"`
-	FileKeywards   string                 `json:"_file_keywards"`
+	FileKeywords   string                 `json:"_file_keywords"`
+	FileType       string                 `json:"_file_type"`
+	TextPrefix     string                 `json:"_text_prefix"`
 	Indexed        uint64                 `json:"_indexed"`
 	IndexedStatus  uint64                 `json:"_indexed_status"`
-	CreateTime     uint64                 `json:"_create_time"`
-	LastUpdateTime uint64                 `json:"_last_update_time"`
+	CreateTime     int64                  `json:"_create_time"`
+	LastUpdateTime int64                  `json:"_last_update_time"`
 	TextLength     uint64                 `json:"_text_length"`
 	FileMetadata   string                 `json:"_file_metadata"`
 	ScalarFields   map[string]interface{} `json:"-"`
@@ -93,7 +95,7 @@ type SourceFile struct {
 	Id           string                 `json:"id"`
 	FileName     string                 `json:"_file_name"`
 	FileMetadata string                 `json:"_file_metadata"`
-	CreateTime   string                 `json:"_create_time"`
+	CreateTime   int64                  `json:"_create_time"`
 	ScalarFields map[string]interface{} `json:"-"`
 }
 

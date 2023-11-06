@@ -63,7 +63,7 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 
 		// defaultEnableWordsSimilarity := true
 		if option.AiConfig != nil {
-			req.MaxFiles = option.AiConfig.MaxFiles
+			req.ExpectedFileNum = option.AiConfig.ExpectedFileNum
 			req.AverageFileSize = option.AiConfig.AverageFileSize
 			req.Language = string(option.AiConfig.Language)
 			if option.AiConfig.DocumentPreprocess != nil {
@@ -209,7 +209,7 @@ func (i *implementerAICollection) toCollection(item *ai_collection.DescribeAICol
 	coll.CreateTime, _ = time.Parse("2006-01-02 15:04:05", item.CreateTime)
 
 	coll.AiConfig = entity.AiConfig{
-		MaxFiles:           item.MaxFiles,
+		ExpectedFileNum:    item.ExpectedFileNum,
 		AverageFileSize:    item.AverageFileSize,
 		Language:           entity.Language(item.Language),
 		DocumentPreprocess: item.DocumentPreprocess,

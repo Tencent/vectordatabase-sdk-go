@@ -33,7 +33,7 @@ type CreateAICollectionResult struct {
 }
 
 type AiConfig struct {
-	MaxFiles           uint64                            `json:"maxFiles,omitempty"`
+	ExpectedFileNum    uint64                            `json:"expectedFileNum,omitempty"`
 	AverageFileSize    uint64                            `json:"averageFileSize,omitempty"`
 	Language           Language                          `json:"language,omitempty"`
 	DocumentPreprocess *ai_collection.DocumentPreprocess `json:"documentPreprocess,omitempty"`

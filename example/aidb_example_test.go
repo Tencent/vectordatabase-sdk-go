@@ -16,7 +16,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package main
+package example
 
 import (
 	"context"
@@ -27,8 +27,8 @@ import (
 )
 
 var (
-	aiDatabase       = "ai-db-test-lqs"
-	aiCollectionName = "user_collection-lqs"
+	aiDatabase       = "ai-db-test"
+	aiCollectionName = "user_collection"
 )
 
 func TestCreateAIDatabase(t *testing.T) {
@@ -70,13 +70,8 @@ func TestCreateCollectionInAIDB(t *testing.T) {
 
 	index := []entity.FilterIndex{
 		{
-			FieldName: "bookName",
+			FieldName: "author",
 			FieldType: entity.String,
-			IndexType: entity.FILTER,
-		},
-		{
-			FieldName: "wordNum",
-			FieldType: entity.Uint64,
 			IndexType: entity.FILTER,
 		},
 	}
@@ -89,7 +84,7 @@ func TestCreateCollectionInAIDB(t *testing.T) {
 		Description: "test ai collection",
 		Indexes:     index,
 		AiConfig: &entity.AiConfig{
-			MaxFiles:        1000,
+			ExpectedFileNum: 1000,
 			AverageFileSize: 1 << 20,
 			Language:        entity.LanguageChinese,
 		},
@@ -159,13 +154,12 @@ func TestGetCosSecret(t *testing.T) {
 func TestUploadFile(t *testing.T) {
 	defer cli.Close()
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
-	cli.Debug(true)
 
 	metaData := map[string]entity.Field{
-		"fileName": {Val: "职业规划.md"},
+		"fileName": {Val: "README.md"},
 		"author":   {Val: "sam"},
 		"fileKey":  {Val: 1024}}
-	result, err := col.Upload(context.Background(), "./职业规划.md", &entity.UploadAIDocumentOption{
+	result, err := col.Upload(context.Background(), "../README.md", &entity.UploadAIDocumentOption{
 		FileType: "", MetaData: metaData})
 	printErr(err)
 	t.Logf("%+v", result)
@@ -180,7 +174,7 @@ func TestAIQuery(t *testing.T) {
 
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
 	option := &entity.QueryAIDocumentOption{
-		Filter:       nil,
+		// Filter:       entity.NewFilter(`_file_name="职业规划.md"`),
 		OutputFields: []string{},
 		Limit:        3,
 		Offset:       0,
@@ -206,10 +200,11 @@ func TestAISearch(t *testing.T) {
 
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
 
-	filter := entity.NewFilter(`bookName="三国演义"`)
-	searchRes, err := col.Search(context.Background(), "文本语句", &entity.SearchAIDocumentOption{
-		Filter: filter, // 过滤获取到结果
-		Limit:  3,      // 指定 Top K 的 K 值
+	col.Debug(true)
+	searchRes, err := col.Search(context.Background(), "文章讲的什么", &entity.SearchAIDocumentOption{
+		// FileName: "README.md",
+		Filter: nil, // 过滤获取到结果
+		// Limit:  3,   // 指定 Top K 的 K 值
 	})
 	printErr(err)
 	for _, doc := range searchRes.Documents {
@@ -217,35 +212,53 @@ func TestAISearch(t *testing.T) {
 	}
 }
 
-func TestAIUpdateAndDelete(t *testing.T) {
+func TestAIUpdate(t *testing.T) {
+	fileName := "职业规划.md"
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
-	fileId := ""
+	col.Debug(true)
 	// update
 	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
 
 	// filter 限制仅会更新 id = "0003"
 	result, err := col.Update(context.Background(), &entity.UpdateAIDocumentOption{
-		QueryIds: []string{fileId},
+		FileName: fileName,
 		UpdateFields: map[string]interface{}{
-			"page": 24,
+			"author": "jack",
 		},
 	})
 	printErr(err)
 	t.Logf("affect count: %d", result.AffectedCount)
 	docs, err := col.Query(context.Background(), &entity.QueryAIDocumentOption{
-		DocumentIds: []string{fileId},
+		FileName: fileName,
+		Limit:    1,
 	})
 	printErr(err)
 	for _, doc := range docs.Documents {
 		t.Logf("query document is: %+v", doc)
 	}
+}
 
+func TestAIDelete(t *testing.T) {
+	fileName := "README.md"
+	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
+	col.Debug(true)
 	// delete
 	// 1. delete 提供基于 [主键查询] 和 [Filter 过滤] 的数据删除能力
 	// 2. 删除功能会受限于 collection 的索引类型，部分索引类型不支持删除操作
 
 	// filter 限制只会删除 id="0001" 成功
-	col.Delete(context.Background(), &entity.DeleteAIDocumentOption{
-		DocumentIds: []string{fileId},
+	result, err := col.Delete(context.Background(), &entity.DeleteAIDocumentOption{
+		// DocumentIds: []string{fileId},
+		FileName: fileName,
 	})
+	printErr(err)
+	t.Logf("%v", result)
+}
+
+func TestAITruncate(t *testing.T) {
+	db := cli.AIDatabase(aiDatabase)
+	db.Debug(true)
+	result, err := db.TruncateCollection(context.Background(), aiCollectionName, nil)
+	printErr(err)
+	t.Logf("result: %+v", result)
 }

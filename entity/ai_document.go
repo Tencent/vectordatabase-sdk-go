@@ -3,6 +3,7 @@ package entity
 import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/ai_document"
 
 type QueryAIDocumentOption struct {
+	FileName     string
 	DocumentIds  []string
 	Filter       *Filter
 	Limit        int64
@@ -17,6 +18,7 @@ type QueryAIDocumentsResult struct {
 }
 
 type SearchAIDocumentOption struct {
+	FileName    string
 	Filter      *Filter
 	ResultType  string
 	ChunkExpand []int
@@ -37,6 +39,7 @@ type SearchAIDocumentResult struct {
 }
 
 type DeleteAIDocumentOption struct {
+	FileName    string
 	DocumentIds []string
 	Filter      *Filter
 }
@@ -46,8 +49,9 @@ type DeleteAIDocumentResult struct {
 }
 
 type UpdateAIDocumentOption struct {
+	FileName     string
 	QueryIds     []string
-	QueryFilter  Filter
+	QueryFilter  *Filter
 	UpdateFields map[string]interface{}
 }
 
@@ -77,7 +81,13 @@ type UploadAIDocumentOption struct {
 }
 
 type UploadAIDocumentResult struct {
-	CosEndpoint string
-	UploadPath  string
-	FileId      string
+	CosEndpoint             string
+	CosRegion               string `json:"cosRegion,omitempty"`
+	CosBucket               string `json:"cosBucket,omitempty"`
+	UploadPath              string
+	TmpSecretID             string `json:"tmpSecretId"`
+	TmpSecretKey            string `json:"tmpSecretKey"`
+	SessionToken            string `json:"token"`
+	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
+	FileId                  string
 }
