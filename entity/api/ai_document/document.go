@@ -8,19 +8,24 @@ import (
 
 // Document document struct for document api
 type QueryDocument struct {
-	Id             string                 `json:"id"`
-	ContentLength  uint64                 `json:"_content_length"`
-	FileName       string                 `json:"_file_name"`
-	FileKeywords   string                 `json:"_file_keywords"`
-	FileType       string                 `json:"_file_type"`
-	TextPrefix     string                 `json:"_text_prefix"`
-	Indexed        uint64                 `json:"_indexed"`
-	IndexedStatus  uint64                 `json:"_indexed_status"`
-	CreateTime     int64                  `json:"_create_time"`
-	LastUpdateTime int64                  `json:"_last_update_time"`
-	TextLength     uint64                 `json:"_text_length"`
-	FileMetadata   string                 `json:"_file_metadata"`
-	ScalarFields   map[string]interface{} `json:"-"`
+	Id            string                 `json:"id"`
+	ContentLength uint64                 `json:"_content_length"`
+	FileName      string                 `json:"_file_name"`
+	TextPrefix    string                 `json:"_text_prefix"`
+	FileInfo      map[string]interface{} `json:"_file_info"`
+	ScalarFields  map[string]interface{} `json:"-"`
+}
+
+// Deprecated
+type QueryDocumentFileInfo struct {
+	FileSize       uint64 `json:"_file_size"`
+	CreateTime     string `json:"_create_time"`
+	FileKeywords   string `json:"_file_keywords"`
+	FileType       string `json:"_file_type"`
+	Indexed        uint64 `json:"_indexed"`
+	IndexedStatus  uint64 `json:"_indexed_status"`
+	LastUpdateTime int64  `json:"_last_update_time"`
+	TextLength     uint64 `json:"_text_length"`
 }
 
 func (d QueryDocument) MarshalJSON() ([]byte, error) {
@@ -94,8 +99,7 @@ type Chunk struct {
 type SourceFile struct {
 	Id           string                 `json:"id"`
 	FileName     string                 `json:"_file_name"`
-	FileMetadata string                 `json:"_file_metadata"`
-	CreateTime   int64                  `json:"_create_time"`
+	FileInfo     map[string]interface{} `json:"_file_info"`
 	ScalarFields map[string]interface{} `json:"-"`
 }
 
