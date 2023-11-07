@@ -63,7 +63,7 @@ var defaultOption = entity.ClientOption{
 // NewClient new http client with url, username and api key
 func NewClient(url, username, key string, option *entity.ClientOption) (*Client, error) {
 	if !strings.HasPrefix(url, "http") {
-		return nil, errors.Errorf("invailid url param with: %s", url)
+		return nil, errors.Errorf("invalid url param with: %s", url)
 	}
 	if username == "" || key == "" {
 		return nil, errors.New("username or key is empty")
@@ -158,7 +158,7 @@ func (c *Client) handleResponse(ctx context.Context, res *http.Response, out int
 	}
 
 	if commenRes.Code != 0 {
-		return errors.Errorf("server internal error, code: %d, message: %s", commenRes.Code, commenRes.Msg)
+		return errors.Errorf("code: %d, message: %s", commenRes.Code, commenRes.Msg)
 	}
 
 	if err := json.Unmarshal(responseBytes, &out); err != nil {
