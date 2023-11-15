@@ -32,7 +32,7 @@ type Database struct {
 }
 
 func (d Database) IsAIDatabase() bool {
-	return d.Info.DbType == AIDOCDbType
+	return d.Info.DbType == AIDOCDbType || d.Info.DbType == DbTypeAI
 }
 
 type DatabaseItem struct {

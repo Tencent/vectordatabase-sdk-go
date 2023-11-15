@@ -29,7 +29,7 @@ type AIDatabase struct {
 }
 
 func (d AIDatabase) IsAIDatabase() bool {
-	return d.Info.DbType == AIDOCDbType
+	return d.Info.DbType == AIDOCDbType || d.Info.DbType == DbTypeAI
 }
 
 func (d *AIDatabase) Debug(v bool) {

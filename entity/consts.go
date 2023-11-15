@@ -109,6 +109,8 @@ const (
 const (
 	BASEDbType  = "BASE"
 	AIDOCDbType = "AI_DOC"
+	DbTypeBase  = "BASE_DB"
+	DbTypeAI    = "AI_DB"
 )
 
 var (

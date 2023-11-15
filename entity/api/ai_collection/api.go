@@ -42,7 +42,13 @@ type CreateRes struct {
 }
 
 type DocumentPreprocess struct {
-	AppendTitleToChunk    string `json:"appendTitleToChunk"`
+	// AppendTitleToChunk
+	// "0", "": no process
+	// "1": append the file paragraph title to chunk for embedding
+	AppendTitleToChunk string `json:"appendTitleToChunk"`
+	// AppendKeywordsToChunk
+	// "0", "": no process
+	// "1": append the file keywords to chunk for embedding
 	AppendKeywordsToChunk string `json:"appendKeywordsToChunk"`
 }
 
