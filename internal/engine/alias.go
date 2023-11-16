@@ -32,7 +32,7 @@ type implementerAlias struct {
 	database entity.Database
 }
 
-func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option *entity.SetAliasOption) (*entity.SetAliasResult, error) {
+func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option ...*entity.SetAliasOption) (*entity.SetAliasResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}
@@ -51,7 +51,7 @@ func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasNa
 	return result, nil
 }
 
-func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string, option *entity.DeleteAliasOption) (*entity.DeleteAliasResult, error) {
+func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string, option ...*entity.DeleteAliasOption) (*entity.DeleteAliasResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}

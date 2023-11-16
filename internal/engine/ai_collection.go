@@ -42,7 +42,7 @@ type implementerAICollection struct {
 // The parameter `shardNum`, `replicasNum` must bigger than 0, `description` could be empty.
 // You can set the index field in entity.Indexes, the vectorIndex must be set one currently, and
 // the filterIndex sets at least one primaryKey value.
-func (i *implementerAICollection) CreateCollection(ctx context.Context, name string, option *entity.CreateAICollectionOption) (*entity.CreateAICollectionResult, error) {
+func (i *implementerAICollection) CreateCollection(ctx context.Context, name string, options ...*entity.CreateAICollectionOption) (*entity.CreateAICollectionResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -50,7 +50,8 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 	req.Database = i.database.DatabaseName
 	req.Collection = name
 
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		req.Description = option.Description
 
 		for _, v := range option.Indexes {
@@ -102,7 +103,7 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 
 // DescribeCollection get a collection detail.
 // It returns the collection object to get collecton parameters or operate document api
-func (i *implementerAICollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeAICollectionOption) (*entity.DescribeAICollectionResult, error) {
+func (i *implementerAICollection) DescribeCollection(ctx context.Context, name string, option ...*entity.DescribeAICollectionOption) (*entity.DescribeAICollectionResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -124,7 +125,7 @@ func (i *implementerAICollection) DescribeCollection(ctx context.Context, name s
 }
 
 // DropCollection drop a collection. If collection not exist, it return nil.
-func (i *implementerAICollection) DropCollection(ctx context.Context, name string, option *entity.DropAICollectionOption) (result *entity.DropAICollectionResult, err error) {
+func (i *implementerAICollection) DropCollection(ctx context.Context, name string, option ...*entity.DropAICollectionOption) (result *entity.DropAICollectionResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -145,7 +146,7 @@ func (i *implementerAICollection) DropCollection(ctx context.Context, name strin
 	return
 }
 
-func (i *implementerAICollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateAICollectionOption) (result *entity.TruncateAICollectionResult, err error) {
+func (i *implementerAICollection) TruncateCollection(ctx context.Context, name string, option ...*entity.TruncateAICollectionOption) (result *entity.TruncateAICollectionResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -166,7 +167,7 @@ func (i *implementerAICollection) TruncateCollection(ctx context.Context, name s
 
 // ListCollection get collection list.
 // It return the list of collection, each collection same as DescribeCollection return.
-func (i *implementerAICollection) ListCollection(ctx context.Context, option *entity.ListAICollectionOption) (*entity.ListAICollectionResult, error) {
+func (i *implementerAICollection) ListCollection(ctx context.Context, option ...*entity.ListAICollectionOption) (*entity.ListAICollectionResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}

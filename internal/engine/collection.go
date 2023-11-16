@@ -42,7 +42,7 @@ type implementerCollection struct {
 // You can set the index field in entity.Indexes, the vectorIndex must be set one currently, and
 // the filterIndex sets at least one primaryKey value.
 func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32,
-	description string, indexes entity.Indexes, option *entity.CreateCollectionOption) (*entity.Collection, error) {
+	description string, indexes entity.Indexes, options ...*entity.CreateCollectionOption) (*entity.Collection, error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}
@@ -72,7 +72,8 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		column.IndexType = string(v.IndexType)
 		req.Indexes = append(req.Indexes, &column)
 	}
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		if option.Embedding != nil {
 			req.Embedding.Field = option.Embedding.Field
 			req.Embedding.VectorField = option.Embedding.VectorField
@@ -97,7 +98,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 
 // DescribeCollection get a collection detail.
 // It returns the collection object to get collecton parameters or operate document api
-func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option *entity.DescribeCollectionOption) (*entity.DescribeCollectionResult, error) {
+func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option ...*entity.DescribeCollectionOption) (*entity.DescribeCollectionResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}
@@ -119,7 +120,7 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 }
 
 // DropCollection drop a collection. If collection not exist, it return nil.
-func (i *implementerCollection) DropCollection(ctx context.Context, name string, option *entity.DropCollectionOption) (result *entity.DropCollectionResult, err error) {
+func (i *implementerCollection) DropCollection(ctx context.Context, name string, option ...*entity.DropCollectionOption) (result *entity.DropCollectionResult, err error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}
@@ -140,7 +141,7 @@ func (i *implementerCollection) DropCollection(ctx context.Context, name string,
 	return
 }
 
-func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option *entity.TruncateCollectionOption) (result *entity.TruncateCollectionResult, err error) {
+func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option ...*entity.TruncateCollectionOption) (result *entity.TruncateCollectionResult, err error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}
@@ -161,7 +162,7 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 
 // ListCollection get collection list.
 // It return the list of collection, each collection same as DescribeCollection return.
-func (i *implementerCollection) ListCollection(ctx context.Context, option *entity.ListCollectionOption) (*entity.ListCollectionResult, error) {
+func (i *implementerCollection) ListCollection(ctx context.Context, option ...*entity.ListCollectionOption) (*entity.ListCollectionResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}

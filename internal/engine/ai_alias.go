@@ -32,7 +32,7 @@ type implementerAIAlias struct {
 	database entity.AIDatabase
 }
 
-func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option *entity.SetAIAliasOption) (*entity.SetAIAliasResult, error) {
+func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option ...*entity.SetAIAliasOption) (*entity.SetAIAliasResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -51,7 +51,7 @@ func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionName, alias
 	return result, nil
 }
 
-func (i *implementerAIAlias) DeleteAlias(ctx context.Context, aliasName string, option *entity.DeleteAIAliasOption) (*entity.DeleteAIAliasResult, error) {
+func (i *implementerAIAlias) DeleteAlias(ctx context.Context, aliasName string, option ...*entity.DeleteAIAliasOption) (*entity.DeleteAIAliasResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}

@@ -60,6 +60,8 @@ const (
 	M3E_BASE EmbeddingModel = "m3e-base"
 	// BGE_BASE_ZH 768
 	BGE_BASE_ZH EmbeddingModel = "bge-base-zh"
+	// BGE_LARGE_ZH 1024
+	BGE_LARGE_ZH EmbeddingModel = "bge-large-zh"
 	// MULTILINGUAL 768
 	MULTILINGUAL_E5_BASE EmbeddingModel = "multilingual-e5-base"
 	// E5_LARGE_V2 1024

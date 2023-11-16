@@ -32,7 +32,7 @@ type implementerIndex struct {
 	database entity.Database
 }
 
-func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName string, option *entity.IndexRebuildOption) (*entity.IndexReBuildResult, error) {
+func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName string, options ...*entity.IndexRebuildOption) (*entity.IndexReBuildResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}
@@ -40,8 +40,11 @@ func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName stri
 	req.Database = i.database.DatabaseName
 	req.Collection = collectionName
 
-	req.DropBeforeRebuild = option.DropBeforeRebuild
-	req.Throttle = int32(option.Throttle)
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
+		req.DropBeforeRebuild = option.DropBeforeRebuild
+		req.Throttle = int32(option.Throttle)
+	}
 
 	res := new(index.RebuildRes)
 	err := i.Request(ctx, req, &res)

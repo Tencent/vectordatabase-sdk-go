@@ -29,11 +29,11 @@ type VectorDBClient struct {
 // DatabaseInterface database api
 type DatabaseInterface interface {
 	SdkClient
-	CreateDatabase(ctx context.Context, name string, option *CreateDatabaseOption) (*CreateDatabaseResult, error)
-	DropDatabase(ctx context.Context, name string, option *DropDatabaseOption) (*DropDatabaseResult, error)
-	ListDatabase(ctx context.Context, option *ListDatabaseOption) (result *ListDatabaseResult, err error)
-	CreateAIDatabase(ctx context.Context, name string, option *CreateAIDatabaseOption) (result *CreateAIDatabaseResult, err error)
-	DropAIDatabase(ctx context.Context, name string, option *DropAIDatabaseOption) (result *DropAIDatabaseResult, err error)
+	CreateDatabase(ctx context.Context, name string, options ...*CreateDatabaseOption) (*CreateDatabaseResult, error)
+	DropDatabase(ctx context.Context, name string, options ...*DropDatabaseOption) (*DropDatabaseResult, error)
+	ListDatabase(ctx context.Context, options ...*ListDatabaseOption) (result *ListDatabaseResult, err error)
+	CreateAIDatabase(ctx context.Context, name string, options ...*CreateAIDatabaseOption) (result *CreateAIDatabaseResult, err error)
+	DropAIDatabase(ctx context.Context, name string, options ...*DropAIDatabaseOption) (result *DropAIDatabaseResult, err error)
 	Database(name string) *Database
 	AIDatabase(name string) *AIDatabase
 }
@@ -42,59 +42,59 @@ type DatabaseInterface interface {
 type CollectionInterface interface {
 	SdkClient
 	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
-		indexes Indexes, option *CreateCollectionOption) (*Collection, error)
-	DescribeCollection(ctx context.Context, name string, option *DescribeCollectionOption) (*DescribeCollectionResult, error)
-	DropCollection(ctx context.Context, name string, option *DropCollectionOption) (*DropCollectionResult, error)
-	TruncateCollection(ctx context.Context, name string, option *TruncateCollectionOption) (*TruncateCollectionResult, error)
-	ListCollection(ctx context.Context, option *ListCollectionOption) (*ListCollectionResult, error)
+		indexes Indexes, options ...*CreateCollectionOption) (*Collection, error)
+	DescribeCollection(ctx context.Context, name string, options ...*DescribeCollectionOption) (result *DescribeCollectionResult, err error)
+	DropCollection(ctx context.Context, name string, options ...*DropCollectionOption) (result *DropCollectionResult, err error)
+	TruncateCollection(ctx context.Context, name string, options ...*TruncateCollectionOption) (result *TruncateCollectionResult, err error)
+	ListCollection(ctx context.Context, options ...*ListCollectionOption) (result *ListCollectionResult, err error)
 	Collection(name string) *Collection
 }
 
 type AICollectionInterface interface {
 	SdkClient
-	CreateCollection(ctx context.Context, name string, option *CreateAICollectionOption) (*CreateAICollectionResult, error)
-	DescribeCollection(ctx context.Context, name string, option *DescribeAICollectionOption) (*DescribeAICollectionResult, error)
-	DropCollection(ctx context.Context, name string, option *DropAICollectionOption) (result *DropAICollectionResult, err error)
-	TruncateCollection(ctx context.Context, name string, option *TruncateAICollectionOption) (result *TruncateAICollectionResult, err error)
-	ListCollection(ctx context.Context, option *ListAICollectionOption) (*ListAICollectionResult, error)
+	CreateCollection(ctx context.Context, name string, options ...*CreateAICollectionOption) (result *CreateAICollectionResult, err error)
+	DescribeCollection(ctx context.Context, name string, options ...*DescribeAICollectionOption) (result *DescribeAICollectionResult, err error)
+	DropCollection(ctx context.Context, name string, options ...*DropAICollectionOption) (result *DropAICollectionResult, err error)
+	TruncateCollection(ctx context.Context, name string, options ...*TruncateAICollectionOption) (result *TruncateAICollectionResult, err error)
+	ListCollection(ctx context.Context, options ...*ListAICollectionOption) (result *ListAICollectionResult, err error)
 	Collection(name string) *AICollection
 }
 
 type AliasInterface interface {
 	SdkClient
-	SetAlias(ctx context.Context, collectionName, aliasName string, option *SetAliasOption) (*SetAliasResult, error)
-	DeleteAlias(ctx context.Context, aliasName string, option *DeleteAliasOption) (*DeleteAliasResult, error)
+	SetAlias(ctx context.Context, collectionName, aliasName string, options ...*SetAliasOption) (result *SetAliasResult, err error)
+	DeleteAlias(ctx context.Context, aliasName string, options ...*DeleteAliasOption) (result *DeleteAliasResult, err error)
 }
 
 type AIAliasInterface interface {
 	SdkClient
-	SetAlias(ctx context.Context, collectionName, aliasName string, option *SetAIAliasOption) (*SetAIAliasResult, error)
-	DeleteAlias(ctx context.Context, aliasName string, option *DeleteAIAliasOption) (*DeleteAIAliasResult, error)
+	SetAlias(ctx context.Context, collectionName, aliasName string, options ...*SetAIAliasOption) (result *SetAIAliasResult, err error)
+	DeleteAlias(ctx context.Context, aliasName string, options ...*DeleteAIAliasOption) (result *DeleteAIAliasResult, err error)
 }
 
 type IndexInterface interface {
 	SdkClient
-	IndexRebuild(ctx context.Context, collectionName string, option *IndexRebuildOption) (*IndexReBuildResult, error)
+	IndexRebuild(ctx context.Context, collectionName string, options ...*IndexRebuildOption) (result *IndexReBuildResult, err error)
 }
 
 // DocumentInterface document api
 type DocumentInterface interface {
 	SdkClient
-	Upsert(ctx context.Context, documents []Document, option *UpsertDocumentOption) (result *UpsertDocumentResult, err error)
-	Query(ctx context.Context, documentIds []string, option *QueryDocumentOption) (*QueryDocumentResult, error)
-	Search(ctx context.Context, vectors [][]float32, option *SearchDocumentOption) (*SearchDocumentResult, error)
-	SearchById(ctx context.Context, documentIds []string, option *SearchDocumentOption) (*SearchDocumentResult, error)
-	SearchByText(ctx context.Context, text map[string][]string, option *SearchDocumentOption) (*SearchDocumentResult, error)
-	Delete(ctx context.Context, option *DeleteDocumentOption) (result *DeleteDocumentResult, err error)
-	Update(ctx context.Context, option *UpdateDocumentOption) (*UpdateDocumentResult, error)
+	Upsert(ctx context.Context, documents []Document, options ...*UpsertDocumentOption) (result *UpsertDocumentResult, err error)
+	Query(ctx context.Context, documentIds []string, options ...*QueryDocumentOption) (result *QueryDocumentResult, err error)
+	Search(ctx context.Context, vectors [][]float32, options ...*SearchDocumentOption) (result *SearchDocumentResult, err error)
+	SearchById(ctx context.Context, documentIds []string, options ...*SearchDocumentOption) (*SearchDocumentResult, error)
+	SearchByText(ctx context.Context, text map[string][]string, options ...*SearchDocumentOption) (*SearchDocumentResult, error)
+	Delete(ctx context.Context, options ...*DeleteDocumentOption) (result *DeleteDocumentResult, err error)
+	Update(ctx context.Context, options ...*UpdateDocumentOption) (*UpdateDocumentResult, error)
 }
 
 type AIDocumentInterface interface {
 	SdkClient
-	Query(ctx context.Context, option *QueryAIDocumentOption) (*QueryAIDocumentsResult, error)
-	Search(ctx context.Context, text string, option *SearchAIDocumentOption) (*SearchAIDocumentResult, error)
-	Delete(ctx context.Context, option *DeleteAIDocumentOption) (*DeleteAIDocumentResult, error)
-	Update(ctx context.Context, option *UpdateAIDocumentOption) (*UpdateAIDocumentResult, error)
-	Upload(ctx context.Context, localFilePath string, option *UploadAIDocumentOption) (*UploadAIDocumentResult, error)
-	GetCosTmpSecret(ctx context.Context, localFilePath string, option *GetCosTmpSecretOption) (*GetCosTmpSecretResult, error)
+	Query(ctx context.Context, options ...*QueryAIDocumentOption) (*QueryAIDocumentsResult, error)
+	Search(ctx context.Context, text string, options ...*SearchAIDocumentOption) (*SearchAIDocumentResult, error)
+	Delete(ctx context.Context, options ...*DeleteAIDocumentOption) (*DeleteAIDocumentResult, error)
+	Update(ctx context.Context, options ...*UpdateAIDocumentOption) (*UpdateAIDocumentResult, error)
+	Upload(ctx context.Context, localFilePath string, options ...*UploadAIDocumentOption) (*UploadAIDocumentResult, error)
+	GetCosTmpSecret(ctx context.Context, localFilePath string, options ...*GetCosTmpSecretOption) (*GetCosTmpSecretResult, error)
 }

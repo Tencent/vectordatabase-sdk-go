@@ -34,7 +34,7 @@ type implementerDatabase struct {
 }
 
 // CreateDatabase create database with database name. It returns error if name exist.
-func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string, option *entity.CreateDatabaseOption) (result *entity.CreateDatabaseResult, err error) {
+func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string, option ...*entity.CreateDatabaseOption) (result *entity.CreateDatabaseResult, err error) {
 	req := database.CreateReq{
 		Database: name,
 	}
@@ -50,7 +50,7 @@ func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string, o
 }
 
 // CreateAIDatabase create ai database with database name. It returns error if name exist.
-func (i *implementerDatabase) CreateAIDatabase(ctx context.Context, name string, option *entity.CreateAIDatabaseOption) (result *entity.CreateAIDatabaseResult, err error) {
+func (i *implementerDatabase) CreateAIDatabase(ctx context.Context, name string, option ...*entity.CreateAIDatabaseOption) (result *entity.CreateAIDatabaseResult, err error) {
 	req := ai_database.CreateReq{
 		Database: name,
 	}
@@ -66,7 +66,7 @@ func (i *implementerDatabase) CreateAIDatabase(ctx context.Context, name string,
 }
 
 // DropDatabase drop database with database name. If database not exist, it return nil.
-func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, option *entity.DropDatabaseOption) (result *entity.DropDatabaseResult, err error) {
+func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, option ...*entity.DropDatabaseOption) (result *entity.DropDatabaseResult, err error) {
 	result = new(entity.DropDatabaseResult)
 
 	req := database.DropReq{Database: name}
@@ -83,7 +83,7 @@ func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, opt
 }
 
 // DropAIDatabase drop ai database with database name. If database not exist, it return nil.
-func (i *implementerDatabase) DropAIDatabase(ctx context.Context, name string, option *entity.DropAIDatabaseOption) (result *entity.DropAIDatabaseResult, err error) {
+func (i *implementerDatabase) DropAIDatabase(ctx context.Context, name string, option ...*entity.DropAIDatabaseOption) (result *entity.DropAIDatabaseResult, err error) {
 	result = new(entity.DropAIDatabaseResult)
 
 	req := ai_database.DropReq{Database: name}
@@ -100,7 +100,7 @@ func (i *implementerDatabase) DropAIDatabase(ctx context.Context, name string, o
 }
 
 // ListDatabase get database list. It returns the database list to operate the collection.
-func (i *implementerDatabase) ListDatabase(ctx context.Context, option *entity.ListDatabaseOption) (result *entity.ListDatabaseResult, err error) {
+func (i *implementerDatabase) ListDatabase(ctx context.Context, option ...*entity.ListDatabaseOption) (result *entity.ListDatabaseResult, err error) {
 	req := database.ListReq{}
 	res := new(database.ListRes)
 	err = i.Request(ctx, req, res)

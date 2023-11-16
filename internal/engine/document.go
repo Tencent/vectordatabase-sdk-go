@@ -38,7 +38,7 @@ type implementerDocument struct {
 }
 
 // Upsert upsert documents into collection. Support for repeated insertion
-func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Document, option *entity.UpsertDocumentOption) (result *entity.UpsertDocumentResult, err error) {
+func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Document, options ...*entity.UpsertDocumentOption) (result *entity.UpsertDocumentResult, err error) {
 	req := new(document.UpsertReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
@@ -52,9 +52,11 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Doc
 		}
 		req.Documents = append(req.Documents, d)
 	}
-
-	if option != nil && option.BuildIndex != nil {
-		req.BuildIndex = option.BuildIndex
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
+		if option.BuildIndex != nil {
+			req.BuildIndex = option.BuildIndex
+		}
 	}
 
 	res := new(document.UpsertRes)
@@ -69,7 +71,7 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []entity.Doc
 
 // Query query the document by document ids.
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
-func (i *implementerDocument) Query(ctx context.Context, documentIds []string, option *entity.QueryDocumentOption) (*entity.QueryDocumentResult, error) {
+func (i *implementerDocument) Query(ctx context.Context, documentIds []string, options ...*entity.QueryDocumentOption) (*entity.QueryDocumentResult, error) {
 	req := new(document.QueryReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
@@ -77,7 +79,8 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, o
 		DocumentIds: documentIds,
 	}
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		req.Query.Filter = option.Filter.Cond()
 		req.Query.RetrieveVector = option.RetrieveVector
 		req.Query.OutputFields = option.OutputFields
@@ -112,21 +115,21 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, o
 
 // Search search document topK by vector. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
-	return i.search(ctx, nil, vectors, nil, option)
+func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, options ...*entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
+	return i.search(ctx, nil, vectors, nil, options...)
 }
 
 // Search search document topK by document ids. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
-	return i.search(ctx, documentIds, nil, nil, option)
+func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, options ...*entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
+	return i.search(ctx, documentIds, nil, nil, options...)
 }
 
-func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
-	return i.search(ctx, nil, nil, text, option)
+func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, options ...*entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
+	return i.search(ctx, nil, nil, text, options...)
 }
 
-func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, option *entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
+func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, options ...*entity.SearchDocumentOption) (*entity.SearchDocumentResult, error) {
 	req := new(document.SearchReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
@@ -138,7 +141,8 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 		req.Search.EmbeddingItems = v
 	}
 
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		req.Search.Filter = option.Filter.Cond()
 		req.Search.RetrieveVector = option.RetrieveVector
 		req.Search.OutputFields = option.OutputFields
@@ -180,11 +184,12 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 }
 
 // Delete delete document by document ids
-func (i *implementerDocument) Delete(ctx context.Context, option *entity.DeleteDocumentOption) (result *entity.DeleteDocumentResult, err error) {
+func (i *implementerDocument) Delete(ctx context.Context, options ...*entity.DeleteDocumentOption) (result *entity.DeleteDocumentResult, err error) {
 	req := new(document.DeleteReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		req.Query = &document.QueryCond{
 			DocumentIds: option.DocumentIds,
 			Filter:      option.Filter.Cond(),
@@ -201,21 +206,20 @@ func (i *implementerDocument) Delete(ctx context.Context, option *entity.DeleteD
 	return
 }
 
-func (i *implementerDocument) Update(ctx context.Context, option *entity.UpdateDocumentOption) (*entity.UpdateDocumentResult, error) {
+func (i *implementerDocument) Update(ctx context.Context, options ...*entity.UpdateDocumentOption) (*entity.UpdateDocumentResult, error) {
 	req := new(document.UpdateReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
 	req.Query = new(document.QueryCond)
 
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		req.Query.DocumentIds = option.QueryIds
 		req.Query.Filter = option.QueryFilter.Cond()
 		req.Update.Vector = option.UpdateVector
 		req.Update.Fields = make(map[string]interface{})
-		if len(option.UpdateFields) != 0 {
-			for k, v := range option.UpdateFields {
-				req.Update.Fields[k] = v.Val
-			}
+		for k, v := range option.UpdateFields {
+			req.Update.Fields[k] = v.Val
 		}
 	}
 
