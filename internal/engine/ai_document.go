@@ -41,14 +41,15 @@ type implementerAIDocument struct {
 
 // Query query the ai_document by ai_document ids.
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
-func (i *implementerAIDocument) Query(ctx context.Context, option *entity.QueryAIDocumentOption) (*entity.QueryAIDocumentsResult, error) {
+func (i *implementerAIDocument) Query(ctx context.Context, options ...*entity.QueryAIDocumentOption) (*entity.QueryAIDocumentsResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
 	req := new(ai_document.QueryReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		filter := option.Filter
 		if filter == nil {
 			filter = entity.NewFilter("")
@@ -83,7 +84,7 @@ func (i *implementerAIDocument) Query(ctx context.Context, option *entity.QueryA
 
 // Search search ai_document topK by vector. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerAIDocument) Search(ctx context.Context, text string, option *entity.SearchAIDocumentOption) (*entity.SearchAIDocumentResult, error) {
+func (i *implementerAIDocument) Search(ctx context.Context, text string, options ...*entity.SearchAIDocumentOption) (*entity.SearchAIDocumentResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -94,7 +95,8 @@ func (i *implementerAIDocument) Search(ctx context.Context, text string, option 
 	req.Search = new(ai_document.SearchCond)
 	req.Search.Content = text
 
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		filter := option.Filter
 		if filter == nil {
 			filter = entity.NewFilter("")
@@ -129,14 +131,15 @@ func (i *implementerAIDocument) Search(ctx context.Context, text string, option 
 }
 
 // Delete delete ai_document by ai_document ids
-func (i *implementerAIDocument) Delete(ctx context.Context, option *entity.DeleteAIDocumentOption) (result *entity.DeleteAIDocumentResult, err error) {
+func (i *implementerAIDocument) Delete(ctx context.Context, options ...*entity.DeleteAIDocumentOption) (result *entity.DeleteAIDocumentResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
 	req := new(ai_document.DeleteReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		filter := option.Filter
 		if filter == nil {
 			filter = entity.NewFilter("")
@@ -160,7 +163,7 @@ func (i *implementerAIDocument) Delete(ctx context.Context, option *entity.Delet
 	return
 }
 
-func (i *implementerAIDocument) Update(ctx context.Context, option *entity.UpdateAIDocumentOption) (*entity.UpdateAIDocumentResult, error) {
+func (i *implementerAIDocument) Update(ctx context.Context, options ...*entity.UpdateAIDocumentOption) (*entity.UpdateAIDocumentResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -168,7 +171,8 @@ func (i *implementerAIDocument) Update(ctx context.Context, option *entity.Updat
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
 
-	if option != nil {
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
 		filter := option.QueryFilter
 		if filter == nil {
 			filter = entity.NewFilter("")
@@ -193,13 +197,16 @@ func (i *implementerAIDocument) Update(ctx context.Context, option *entity.Updat
 	return result, nil
 }
 
-func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePath string, option *entity.GetCosTmpSecretOption) (*entity.GetCosTmpSecretResult, error) {
+func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePath string, options ...*entity.GetCosTmpSecretOption) (*entity.GetCosTmpSecretResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
 	fileType := getFileTypeFromFileName(localFilePath)
-	if option != nil && option.FileType != "" {
-		fileType = option.FileType
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
+		if option.FileType != "" {
+			fileType = option.FileType
+		}
 	}
 
 	if fileType != entity.MarkdownFileType {
@@ -235,15 +242,22 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 	return result, nil
 }
 
-func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string, option *entity.UploadAIDocumentOption) (result *entity.UploadAIDocumentResult, err error) {
+func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string, options ...*entity.UploadAIDocumentOption) (result *entity.UploadAIDocumentResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
 
 	// localFilePath string, fileName string, fileType entity.FileType,
 	//	metaData map[string]string
+	var option *entity.UploadAIDocumentOption
+	var metaData map[string]entity.Field
+	if len(options) != 0 && options[0] != nil {
+		option = options[0]
+		metaData = option.MetaData
+	}
+
 	fileType := getFileTypeFromFileName(localFilePath)
-	if option != nil && option.FileType != "" {
+	if option.FileType != "" {
 		fileType = option.FileType
 	}
 
@@ -275,16 +289,13 @@ func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string
 	})
 
 	header := make(http.Header)
-	if option == nil {
-		option = new(entity.UploadAIDocumentOption)
+	if metaData == nil {
+		metaData = make(map[string]entity.Field)
 	}
-	if option.MetaData == nil {
-		option.MetaData = make(map[string]entity.Field)
-	}
-	option.MetaData["-fileType"] = entity.Field{Val: string(fileType)}
-	option.MetaData["-id"] = entity.Field{Val: res.FileId}
+	metaData["-fileType"] = entity.Field{Val: string(fileType)}
+	metaData["-id"] = entity.Field{Val: res.FileId}
 
-	for k, v := range option.MetaData {
+	for k, v := range metaData {
 		if v.Type() == "" {
 			continue
 		}
