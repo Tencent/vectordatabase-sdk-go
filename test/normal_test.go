@@ -25,12 +25,11 @@ import (
 	"testing"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 )
 
 var (
-	cli                 *entity.VectorDBClient
+	cli                 *tcvectordb.Client
 	ctx                 = context.Background()
 	database            = "go-sdk-test-db"
 	collectionName      = "go-sdk-test-coll"
@@ -41,10 +40,10 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	// cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "RPo223wN2yXyUq16dmHcGyzXHaYfWCZWNMGwBC01", &entity.ClientOption{Timeout: 10 * time.Second})
-	cli, err = tcvectordb.NewClient("http://lb-3fuz86n6-e8g7tor5zvbql29p.clb.ap-guangzhou.tencentclb.com:60000", "root", "Nfg5r1geFnuuR1uvkxaHqFjoWZwsm9FGr4I28NTK", &entity.ClientOption{Timeout: 10 * time.Second})
-	// cli, err = tcvectordb.NewClient("http://21.0.83.222:8100", "root", "NGr06gxdHdS7U6QGOxYvQuEI5VscqoGHadEAvK45", &entity.ClientOption{Timeout: 10 * time.Second})
-	// cli, err = tcvectordb.NewClient("http://lb-9wwd95re-yrqlnz5gavcf0b4j.clb.ap-guangzhou.tencentclb.com:20000", "root", "OYBR9chH4fC7f3RF8kKEImEtvuGCFrBhGMWFlZjI", &entity.ClientOption{Timeout: 10 * time.Second})
+	// cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "RPo223wN2yXyUq16dmHcGyzXHaYfWCZWNMGwBC01", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewClient("http://lb-3fuz86n6-e8g7tor5zvbql29p.clb.ap-guangzhou.tencentclb.com:60000", "root", "Nfg5r1geFnuuR1uvkxaHqFjoWZwsm9FGr4I28NTK", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	// cli, err = tcvectordb.NewClient("http://21.0.83.222:8100", "root", "NGr06gxdHdS7U6QGOxYvQuEI5VscqoGHadEAvK45", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	// cli, err = tcvectordb.NewClient("http://lb-9wwd95re-yrqlnz5gavcf0b4j.clb.ap-guangzhou.tencentclb.com:20000", "root", "OYBR9chH4fC7f3RF8kKEImEtvuGCFrBhGMWFlZjI", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
@@ -88,27 +87,27 @@ func TestDropCollection(t *testing.T) {
 func TestCreateCollection(t *testing.T) {
 	db := cli.Database(database)
 
-	index := entity.Indexes{
-		VectorIndex: []entity.VectorIndex{
+	index := tcvectordb.Indexes{
+		VectorIndex: []tcvectordb.VectorIndex{
 			{
-				FilterIndex: entity.FilterIndex{
+				FilterIndex: tcvectordb.FilterIndex{
 					FieldName: "vector",
-					FieldType: entity.Vector,
-					IndexType: entity.HNSW,
+					FieldType: tcvectordb.Vector,
+					IndexType: tcvectordb.HNSW,
 				},
 				Dimension:  3,
-				MetricType: entity.COSINE,
-				Params: &entity.HNSWParam{
+				MetricType: tcvectordb.COSINE,
+				Params: &tcvectordb.HNSWParam{
 					M:              16,
 					EfConstruction: 200,
 				},
 			},
 		},
-		FilterIndex: []entity.FilterIndex{
-			{FieldName: "id", FieldType: entity.String, IndexType: entity.PRIMARY},
-			{FieldName: "bookName", FieldType: entity.String, IndexType: entity.FILTER},
-			{FieldName: "page", FieldType: entity.Uint64, IndexType: entity.FILTER},
-			{FieldName: "tag", FieldType: entity.Array, IndexType: entity.FILTER},
+		FilterIndex: []tcvectordb.FilterIndex{
+			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
+			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
+			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
+			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
 		},
 	}
 
@@ -141,11 +140,11 @@ func TestUpsert(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
 	buildIndex := true
-	result, err := col.Upsert(ctx, []entity.Document{
+	result, err := col.Upsert(ctx, []tcvectordb.Document{
 		{
 			Id:     "0001",
 			Vector: []float32{0.2123, 0.21, 0.213},
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 21},
@@ -156,7 +155,7 @@ func TestUpsert(t *testing.T) {
 		{
 			Id:     "0002",
 			Vector: []float32{0.2123, 0.22, 0.213},
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 22},
@@ -167,7 +166,7 @@ func TestUpsert(t *testing.T) {
 		{
 			Id:     "0003",
 			Vector: []float32{0.2123, 0.23, 0.213},
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 23},
@@ -178,7 +177,7 @@ func TestUpsert(t *testing.T) {
 		{
 			Id:     "0004",
 			Vector: []float32{0.2123, 0.24, 0.213},
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 24},
@@ -189,7 +188,7 @@ func TestUpsert(t *testing.T) {
 		{
 			Id:     "0005",
 			Vector: []float32{0.2123, 0.25, 0.213},
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 25},
@@ -197,7 +196,7 @@ func TestUpsert(t *testing.T) {
 				"tag":      {Val: []string{"曹操", "诸葛亮", "刘备"}},
 			},
 		},
-	}, &entity.UpsertDocumentOption{BuildIndex: &buildIndex})
+	}, &tcvectordb.UpsertDocumentOption{BuildIndex: &buildIndex})
 
 	printErr(err)
 	log.Printf("upsert result: %+v", result)
@@ -205,8 +204,8 @@ func TestUpsert(t *testing.T) {
 
 func TestQuery(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
-	option := &entity.QueryDocumentOption{
-		Filter: entity.NewFilter(entity.Include("tag", []string{"曹操", "刘备"})),
+	option := &tcvectordb.QueryDocumentOption{
+		Filter: tcvectordb.NewFilter(tcvectordb.Include("tag", []string{"曹操", "刘备"})),
 		// OutputFields:   []string{"id", "bookName"},
 		// RetrieveVector: true,
 		// Limit: 100,
@@ -226,8 +225,8 @@ func TestSearch(t *testing.T) {
 	searchRes, err := col.Search(ctx, [][]float32{
 		{0.3123, 0.43, 0.213},
 		{0.233, 0.12, 0.97},
-	}, &entity.SearchDocumentOption{
-		Params:         &entity.SearchDocParams{Ef: 100},
+	}, &tcvectordb.SearchDocumentOption{
+		Params:         &tcvectordb.SearchDocParams{Ef: 100},
 		RetrieveVector: false,
 		Limit:          10,
 	})
@@ -244,11 +243,11 @@ func TestSearch(t *testing.T) {
 func TestSearchById(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	filter := entity.NewFilter(`bookName="三国演义"`)
+	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	documentId := []string{"0003"}
-	searchRes, err := col.SearchById(ctx, documentId, &entity.SearchDocumentOption{
+	searchRes, err := col.SearchById(ctx, documentId, &tcvectordb.SearchDocumentOption{
 		Filter:         filter,
-		Params:         &entity.SearchDocParams{Ef: 100},
+		Params:         &tcvectordb.SearchDocParams{Ef: 100},
 		RetrieveVector: false,
 		Limit:          2,
 	})
@@ -265,10 +264,10 @@ func TestSearchById(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	result, err := col.Update(ctx, &entity.UpdateDocumentOption{
+	result, err := col.Update(ctx, &tcvectordb.UpdateDocumentOption{
 		QueryIds:    []string{"0001", "0003"},
-		QueryFilter: entity.NewFilter(`bookName="三国演义"`),
-		UpdateFields: map[string]entity.Field{
+		QueryFilter: tcvectordb.NewFilter(`bookName="三国演义"`),
+		UpdateFields: map[string]tcvectordb.Field{
 			"page": {Val: 24},
 		},
 	})
@@ -284,9 +283,9 @@ func TestUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	res, err := col.Delete(ctx, &entity.DeleteDocumentOption{
+	res, err := col.Delete(ctx, &tcvectordb.DeleteDocumentOption{
 		DocumentIds: []string{"0001", "0003"},
-		Filter:      entity.NewFilter(`bookName="西游记"`),
+		Filter:      tcvectordb.NewFilter(`bookName="西游记"`),
 	})
 	printErr(err)
 	log.Printf("Delete result: %+v", res)
@@ -295,7 +294,7 @@ func TestDelete(t *testing.T) {
 func TestBuildIndex(t *testing.T) {
 	coll := cli.Database(database).Collection(collectionName)
 	// 索引重建，重建期间不支持写入
-	_, err := coll.RebuildIndex(ctx, &entity.RebuildIndexOption{Throttle: 1})
+	_, err := coll.RebuildIndex(ctx, &tcvectordb.RebuildIndexOption{Throttle: 1})
 	printErr(err)
 }
 

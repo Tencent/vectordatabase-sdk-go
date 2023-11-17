@@ -5,52 +5,52 @@ import (
 	"testing"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 )
 
 func TestCreateCollectionWithEmbedding(t *testing.T) {
 	db := cli.Database(database)
 
 	// 设置embedding字段和模型
-	option := &entity.CreateCollectionOption{
-		Embedding: &entity.Embedding{
+	option := &tcvectordb.CreateCollectionOption{
+		Embedding: &tcvectordb.Embedding{
 			Field:       "segment",
 			VectorField: "vector",
-			Model:       entity.BGE_BASE_ZH,
+			Model:       tcvectordb.BGE_BASE_ZH,
 		},
 	}
 
-	index := entity.Indexes{
+	index := tcvectordb.Indexes{
 		// 指定embedding时，vector的维度可以不传，系统会使用embedding model的维度
-		VectorIndex: []entity.VectorIndex{
+		VectorIndex: []tcvectordb.VectorIndex{
 			{
-				FilterIndex: entity.FilterIndex{
+				FilterIndex: tcvectordb.FilterIndex{
 					FieldName: "vector",
-					FieldType: entity.Vector,
-					IndexType: entity.HNSW,
+					FieldType: tcvectordb.Vector,
+					IndexType: tcvectordb.HNSW,
 				},
-				MetricType: entity.COSINE,
-				Params: &entity.HNSWParam{
+				MetricType: tcvectordb.COSINE,
+				Params: &tcvectordb.HNSWParam{
 					M:              16,
 					EfConstruction: 200,
 				},
 			},
 		},
-		FilterIndex: []entity.FilterIndex{
+		FilterIndex: []tcvectordb.FilterIndex{
 			{
 				FieldName: "id",
-				FieldType: entity.String,
-				IndexType: entity.PRIMARY,
+				FieldType: tcvectordb.String,
+				IndexType: tcvectordb.PRIMARY,
 			},
 			{
 				FieldName: "bookName",
-				FieldType: entity.String,
-				IndexType: entity.FILTER,
+				FieldType: tcvectordb.String,
+				IndexType: tcvectordb.FILTER,
 			},
 			{
 				FieldName: "page",
-				FieldType: entity.Uint64,
-				IndexType: entity.FILTER,
+				FieldType: tcvectordb.Uint64,
+				IndexType: tcvectordb.FILTER,
 			},
 		},
 	}
@@ -67,10 +67,10 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 func TestUpsertEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	res, err := col.Upsert(ctx, []entity.Document{
+	res, err := col.Upsert(ctx, []tcvectordb.Document{
 		{
 			Id: "0001",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 21},
@@ -79,7 +79,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0002",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 22},
@@ -88,7 +88,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0003",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 23},
@@ -97,7 +97,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0004",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 24},
@@ -106,7 +106,7 @@ func TestUpsertEmbedding(t *testing.T) {
 		},
 		{
 			Id: "0005",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 25},
@@ -122,8 +122,8 @@ func TestUpsertEmbedding(t *testing.T) {
 func TestQueryEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	option := &entity.QueryDocumentOption{
-		Filter:         entity.NewFilter(`bookName="三国演义"`),
+	option := &tcvectordb.QueryDocumentOption{
+		Filter:         tcvectordb.NewFilter(`bookName="三国演义"`),
 		OutputFields:   []string{"id", "bookName", "segment"},
 		RetrieveVector: false,
 		Limit:          2,
@@ -140,10 +140,10 @@ func TestQueryEmbedding(t *testing.T) {
 func TestSearchEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	searchRes, err := col.SearchByText(ctx, map[string][]string{"segment": {"吕布"}}, &entity.SearchDocumentOption{
-		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          2,                                // 指定 Top K 的 K 值
+	searchRes, err := col.SearchByText(ctx, map[string][]string{"segment": {"吕布"}}, &tcvectordb.SearchDocumentOption{
+		Params:         &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
+		RetrieveVector: false,                                // 是否需要返回向量字段，False：不返回，True：返回
+		Limit:          2,                                    // 指定 Top K 的 K 值
 	})
 	printErr(err)
 	t.Log("searchByText-----------------")

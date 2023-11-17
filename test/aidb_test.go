@@ -22,8 +22,8 @@ import (
 	"log"
 	"testing"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/ai_collection"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_collection"
 )
 
 var (
@@ -47,23 +47,23 @@ func TestAIDropDatabase(t *testing.T) {
 func TestAICreateCollection(t *testing.T) {
 	db := cli.AIDatabase(aiDatabase)
 
-	index := entity.Indexes{
-		FilterIndex: []entity.FilterIndex{
+	index := tcvectordb.Indexes{
+		FilterIndex: []tcvectordb.FilterIndex{
 			{
 				FieldName: "author",
-				FieldType: entity.String,
-				IndexType: entity.FILTER,
+				FieldType: tcvectordb.String,
+				IndexType: tcvectordb.FILTER,
 			},
 		},
 	}
 
-	coll, err := db.CreateCollection(ctx, aiCollectionName, &entity.CreateAICollectionOption{
+	coll, err := db.CreateCollection(ctx, aiCollectionName, &tcvectordb.CreateAICollectionOption{
 		Description: "test ai collection",
 		Indexes:     index,
-		AiConfig: &entity.AiConfig{
+		AiConfig: &tcvectordb.AiConfig{
 			ExpectedFileNum: 1000,
 			AverageFileSize: 1 << 20,
-			Language:        entity.LanguageChinese,
+			Language:        tcvectordb.LanguageChinese,
 			DocumentPreprocess: &ai_collection.DocumentPreprocess{
 				AppendKeywordsToChunk: "1",
 			},
@@ -128,10 +128,10 @@ func TestUploadFile(t *testing.T) {
 	defer cli.Close()
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
 
-	metaData := map[string]entity.Field{
+	metaData := map[string]tcvectordb.Field{
 		"author":  {Val: "sam"},
 		"fileKey": {Val: 1024}}
-	result, err := col.Upload(ctx, "../example/tcvdb.md", &entity.UploadAIDocumentOption{
+	result, err := col.Upload(ctx, "../example/tcvdb.md", &tcvectordb.UploadAIDocumentOption{
 		FileType: "", MetaData: metaData})
 	printErr(err)
 	t.Logf("%+v", result)
@@ -139,8 +139,8 @@ func TestUploadFile(t *testing.T) {
 
 func TestAIQuery(t *testing.T) {
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
-	option := &entity.QueryAIDocumentOption{
-		// Filter:       entity.NewFilter(`_file_name="README.md"`),
+	option := &tcvectordb.QueryAIDocumentOption{
+		// Filter:       tcvectordb.NewFilter(`_file_name="README.md"`),
 		OutputFields: []string{},
 		Limit:        3,
 		Offset:       0,
@@ -156,7 +156,7 @@ func TestAIQuery(t *testing.T) {
 func TestAISearch(t *testing.T) {
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
 
-	searchRes, err := col.Search(ctx, "什么是向量数据库", &entity.SearchAIDocumentOption{
+	searchRes, err := col.Search(ctx, "什么是向量数据库", &tcvectordb.SearchAIDocumentOption{
 		// FileName: "README.md",
 		Filter: nil, // 过滤获取到结果
 		// Limit:  3,   // 指定 Top K 的 K 值
@@ -170,7 +170,7 @@ func TestAISearch(t *testing.T) {
 func TestAIUpdate(t *testing.T) {
 	fileName := "tcvdb.md"
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
-	result, err := col.Update(ctx, &entity.UpdateAIDocumentOption{
+	result, err := col.Update(ctx, &tcvectordb.UpdateAIDocumentOption{
 		FileName: fileName,
 		UpdateFields: map[string]interface{}{
 			"author": "jack",
@@ -178,7 +178,7 @@ func TestAIUpdate(t *testing.T) {
 	})
 	printErr(err)
 	t.Logf("affect count: %d", result.AffectedCount)
-	docs, err := col.Query(ctx, &entity.QueryAIDocumentOption{
+	docs, err := col.Query(ctx, &tcvectordb.QueryAIDocumentOption{
 		FileName: fileName,
 		Limit:    1,
 	})
@@ -191,7 +191,7 @@ func TestAIUpdate(t *testing.T) {
 func TestAIDelete(t *testing.T) {
 	fileName := "tcvdb.md"
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
-	result, err := col.Delete(ctx, &entity.DeleteAIDocumentOption{
+	result, err := col.Delete(ctx, &tcvectordb.DeleteAIDocumentOption{
 		// DocumentIds: []string{fileId},
 		FileName: fileName,
 	})
