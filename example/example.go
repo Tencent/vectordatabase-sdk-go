@@ -1,4 +1,4 @@
-package main
+package example
 
 import (
 	"context"
@@ -351,34 +351,4 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 	}
 	log.Printf("TruncateResult: %+v", truncateRes)
 	return nil
-}
-
-func printErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func main() {
-	database := "go-sdk-demo-db"
-	collectionName := "go-sdk-demo-col"
-	collectionAlias := "go-sdk-demo-alias"
-
-	ctx := context.Background()
-	testVdb, err := NewDemo("http://lb-3fuz86n6-e8g7tor5zvbql29p.clb.ap-guangzhou.tencentclb.com:60000", "root", "Nfg5r1geFnuuR1uvkxaHqFjoWZwsm9FGr4I28NTK")
-	// testVdb, err := NewEmbeddingDemo("vdb http url or ip and post", "vdb username", "key get from web console")
-	// testVdb := NewDemo("http://127.0.0.1:80", "root","vdb-key")
-	printErr(err)
-	err = testVdb.Clear(ctx, database)
-	printErr(err)
-	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)
-	printErr(err)
-	err = testVdb.UpsertData(ctx, database, collectionName)
-	printErr(err)
-	err = testVdb.QueryData(ctx, database, collectionName)
-	printErr(err)
-	err = testVdb.UpdateAndDelete(ctx, database, collectionName)
-	printErr(err)
-	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
-	printErr(err)
 }

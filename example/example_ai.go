@@ -1,4 +1,4 @@
-package main
+package example
 
 import (
 	"context"
@@ -11,10 +11,7 @@ import (
 )
 
 type AIDemo struct {
-	client     *entity.VectorDBClient
-	database   string
-	collection string
-	fileInfo   *entity.UploadAIDocumentResult
+	client *entity.VectorDBClient
 }
 
 func NewAIDemo(url, username, key string) (*AIDemo, error) {
@@ -37,11 +34,11 @@ func (d *AIDemo) Clear(ctx context.Context, database string) error {
 	return nil
 }
 
-func (d *AIDemo) DeleteAndDrop(ctx context.Context) error {
+func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collection, fileName string) error {
 	// 删除collection，删除collection的同时，其中的数据也将被全部删除
 	log.Println("-------------------------- Delete Document --------------------------")
-	cdocDelResult, err := d.client.AIDatabase(d.database).Collection(d.collection).Delete(ctx, &entity.DeleteAIDocumentOption{
-		FileName: d.fileInfo.FileName,
+	cdocDelResult, err := d.client.AIDatabase(database).Collection(collection).Delete(ctx, &entity.DeleteAIDocumentOption{
+		FileName: fileName,
 	})
 	if err != nil {
 		return err
@@ -50,7 +47,7 @@ func (d *AIDemo) DeleteAndDrop(ctx context.Context) error {
 
 	// 删除collection，删除collection的同时，其中的数据也将被全部删除
 	log.Println("-------------------------- DropCollection --------------------------")
-	colDropResult, err := d.client.AIDatabase(d.database).DropCollection(ctx, d.collection)
+	colDropResult, err := d.client.AIDatabase(database).DropCollection(ctx, collection)
 	if err != nil {
 		return err
 	}
@@ -58,7 +55,7 @@ func (d *AIDemo) DeleteAndDrop(ctx context.Context) error {
 
 	log.Println("--------------------------- DropDatabase ---------------------------")
 	// 删除db，db下的所有collection都将被删除
-	dbDropResult, err := d.client.DropDatabase(ctx, d.database)
+	dbDropResult, err := d.client.DropAIDatabase(ctx, database)
 	if err != nil {
 		return err
 	}
@@ -72,7 +69,6 @@ func (d *AIDemo) CreateAIDatabase(ctx context.Context, database string) error {
 	if err != nil {
 		return err
 	}
-	d.database = database
 	log.Println("--------------------------- ListDatabase ---------------------------")
 	dbList, err := d.client.ListDatabase(ctx)
 	if err != nil {
@@ -91,8 +87,8 @@ func (d *AIDemo) CreateAIDatabase(ctx context.Context, database string) error {
 	return nil
 }
 
-func (d *AIDemo) CreateCollection(ctx context.Context, collection string) error {
-	db := d.client.AIDatabase(d.database)
+func (d *AIDemo) CreateCollection(ctx context.Context, database, collection string) error {
+	db := d.client.AIDatabase(database)
 
 	log.Println("------------------------- CreateCollection -------------------------")
 	index := entity.Indexes{}
@@ -115,7 +111,6 @@ func (d *AIDemo) CreateCollection(ctx context.Context, collection string) error 
 	if err != nil {
 		return err
 	}
-	d.collection = collection
 
 	log.Println("-------------------------- ListCollection --------------------------")
 	// 列出所有 Collection
@@ -129,9 +124,9 @@ func (d *AIDemo) CreateCollection(ctx context.Context, collection string) error 
 	return nil
 }
 
-func (d *AIDemo) UploadFile(ctx context.Context, filePath string) error {
+func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath string) (*entity.UploadAIDocumentResult, error) {
 	log.Println("---------------------------- UploadFile ---------------------------")
-	coll := d.client.AIDatabase(d.database).Collection(d.collection)
+	coll := d.client.AIDatabase(database).Collection(collection)
 	res, err := coll.Upload(ctx, filePath, &entity.UploadAIDocumentOption{
 		MetaData: map[string]entity.Field{
 			"teststr": {Val: "v1"},
@@ -140,18 +135,17 @@ func (d *AIDemo) UploadFile(ctx context.Context, filePath string) error {
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	d.fileInfo = res
 	log.Printf("UploadFileResult: %+v", res)
-	return nil
+	return res, nil
 }
 
-func (d *AIDemo) GetFile(ctx context.Context) error {
-	coll := d.client.AIDatabase(d.database).Collection(d.collection)
+func (d *AIDemo) GetFile(ctx context.Context, database, collection, fileName string) error {
+	coll := d.client.AIDatabase(database).Collection(collection)
 	log.Println("---------------------------- GetFile by Name ----------------------------")
 	result, err := coll.Query(ctx, &entity.QueryAIDocumentOption{
-		FileName: d.fileInfo.FileName,
+		FileName: fileName,
 	})
 	if err != nil {
 		return err
@@ -163,9 +157,9 @@ func (d *AIDemo) GetFile(ctx context.Context) error {
 	return nil
 }
 
-func (d *AIDemo) QueryAndSearch(ctx context.Context) error {
-	db := d.client.AIDatabase(d.database)
-	coll := db.Collection(d.collection)
+func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string) error {
+	db := d.client.AIDatabase(database)
+	coll := db.Collection(collection)
 
 	log.Println("---------------------------- Search ----------------------------")
 	// 查找与给定查询向量相似的向量。支持输入文本信息检索与输入文本相似的内容，同时，支持搭配标量字段的 Filter 表达式一并检索。
@@ -206,17 +200,17 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context) error {
 	return nil
 }
 
-func (d *AIDemo) Alias(ctx context.Context, alias string) error {
-	db := d.client.AIDatabase(d.database)
+func (d *AIDemo) Alias(ctx context.Context, database, collection, alias string) error {
+	db := d.client.AIDatabase(database)
 	log.Println("---------------------------- SetAlias ----------------------------")
-	setRes, err := db.SetAlias(ctx, d.collection, alias)
+	setRes, err := db.SetAlias(ctx, collection, alias)
 	if err != nil {
 		return err
 	}
 	log.Printf("SetAlias result: %+v", setRes)
 
 	log.Println("----------------------- DescribeCollection -----------------------")
-	collRes, err := db.DescribeCollection(ctx, d.collection)
+	collRes, err := db.DescribeCollection(ctx, collection)
 	if err != nil {
 		return err
 	}
@@ -229,30 +223,4 @@ func (d *AIDemo) Alias(ctx context.Context, alias string) error {
 	}
 	log.Printf("SetAlias result: %+v", delRes)
 	return nil
-}
-
-func main() {
-	database := "go-sdk-demo-ai-db"
-	collectionName := "go-sdk-demo-ai-col"
-	collectionAlias := "go-sdk-demo-ai-alias"
-
-	ctx := context.Background()
-	testVdb, err := NewAIDemo("vdb http url or ip and post", "vdb username", "key get from web console")
-	printErr(err)
-	err = testVdb.Clear(ctx, database)
-	printErr(err)
-	err = testVdb.CreateAIDatabase(ctx, database)
-	printErr(err)
-	err = testVdb.CreateCollection(ctx, collectionName)
-	printErr(err)
-	err = testVdb.UploadFile(ctx, "./tcvdb.md")
-	printErr(err)
-	err = testVdb.GetFile(ctx)
-	printErr(err)
-	err = testVdb.QueryAndSearch(ctx)
-	printErr(err)
-	err = testVdb.Alias(ctx, collectionAlias)
-	printErr(err)
-	err = testVdb.DeleteAndDrop(ctx)
-	printErr(err)
 }
