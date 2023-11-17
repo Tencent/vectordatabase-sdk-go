@@ -16,7 +16,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package example
+package test
 
 import (
 	"context"
@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/ai_collection"
 )
 
 var (
@@ -32,27 +33,14 @@ var (
 )
 
 func TestCreateAIDatabase(t *testing.T) {
-	db, err := cli.CreateAIDatabase(context.Background(), aiDatabase, nil)
+	cli.Debug(true)
+	db, err := cli.CreateAIDatabase(ctx, aiDatabase, nil)
 	printErr(err)
 	t.Logf("create database success, %s", db.DatabaseName)
 }
 
-func TestListDatabase(t *testing.T) {
-	dbList, err := cli.ListDatabase(context.Background(), nil)
-	printErr(err)
-	t.Logf("base database ======================")
-	for _, db := range dbList.Databases {
-		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
-	}
-
-	t.Logf("AI database ======================")
-	for _, db := range dbList.AIDatabases {
-		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
-	}
-}
-
 func TestDropAIDatabase(t *testing.T) {
-	result, err := cli.DropAIDatabase(context.Background(), aiDatabase, nil)
+	result, err := cli.DropAIDatabase(ctx, aiDatabase, nil)
 	printErr(err)
 
 	t.Logf("drop database result: %+v", result)
@@ -68,11 +56,13 @@ func TestCreateCollectionInAIDB(t *testing.T) {
 	// 2. 【其他索引】：检索时需作为条件查询的字段，比如要按书籍的作者进行过滤，这个时候 author 字段就需要建立索引，
 	//     否则无法在查询的时候对 author 字段进行过滤，不需要过滤的字段无需加索引，会浪费内存；
 
-	index := []entity.FilterIndex{
-		{
-			FieldName: "author",
-			FieldType: entity.String,
-			IndexType: entity.FILTER,
+	index := entity.Indexes{
+		FilterIndex: []entity.FilterIndex{
+			{
+				FieldName: "author",
+				FieldType: entity.String,
+				IndexType: entity.FILTER,
+			},
 		},
 	}
 
@@ -80,36 +70,58 @@ func TestCreateCollectionInAIDB(t *testing.T) {
 	// 创建collection耗时较长，需要调整客户端的timeout
 	db.WithTimeout(time.Second * 30)
 	db.Debug(true)
-	_, err := db.CreateCollection(context.Background(), aiCollectionName, &entity.CreateAICollectionOption{
+	_, err := db.CreateCollection(ctx, aiCollectionName, &entity.CreateAICollectionOption{
 		Description: "test ai collection",
 		Indexes:     index,
 		AiConfig: &entity.AiConfig{
 			ExpectedFileNum: 1000,
 			AverageFileSize: 1 << 20,
 			Language:        entity.LanguageChinese,
+			DocumentPreprocess: &ai_collection.DocumentPreprocess{
+				AppendKeywordsToChunk: "1",
+			},
 		},
 	})
 	printErr(err)
 
 	// 列出所有 Collection
-	colList, err := db.ListCollection(context.Background(), nil)
+	colList, err := db.ListCollection(ctx, nil)
 	printErr(err)
 	for _, col := range colList.Collections {
 		t.Logf("%+v", col)
 	}
 }
 
+func TestTmp(t *testing.T) {
+	col := cli.Database(aiDatabase).Collection(aiDatabase + "$$ai_collections")
+	col.Debug(true)
+	result, err := col.Query(ctx, []string{}, &entity.QueryDocumentOption{Limit: 10})
+	printErr(err)
+	for _, res := range result.Documents {
+		t.Logf("%+v", res)
+	}
+}
+
+func TestTmp1(t *testing.T) {
+	col := cli.Database(aiDatabase).Collection(aiDatabase + "$$ai_collections")
+	result, err := col.Delete(context.TODO(), &entity.DeleteDocumentOption{
+		DocumentIds: []string{"user_collection1"},
+	})
+	printErr(err)
+	t.Logf("%v", result)
+}
+
 func TestListAICollection(t *testing.T) {
 	db := cli.AIDatabase(aiDatabase)
 	t.Logf("ListCollection ================")
-	db.Debug(true)
-	coll, err := db.ListCollection(context.Background(), nil)
+	// db.Debug(true)
+	coll, err := db.ListCollection(ctx, nil)
 	printErr(err)
 	for _, col := range coll.Collections {
 		t.Logf("%+v", col)
 	}
 	t.Logf("DescribeCollection ================")
-	col, err := db.DescribeCollection(context.Background(), aiCollectionName, nil)
+	col, err := db.DescribeCollection(ctx, aiCollectionName, nil)
 	printErr(err)
 	t.Logf("%+v", col)
 }
@@ -117,36 +129,38 @@ func TestListAICollection(t *testing.T) {
 func TestAIAlias(t *testing.T) {
 	db := cli.AIDatabase(aiDatabase)
 	db.Debug(true)
-	_, err := db.SetAlias(context.Background(), aiCollectionName, collectionAlias, nil)
+	_, err := db.SetAlias(ctx, aiCollectionName, collectionAlias, nil)
 	printErr(err)
 
 	// 查看 Collection 信息
-	colRes, err := db.DescribeCollection(context.Background(), aiCollectionName, nil)
+	colRes, err := db.DescribeCollection(ctx, aiCollectionName, nil)
 	printErr(err)
 	t.Logf("%+v", colRes)
 
 	// 删除 Collection 的 alias
-	db.DeleteAlias(context.Background(), collectionAlias, nil)
+	db.DeleteAlias(ctx, collectionAlias, nil)
 
 	// 查看 Collection 信息
-	colRes, err = db.DescribeCollection(context.Background(), aiCollectionName, nil)
+	colRes, err = db.DescribeCollection(ctx, aiCollectionName, nil)
 	printErr(err)
 	t.Logf("%+v", colRes)
 }
 
 func TestDropAICollection(t *testing.T) {
-	res, err := cli.AIDatabase(aiDatabase).DropCollection(context.Background(), aiCollectionName, nil)
+	cli.Debug(true)
+	res, err := cli.AIDatabase(aiDatabase).DropCollection(ctx, aiCollectionName, nil)
 	printErr(err)
 	t.Logf("%v", res)
-	coll, err := cli.AIDatabase(aiDatabase).ListCollection(context.Background(), nil)
+	coll, err := cli.AIDatabase(aiDatabase).ListCollection(ctx, nil)
 	printErr(err)
+	t.Log("list collection:")
 	for _, col := range coll.Collections {
 		t.Logf("%+v", col)
 	}
 }
 
 func TestGetCosSecret(t *testing.T) {
-	res, err := cli.AIDatabase(aiDatabase).Collection(aiCollectionName).GetCosTmpSecret(context.Background(), "./职业规划.md", nil)
+	res, err := cli.AIDatabase(aiDatabase).Collection(aiCollectionName).GetCosTmpSecret(ctx, "./README.md", nil)
 	printErr(err)
 	t.Logf("%+v", res)
 }
@@ -159,7 +173,7 @@ func TestUploadFile(t *testing.T) {
 		"fileName": {Val: "README.md"},
 		"author":   {Val: "sam"},
 		"fileKey":  {Val: 1024}}
-	result, err := col.Upload(context.Background(), "../README.md", &entity.UploadAIDocumentOption{
+	result, err := col.Upload(ctx, "../README.md", &entity.UploadAIDocumentOption{
 		FileType: "", MetaData: metaData})
 	printErr(err)
 	t.Logf("%+v", result)
@@ -173,14 +187,15 @@ func TestAIQuery(t *testing.T) {
 	// 4. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
 
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
+	// col := cli.AIDatabase("aidb").Collection("ai_doc_collection")
 	option := &entity.QueryAIDocumentOption{
-		// Filter:       entity.NewFilter(`_file_name="职业规划.md"`),
+		// Filter:       entity.NewFilter(`_file_name="README.md"`),
 		OutputFields: []string{},
 		Limit:        3,
 		Offset:       0,
 	}
 	col.Debug(true)
-	result, err := col.Query(context.Background(), option)
+	result, err := col.Query(ctx, option)
 	printErr(err)
 	t.Logf("total doc: %d", result.Total)
 	for _, doc := range result.Documents {
@@ -201,7 +216,7 @@ func TestAISearch(t *testing.T) {
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
 
 	col.Debug(true)
-	searchRes, err := col.Search(context.Background(), "文章讲的什么", &entity.SearchAIDocumentOption{
+	searchRes, err := col.Search(ctx, "文章讲的什么", &entity.SearchAIDocumentOption{
 		// FileName: "README.md",
 		Filter: nil, // 过滤获取到结果
 		// Limit:  3,   // 指定 Top K 的 K 值
@@ -213,14 +228,14 @@ func TestAISearch(t *testing.T) {
 }
 
 func TestAIUpdate(t *testing.T) {
-	fileName := "职业规划.md"
+	fileName := "README.md"
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
 	col.Debug(true)
 	// update
 	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
 
 	// filter 限制仅会更新 id = "0003"
-	result, err := col.Update(context.Background(), &entity.UpdateAIDocumentOption{
+	result, err := col.Update(ctx, &entity.UpdateAIDocumentOption{
 		FileName: fileName,
 		UpdateFields: map[string]interface{}{
 			"author": "jack",
@@ -228,7 +243,7 @@ func TestAIUpdate(t *testing.T) {
 	})
 	printErr(err)
 	t.Logf("affect count: %d", result.AffectedCount)
-	docs, err := col.Query(context.Background(), &entity.QueryAIDocumentOption{
+	docs, err := col.Query(ctx, &entity.QueryAIDocumentOption{
 		FileName: fileName,
 		Limit:    1,
 	})
@@ -247,7 +262,7 @@ func TestAIDelete(t *testing.T) {
 	// 2. 删除功能会受限于 collection 的索引类型，部分索引类型不支持删除操作
 
 	// filter 限制只会删除 id="0001" 成功
-	result, err := col.Delete(context.Background(), &entity.DeleteAIDocumentOption{
+	result, err := col.Delete(ctx, &entity.DeleteAIDocumentOption{
 		// DocumentIds: []string{fileId},
 		FileName: fileName,
 	})
@@ -258,7 +273,7 @@ func TestAIDelete(t *testing.T) {
 func TestAITruncate(t *testing.T) {
 	db := cli.AIDatabase(aiDatabase)
 	db.Debug(true)
-	result, err := db.TruncateCollection(context.Background(), aiCollectionName, nil)
+	result, err := db.TruncateCollection(ctx, aiCollectionName, nil)
 	printErr(err)
 	t.Logf("result: %+v", result)
 }

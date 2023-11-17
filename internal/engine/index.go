@@ -29,16 +29,17 @@ var _ entity.IndexInterface = &implementerIndex{}
 
 type implementerIndex struct {
 	entity.SdkClient
-	database entity.Database
+	database   entity.Database
+	collection entity.Collection
 }
 
-func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName string, options ...*entity.IndexRebuildOption) (*entity.IndexReBuildResult, error) {
+func (i *implementerIndex) RebuildIndex(ctx context.Context, options ...*entity.RebuildIndexOption) (*entity.RebuildIndexResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, entity.AIDbTypeError
 	}
 	req := new(index.RebuildReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = collectionName
+	req.Collection = i.collection.CollectionName
 
 	if len(options) != 0 && options[0] != nil {
 		option := options[0]
@@ -51,7 +52,7 @@ func (i *implementerIndex) IndexRebuild(ctx context.Context, collectionName stri
 	if err != nil {
 		return nil, err
 	}
-	result := new(entity.IndexReBuildResult)
+	result := new(entity.RebuildIndexResult)
 	result.TaskIds = res.TaskIds
 	return result, nil
 }

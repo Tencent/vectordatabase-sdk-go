@@ -23,11 +23,11 @@ import (
 	"time"
 )
 
-type IndexReBuildResult struct {
+type RebuildIndexResult struct {
 	TaskIds []string
 }
 
-type IndexRebuildOption struct {
+type RebuildIndexOption struct {
 	DropBeforeRebuild bool
 	Throttle          int
 }

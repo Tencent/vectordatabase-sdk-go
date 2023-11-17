@@ -74,7 +74,7 @@ type AIAliasInterface interface {
 
 type IndexInterface interface {
 	SdkClient
-	IndexRebuild(ctx context.Context, collectionName string, options ...*IndexRebuildOption) (result *IndexReBuildResult, err error)
+	RebuildIndex(ctx context.Context, options ...*RebuildIndexOption) (result *RebuildIndexResult, err error)
 }
 
 // DocumentInterface document api
@@ -92,7 +92,7 @@ type DocumentInterface interface {
 type AIDocumentInterface interface {
 	SdkClient
 	Query(ctx context.Context, options ...*QueryAIDocumentOption) (*QueryAIDocumentsResult, error)
-	Search(ctx context.Context, text string, options ...*SearchAIDocumentOption) (*SearchAIDocumentResult, error)
+	Search(ctx context.Context, content string, options ...*SearchAIDocumentOption) (*SearchAIDocumentResult, error)
 	Delete(ctx context.Context, options ...*DeleteAIDocumentOption) (*DeleteAIDocumentResult, error)
 	Update(ctx context.Context, options ...*UpdateAIDocumentOption) (*UpdateAIDocumentResult, error)
 	Upload(ctx context.Context, localFilePath string, options ...*UploadAIDocumentOption) (*UploadAIDocumentResult, error)

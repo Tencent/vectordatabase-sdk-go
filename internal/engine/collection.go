@@ -194,7 +194,13 @@ func (i *implementerCollection) Collection(name string) *entity.Collection {
 	docImpl.database = i.database
 	docImpl.collection = *coll
 
+	indexImpl := new(implementerIndex)
+	indexImpl.SdkClient = i.SdkClient
+	indexImpl.database = i.database
+	indexImpl.collection = *coll
+
 	coll.DocumentInterface = docImpl
+	coll.IndexInterface = indexImpl
 
 	return coll
 }

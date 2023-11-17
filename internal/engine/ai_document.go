@@ -83,8 +83,7 @@ func (i *implementerAIDocument) Query(ctx context.Context, options ...*entity.Qu
 }
 
 // Search search ai_document topK by vector. The optional parameters filter will add the filter condition to search.
-// The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerAIDocument) Search(ctx context.Context, text string, options ...*entity.SearchAIDocumentOption) (*entity.SearchAIDocumentResult, error) {
+func (i *implementerAIDocument) Search(ctx context.Context, content string, options ...*entity.SearchAIDocumentOption) (*entity.SearchAIDocumentResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, entity.BaseDbTypeError
 	}
@@ -93,7 +92,7 @@ func (i *implementerAIDocument) Search(ctx context.Context, text string, options
 	req.Collection = i.collection.CollectionName
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Search = new(ai_document.SearchCond)
-	req.Search.Content = text
+	req.Search.Content = content
 
 	if len(options) != 0 && options[0] != nil {
 		option := options[0]
@@ -229,6 +228,8 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 		return nil, fmt.Errorf("get file upload url failed")
 	}
 	result := new(entity.GetCosTmpSecretResult)
+	result.FileName = req.FileName
+	result.FileId = res.FileId
 	result.CosEndpoint = res.CosEndpoint
 	result.CosBucket = res.CosBucket
 	result.CosRegion = res.CosRegion
@@ -237,7 +238,6 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 	result.TmpSecretKey = res.Credentials.TmpSecretKey
 	result.SessionToken = res.Credentials.SessionToken
 	result.MaxSupportContentLength = res.UploadCondition.MaxSupportContentLength
-	result.FileId = res.FileId
 
 	return result, nil
 }
@@ -313,6 +313,8 @@ func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string
 		return nil, err
 	}
 	result = new(entity.UploadAIDocumentResult)
+	result.FileName = res.FileName
+	result.FileId = res.FileId
 	result.CosEndpoint = res.CosEndpoint
 	result.CosRegion = res.CosRegion
 	result.CosBucket = res.CosBucket
@@ -321,6 +323,5 @@ func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string
 	result.TmpSecretKey = res.TmpSecretKey
 	result.SessionToken = res.SessionToken
 	result.MaxSupportContentLength = res.MaxSupportContentLength
-	result.FileId = res.FileId
 	return result, nil
 }

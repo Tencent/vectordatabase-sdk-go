@@ -24,7 +24,7 @@
 * 新增AI collection的别名相关接口
 
 ### IndexInterface
-* IndexRebuild返回值修改为IndexReBuildResult
+* IndexRebuild修改名称为RebuildIndex, 返回值修改为RebuildIndexResult
 
 ### DocumentInterface
 * Upsert移动buildIndex参数到option中；返回值添加UpsertDocumentResult

@@ -25,6 +25,7 @@ import (
 // Collection wrap the collection parameters and document interface to operating the document api
 type Collection struct {
 	DocumentInterface
+	IndexInterface
 	DatabaseName   string
 	CollectionName string
 	DocumentCount  int64
@@ -37,6 +38,14 @@ type Collection struct {
 	Description    string
 	Size           uint64
 	CreateTime     time.Time
+}
+
+func (c *Collection) Debug(v bool) {
+	c.DocumentInterface.Debug(v)
+}
+
+func (c *Collection) WithTimeout(t time.Duration) {
+	c.DocumentInterface.WithTimeout(t)
 }
 
 type CreateCollectionOption struct {

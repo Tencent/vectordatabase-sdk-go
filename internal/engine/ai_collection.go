@@ -54,7 +54,7 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 		option := options[0]
 		req.Description = option.Description
 
-		for _, v := range option.Indexes {
+		for _, v := range option.Indexes.FilterIndex {
 			var column api.IndexColumn
 			column.FieldName = v.FieldName
 			column.FieldType = string(v.FieldType)

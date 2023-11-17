@@ -16,7 +16,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package example
+package test
 
 import (
 	"context"
@@ -30,51 +30,35 @@ import (
 
 var (
 	cli                 *entity.VectorDBClient
-	database            = "db-test"
-	collectionName      = "book_segments"
-	collectionAlias     = "book_segments_alias"
-	embeddingCollection = "book_segments_em"
+	ctx                 = context.Background()
+	database            = "go-sdk-test-db"
+	collectionName      = "go-sdk-test-coll"
+	collectionAlias     = "go-sdk-test-alias"
+	embeddingCollection = "go-sdk-test-emcoll"
 )
 
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("", "root", "", &entity.ClientOption{Timeout: 10 * time.Second})
+	// cli, err = tcvectordb.NewClient("http://21.0.83.204:8100", "root", "RPo223wN2yXyUq16dmHcGyzXHaYfWCZWNMGwBC01", &entity.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewClient("http://lb-3fuz86n6-e8g7tor5zvbql29p.clb.ap-guangzhou.tencentclb.com:60000", "root", "Nfg5r1geFnuuR1uvkxaHqFjoWZwsm9FGr4I28NTK", &entity.ClientOption{Timeout: 10 * time.Second})
+	// cli, err = tcvectordb.NewClient("http://21.0.83.222:8100", "root", "NGr06gxdHdS7U6QGOxYvQuEI5VscqoGHadEAvK45", &entity.ClientOption{Timeout: 10 * time.Second})
+	// cli, err = tcvectordb.NewClient("http://lb-9wwd95re-yrqlnz5gavcf0b4j.clb.ap-guangzhou.tencentclb.com:20000", "root", "OYBR9chH4fC7f3RF8kKEImEtvuGCFrBhGMWFlZjI", &entity.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
 }
 
-func TestClear(t *testing.T) {
-	_, err := cli.DropDatabase(context.Background(), database, nil)
+func TestDropDatabase(t *testing.T) {
+	_, err := cli.DropDatabase(ctx, database)
 	printErr(err)
-}
-
-func TestDeleteAndDrop(t *testing.T) {
-	db := cli.Database(database)
-
-	// 删除collection，删除collection的同时，其中的数据也将被全部删除
-	{
-		result, err := db.DropCollection(context.Background(), collectionName, nil)
-		printErr(err)
-		t.Logf("drop collection result: %+v", result)
-	}
-
-	// 删除db，db下的所有collection都将被删除
-	{
-		result, err := cli.DropDatabase(context.Background(), database, nil)
-		printErr(err)
-		t.Logf("drop collection result: %+v", result)
-	}
 }
 
 func TestCreateDatabase(t *testing.T) {
-	// 创建DB--'book'
-	db, err := cli.CreateDatabase(context.Background(), database, nil)
+	db, err := cli.CreateDatabase(ctx, database)
 	printErr(err)
 	t.Logf("create database success, %s", db.DatabaseName)
-
-	dbList, err := cli.ListDatabase(context.Background(), nil)
+	dbList, err := cli.ListDatabase(ctx)
 	printErr(err)
 
 	for _, db := range dbList.Databases {
@@ -82,20 +66,33 @@ func TestCreateDatabase(t *testing.T) {
 	}
 }
 
-func TestCreateCollection(t *testing.T) {
+func TestListDatabase(t *testing.T) {
+	dbList, err := cli.ListDatabase(ctx)
+	printErr(err)
+	t.Logf("base database ======================")
+	for _, db := range dbList.Databases {
+		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
+	}
+
+	t.Logf("AI database ======================")
+	for _, db := range dbList.AIDatabases {
+		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
+	}
+}
+
+func TestDropCollection(t *testing.T) {
 	db := cli.Database(database)
 
-	// 创建 Collection
+	// 删除collection，删除collection的同时，其中的数据也将被全部删除
+	{
+		result, err := db.DropCollection(ctx, collectionName)
+		printErr(err)
+		t.Logf("drop collection result: %+v", result)
+	}
+}
 
-	// 第一步，设计索引（不是设计 Collection 的结构）
-	// 1. 【重要的事】向量对应的文本字段不要建立索引，会浪费较大的内存，并且没有任何作用。
-	// 2. 【必须的索引】：主键id、向量字段 vector 这两个字段目前是固定且必须的，参考下面的例子；
-	// 3. 【其他索引】：检索时需作为条件查询的字段，比如要按书籍的作者进行过滤，这个时候 author 字段就需要建立索引，
-	//     否则无法在查询的时候对 author 字段进行过滤，不需要过滤的字段无需加索引，会浪费内存；
-	// 4.  向量数据库支持动态 Schema，写入数据时可以写入任何字段，无需提前定义，类似 MongoDB.
-	// 5.  例子中创建一个书籍片段的索引，例如书籍片段的信息包括 {id, vector, segment, bookName, author, page},
-	//     id 为主键需要全局唯一，segment 为文本片段, vector 字段需要建立向量索引，假如我们在查询的时候要查询指定书籍
-	//     名称的内容，这个时候需要对 bookName 建立索引，其他字段没有条件查询的需要，无需建立索引。
+func TestCreateCollection(t *testing.T) {
+	db := cli.Database(database)
 
 	index := entity.Indexes{
 		VectorIndex: []entity.VectorIndex{
@@ -132,30 +129,38 @@ func TestCreateCollection(t *testing.T) {
 		},
 	}
 
-	// 第二步：创建 Collection
-	// 创建collection耗时较长，需要调整客户端的timeout
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(context.Background(), collectionName, 1, 1, "test collection", index, nil)
+	_, err := db.CreateCollection(ctx, collectionName, 1, 1, "test collection", index)
 	printErr(err)
 
 	// 列出所有 Collection
-	result, err := db.ListCollection(context.Background(), nil)
+	result, err := db.ListCollection(ctx, nil)
 	printErr(err)
 	for _, col := range result.Collections {
 		t.Logf("%+v", col)
 	}
 
 	// 设置 Collection 的 alias
-	_, err = db.SetAlias(context.Background(), collectionName, collectionAlias, nil)
+	_, err = db.SetAlias(ctx, collectionName, collectionAlias, nil)
 	printErr(err)
 
 	// 查看 Collection 信息
-	colRes, err := db.DescribeCollection(context.Background(), collectionName, nil)
+	colRes, err := db.DescribeCollection(ctx, collectionName)
 	printErr(err)
 	t.Logf("%+v", colRes)
 
 	// 删除 Collection 的 alias
-	db.DeleteAlias(context.Background(), collectionAlias, nil)
+	db.DeleteAlias(ctx, collectionAlias, nil)
+}
+
+func TestListCollection(t *testing.T) {
+	db := cli.Database(database)
+	// 列出所有 Collection
+	result, err := db.ListCollection(ctx, nil)
+	printErr(err)
+	for _, col := range result.Collections {
+		t.Logf("%+v", col)
+	}
 }
 
 func TestCreateCollectionWithEmbedding(t *testing.T) {
@@ -207,10 +212,10 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 
 	db.WithTimeout(time.Second * 30)
 	db.Debug(true)
-	_, err := db.CreateCollection(context.Background(), embeddingCollection, 1, 1, "desription doc", index, option)
+	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 1, "desription doc", index, option)
 	printErr(err)
 
-	col, err := db.DescribeCollection(context.Background(), embeddingCollection, nil)
+	col, err := db.DescribeCollection(ctx, embeddingCollection, nil)
 	printErr(err)
 	t.Logf("%+v", col)
 }
@@ -219,7 +224,7 @@ func TestUpsertDocument(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
 	buildIndex := true
-	_, err := col.Upsert(context.Background(), []entity.Document{
+	_, err := col.Upsert(ctx, []entity.Document{
 		{
 			Id:     "0001",
 			Vector: []float32{0.2123, 0.21, 0.213},
@@ -283,19 +288,19 @@ func TestQuery(t *testing.T) {
 	// 4. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
 
 	col := cli.Database(database).Collection(collectionName)
+	col.Debug(true)
 	option := &entity.QueryDocumentOption{
-		Filter:         entity.NewFilter(`bookName="三国演义"`),
-		OutputFields:   []string{"id", "bookName"},
-		RetrieveVector: true,
-		Limit:          2,
-		Offset:         1,
+		// Filter: entity.NewFilter(`bookName="三国演义"`),
+		// OutputFields:   []string{"id", "bookName"},
+		// RetrieveVector: true,
+		// Limit: 100,
 	}
 	col.Debug(true)
-	result, err := col.Query(context.Background(), []string{"0001", "0002", "0003", "0004", "0005"}, option)
+	result, err := col.Query(ctx, []string{"0001", "0002", "0003", "0004", "0005"}, option)
 	printErr(err)
 	t.Logf("total doc: %d", result.Total)
 	for _, doc := range result.Documents {
-		t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
+		t.Logf("document: %+v", doc)
 	}
 }
 
@@ -312,7 +317,7 @@ func TestSearch(t *testing.T) {
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
 
 	filter := entity.NewFilter(`bookName="三国演义"`)
-	searchRes, err := col.SearchById(context.Background(), []string{"0003"}, &entity.SearchDocumentOption{
+	searchRes, err := col.SearchById(ctx, []string{"0003"}, &entity.SearchDocumentOption{
 		Filter:         filter,                           // 过滤获取到结果
 		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
@@ -333,7 +338,7 @@ func TestSearch(t *testing.T) {
 
 	// 批量相似性查询，根据指定的多个向量查找多个 Top K 个相似性结果
 	// 指定检索向量，最多指定20个
-	searchRes, err = col.Search(context.Background(), [][]float32{
+	searchRes, err = col.Search(ctx, [][]float32{
 		{0.3123, 0.43, 0.213},
 		{0.233, 0.12, 0.97},
 	}, &entity.SearchDocumentOption{
@@ -358,7 +363,7 @@ func TestUpdateAndDelete(t *testing.T) {
 	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
 
 	// filter 限制仅会更新 id = "0003"
-	result, err := col.Update(context.Background(), &entity.UpdateDocumentOption{
+	result, err := col.Update(ctx, &entity.UpdateDocumentOption{
 		QueryIds:    []string{"0001", "0003"},
 		QueryFilter: entity.NewFilter(`bookName="三国演义"`),
 		UpdateFields: map[string]entity.Field{
@@ -367,7 +372,7 @@ func TestUpdateAndDelete(t *testing.T) {
 	})
 	printErr(err)
 	t.Logf("affect count: %d", result.AffectedCount)
-	docs, err := col.Query(context.Background(), []string{"0003"}, nil)
+	docs, err := col.Query(ctx, []string{"0003"}, nil)
 	printErr(err)
 	for _, doc := range docs.Documents {
 		t.Logf("query document is: %+v", doc.Fields)
@@ -378,30 +383,30 @@ func TestUpdateAndDelete(t *testing.T) {
 	// 2. 删除功能会受限于 collection 的索引类型，部分索引类型不支持删除操作
 
 	// filter 限制只会删除 id="0001" 成功
-	col.Delete(context.Background(), &entity.DeleteDocumentOption{
+	col.Delete(ctx, &entity.DeleteDocumentOption{
 		DocumentIds: []string{"0001", "0003"},
 		Filter:      entity.NewFilter(`bookName="西游记"`),
 	})
 }
 
 func TestBuildIndex(t *testing.T) {
-	db := cli.Database(database)
+	coll := cli.Database(database).Collection(collectionName)
 	// 索引重建，重建期间不支持写入
-	_, err := db.IndexRebuild(context.Background(), collectionName, &entity.IndexRebuildOption{Throttle: 1})
+	_, err := coll.RebuildIndex(ctx, &entity.RebuildIndexOption{Throttle: 1})
 	printErr(err)
 }
 
 func TestTruncateCollection(t *testing.T) {
 	db := cli.Database(database)
 	// 清空 Collection
-	_, err := db.TruncateCollection(context.Background(), collectionName, nil)
+	_, err := db.TruncateCollection(ctx, collectionName, nil)
 	printErr(err)
 }
 
 func TestUpsertEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	_, err := col.Upsert(context.Background(), []entity.Document{
+	_, err := col.Upsert(ctx, []entity.Document{
 		{
 			Id: "0001",
 			Fields: map[string]entity.Field{
@@ -463,7 +468,7 @@ func TestQueryEmbedding(t *testing.T) {
 		Offset:         1,
 	}
 	col.Debug(true)
-	docs, err := col.Query(context.Background(), []string{"0001", "0002", "0003"}, option)
+	docs, err := col.Query(ctx, []string{"0001", "0002", "0003"}, option)
 	printErr(err)
 	t.Logf("total doc: %d", docs.Total)
 	for _, doc := range docs.Documents {
@@ -474,7 +479,7 @@ func TestQueryEmbedding(t *testing.T) {
 func TestSearchEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 	filter := entity.NewFilter(`bookName="三国演义"`)
-	searchRes, err := col.SearchById(context.Background(), []string{"0003"}, &entity.SearchDocumentOption{
+	searchRes, err := col.SearchById(ctx, []string{"0003"}, &entity.SearchDocumentOption{
 		Filter:         filter,                           // 过滤获取到结果
 		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
@@ -495,7 +500,7 @@ func TestSearchEmbedding(t *testing.T) {
 	// 3. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
 	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
 
-	searchRes, err = col.SearchByText(context.Background(), map[string][]string{"segment": {"吕布"}}, &entity.SearchDocumentOption{
+	searchRes, err = col.SearchByText(ctx, map[string][]string{"segment": {"吕布"}}, &entity.SearchDocumentOption{
 		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
 		Limit:          2,                                // 指定 Top K 的 K 值
