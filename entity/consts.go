@@ -50,6 +50,7 @@ type FieldType string
 const (
 	Uint64 FieldType = "uint64"
 	String FieldType = "string"
+	Array  FieldType = "array"
 	Vector FieldType = "vector"
 )
 

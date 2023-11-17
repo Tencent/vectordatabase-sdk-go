@@ -20,6 +20,7 @@ package test
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"testing"
 	"time"
@@ -50,33 +51,28 @@ func init() {
 }
 
 func TestDropDatabase(t *testing.T) {
-	_, err := cli.DropDatabase(ctx, database)
+	result, err := cli.DropDatabase(ctx, database)
 	printErr(err)
+	log.Printf("DropDatabase result: %+v", result)
 }
 
 func TestCreateDatabase(t *testing.T) {
 	db, err := cli.CreateDatabase(ctx, database)
 	printErr(err)
-	t.Logf("create database success, %s", db.DatabaseName)
-	dbList, err := cli.ListDatabase(ctx)
-	printErr(err)
-
-	for _, db := range dbList.Databases {
-		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
-	}
+	log.Printf("create database success, %s", db.DatabaseName)
 }
 
 func TestListDatabase(t *testing.T) {
 	dbList, err := cli.ListDatabase(ctx)
 	printErr(err)
-	t.Logf("base database ======================")
+	log.Printf("base database ======================")
 	for _, db := range dbList.Databases {
-		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
+		log.Printf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
 	}
 
-	t.Logf("AI database ======================")
+	log.Printf("AI database ======================")
 	for _, db := range dbList.AIDatabases {
-		t.Logf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
+		log.Printf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
 	}
 }
 
@@ -84,11 +80,9 @@ func TestDropCollection(t *testing.T) {
 	db := cli.Database(database)
 
 	// 删除collection，删除collection的同时，其中的数据也将被全部删除
-	{
-		result, err := db.DropCollection(ctx, collectionName)
-		printErr(err)
-		t.Logf("drop collection result: %+v", result)
-	}
+	result, err := db.DropCollection(ctx, collectionName)
+	printErr(err)
+	log.Printf("drop collection result: %+v", result)
 }
 
 func TestCreateCollection(t *testing.T) {
@@ -130,101 +124,35 @@ func TestCreateCollection(t *testing.T) {
 	}
 
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(ctx, collectionName, 1, 1, "test collection", index)
+	coll, err := db.CreateCollection(ctx, collectionName, 1, 0, "test collection", index)
 	printErr(err)
-
-	// 列出所有 Collection
-	result, err := db.ListCollection(ctx, nil)
-	printErr(err)
-	for _, col := range result.Collections {
-		t.Logf("%+v", col)
-	}
-
-	// 设置 Collection 的 alias
-	_, err = db.SetAlias(ctx, collectionName, collectionAlias, nil)
-	printErr(err)
-
-	// 查看 Collection 信息
-	colRes, err := db.DescribeCollection(ctx, collectionName)
-	printErr(err)
-	t.Logf("%+v", colRes)
-
-	// 删除 Collection 的 alias
-	db.DeleteAlias(ctx, collectionAlias, nil)
+	log.Printf("CreateCollection success: %v: %v", coll.DatabaseName, coll.CollectionName)
 }
 
 func TestListCollection(t *testing.T) {
 	db := cli.Database(database)
 	// 列出所有 Collection
-	result, err := db.ListCollection(ctx, nil)
+	result, err := db.ListCollection(ctx)
 	printErr(err)
 	for _, col := range result.Collections {
-		t.Logf("%+v", col)
+		data, err := json.Marshal(col)
+		printErr(err)
+		log.Printf("%+v", string(data))
 	}
 }
 
-func TestCreateCollectionWithEmbedding(t *testing.T) {
+func TestDescribeCollection(t *testing.T) {
 	db := cli.Database(database)
-
-	// 设置embedding字段和模型
-	option := &entity.CreateCollectionOption{
-		Embedding: &entity.Embedding{
-			Field:       "segment",
-			VectorField: "vector",
-			Model:       entity.BGE_BASE_ZH,
-		},
-	}
-
-	index := entity.Indexes{
-		// 指定embedding时，vector的维度可以不传，系统会使用embedding model的维度
-		VectorIndex: []entity.VectorIndex{
-			{
-				FilterIndex: entity.FilterIndex{
-					FieldName: "vector",
-					FieldType: entity.Vector,
-					IndexType: entity.HNSW,
-				},
-				MetricType: entity.COSINE,
-				Params: &entity.HNSWParam{
-					M:              16,
-					EfConstruction: 200,
-				},
-			},
-		},
-		FilterIndex: []entity.FilterIndex{
-			{
-				FieldName: "id",
-				FieldType: entity.String,
-				IndexType: entity.PRIMARY,
-			},
-			{
-				FieldName: "bookName",
-				FieldType: entity.String,
-				IndexType: entity.FILTER,
-			},
-			{
-				FieldName: "page",
-				FieldType: entity.Uint64,
-				IndexType: entity.FILTER,
-			},
-		},
-	}
-
-	db.WithTimeout(time.Second * 30)
-	db.Debug(true)
-	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 1, "desription doc", index, option)
+	res, err := db.DescribeCollection(ctx, collectionName)
 	printErr(err)
-
-	col, err := db.DescribeCollection(ctx, embeddingCollection, nil)
-	printErr(err)
-	t.Logf("%+v", col)
+	log.Printf("DescribeCollection result: %+v", res)
 }
 
-func TestUpsertDocument(t *testing.T) {
+func TestUpsert(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
 	buildIndex := true
-	_, err := col.Upsert(ctx, []entity.Document{
+	result, err := col.Upsert(ctx, []entity.Document{
 		{
 			Id:     "0001",
 			Vector: []float32{0.2123, 0.21, 0.213},
@@ -278,91 +206,71 @@ func TestUpsertDocument(t *testing.T) {
 	}, &entity.UpsertDocumentOption{BuildIndex: &buildIndex})
 
 	printErr(err)
+	log.Printf("upsert result: %+v", result)
 }
 
 func TestQuery(t *testing.T) {
-	// 查询
-	// 1. query 用于查询数据
-	// 2. 可以通过传入主键 id 列表或 filter 实现过滤数据的目的
-	// 3. 如果没有主键 id 列表和 filter 则必须传入 limit 和 offset，类似 scan 的数据扫描功能
-	// 4. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
-
 	col := cli.Database(database).Collection(collectionName)
-	col.Debug(true)
 	option := &entity.QueryDocumentOption{
-		// Filter: entity.NewFilter(`bookName="三国演义"`),
+		Filter: entity.NewFilter(`bookName="三国演义"`),
 		// OutputFields:   []string{"id", "bookName"},
 		// RetrieveVector: true,
 		// Limit: 100,
 	}
-	col.Debug(true)
-	result, err := col.Query(ctx, []string{"0001", "0002", "0003", "0004", "0005"}, option)
+	documentId := []string{"0001", "0002", "0003", "0004", "0005"}
+	result, err := col.Query(ctx, documentId, option)
 	printErr(err)
-	t.Logf("total doc: %d", result.Total)
+	log.Printf("total doc: %d", result.Total)
 	for _, doc := range result.Documents {
-		t.Logf("document: %+v", doc)
+		log.Printf("document: %+v", doc)
 	}
 }
 
 func TestSearch(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	// searchById
-	// 1. searchById 提供按 id 搜索的能力
-	// 1. search 提供按照 vector 搜索的能力
-	// 2. 支持通过 filter 过滤数据
-	// 3. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
-	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
-
-	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
-
-	filter := entity.NewFilter(`bookName="三国演义"`)
-	searchRes, err := col.SearchById(ctx, []string{"0003"}, &entity.SearchDocumentOption{
-		Filter:         filter,                           // 过滤获取到结果
-		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          2,                                // 指定 Top K 的 K 值
-	})
-	printErr(err)
-	t.Log("SearchById-----------------")
-	for i, docs := range searchRes.Documents {
-		t.Logf("doc %d result: ", i)
-		for _, doc := range docs {
-			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
-		}
-	}
-
-	// search
-	// 1. search 提供按照 vector 搜索的能力
-	// 其他选项类似 search 接口
-
-	// 批量相似性查询，根据指定的多个向量查找多个 Top K 个相似性结果
-	// 指定检索向量，最多指定20个
-	searchRes, err = col.Search(ctx, [][]float32{
+	searchRes, err := col.Search(ctx, [][]float32{
 		{0.3123, 0.43, 0.213},
 		{0.233, 0.12, 0.97},
 	}, &entity.SearchDocumentOption{
-		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          10,                               // 指定 Top K 的 K 值
+		Params:         &entity.SearchDocParams{Ef: 100},
+		RetrieveVector: false,
+		Limit:          10,
 	})
 	printErr(err)
-	t.Logf("search by vector-----------------")
+	log.Printf("search by vector-----------------")
 	for i, docs := range searchRes.Documents {
-		t.Logf("doc %d result: ", i)
+		log.Printf("doc %d result: ", i)
 		for _, doc := range docs {
-			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
+			log.Printf("document: %+v", doc)
 		}
 	}
 }
 
-func TestUpdateAndDelete(t *testing.T) {
+func TestSearchById(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	// update
-	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
+	filter := entity.NewFilter(`bookName="三国演义"`)
+	documentId := []string{"0003"}
+	searchRes, err := col.SearchById(ctx, documentId, &entity.SearchDocumentOption{
+		Filter:         filter,
+		Params:         &entity.SearchDocParams{Ef: 100},
+		RetrieveVector: false,
+		Limit:          2,
+	})
+	printErr(err)
+	t.Log("SearchById-----------------")
+	for i, docs := range searchRes.Documents {
+		log.Printf("doc %d result: ", i)
+		for _, doc := range docs {
+			log.Printf("document: %+v", doc)
+		}
+	}
+}
 
-	// filter 限制仅会更新 id = "0003"
+func TestUpdate(t *testing.T) {
+	col := cli.Database(database).Collection(collectionName)
+
 	result, err := col.Update(ctx, &entity.UpdateDocumentOption{
 		QueryIds:    []string{"0001", "0003"},
 		QueryFilter: entity.NewFilter(`bookName="三国演义"`),
@@ -371,22 +279,23 @@ func TestUpdateAndDelete(t *testing.T) {
 		},
 	})
 	printErr(err)
-	t.Logf("affect count: %d", result.AffectedCount)
-	docs, err := col.Query(ctx, []string{"0003"}, nil)
+	log.Printf("affect count: %d", result.AffectedCount)
+	docs, err := col.Query(ctx, []string{"0003"})
 	printErr(err)
 	for _, doc := range docs.Documents {
-		t.Logf("query document is: %+v", doc.Fields)
+		log.Printf("query document: %+v", doc)
 	}
+}
 
-	// delete
-	// 1. delete 提供基于 [主键查询] 和 [Filter 过滤] 的数据删除能力
-	// 2. 删除功能会受限于 collection 的索引类型，部分索引类型不支持删除操作
+func TestDelete(t *testing.T) {
+	col := cli.Database(database).Collection(collectionName)
 
-	// filter 限制只会删除 id="0001" 成功
-	col.Delete(ctx, &entity.DeleteDocumentOption{
+	res, err := col.Delete(ctx, &entity.DeleteDocumentOption{
 		DocumentIds: []string{"0001", "0003"},
 		Filter:      entity.NewFilter(`bookName="西游记"`),
 	})
+	printErr(err)
+	log.Printf("Delete result: %+v", res)
 }
 
 func TestBuildIndex(t *testing.T) {
@@ -399,120 +308,8 @@ func TestBuildIndex(t *testing.T) {
 func TestTruncateCollection(t *testing.T) {
 	db := cli.Database(database)
 	// 清空 Collection
-	_, err := db.TruncateCollection(ctx, collectionName, nil)
+	_, err := db.TruncateCollection(ctx, collectionName)
 	printErr(err)
-}
-
-func TestUpsertEmbedding(t *testing.T) {
-	col := cli.Database(database).Collection(embeddingCollection)
-
-	_, err := col.Upsert(ctx, []entity.Document{
-		{
-			Id: "0001",
-			Fields: map[string]entity.Field{
-				"bookName": {Val: "西游记"},
-				"author":   {Val: "吴承恩"},
-				"page":     {Val: 21},
-				"segment":  {Val: "富贵功名，前缘分定，为人切莫欺心。"},
-			},
-		},
-		{
-			Id: "0002",
-			Fields: map[string]entity.Field{
-				"bookName": {Val: "西游记"},
-				"author":   {Val: "吴承恩"},
-				"page":     {Val: 22},
-				"segment":  {Val: "正大光明，忠良善果弥深。些些狂妄天加谴，眼前不遇待时临。"},
-			},
-		},
-		{
-			Id: "0003",
-			Fields: map[string]entity.Field{
-				"bookName": {Val: "三国演义"},
-				"author":   {Val: "罗贯中"},
-				"page":     {Val: 23},
-				"segment":  {Val: "细作探知这个消息，飞报吕布。"},
-			},
-		},
-		{
-			Id: "0004",
-			Fields: map[string]entity.Field{
-				"bookName": {Val: "三国演义"},
-				"author":   {Val: "罗贯中"},
-				"page":     {Val: 24},
-				"segment":  {Val: "布大惊，与陈宫商议。宫曰：“闻刘玄德新领徐州，可往投之。”布从其言，竟投徐州来。有人报知玄德。"},
-			},
-		},
-		{
-			Id: "0005",
-			Fields: map[string]entity.Field{
-				"bookName": {Val: "三国演义"},
-				"author":   {Val: "罗贯中"},
-				"page":     {Val: 25},
-				"segment":  {Val: "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。"},
-			},
-		},
-	}, nil)
-
-	printErr(err)
-}
-
-func TestQueryEmbedding(t *testing.T) {
-	col := cli.Database(database).Collection(embeddingCollection)
-
-	option := &entity.QueryDocumentOption{
-		Filter:         entity.NewFilter(`bookName="三国演义"`),
-		OutputFields:   []string{"id", "bookName", "segment"},
-		RetrieveVector: false,
-		Limit:          2,
-		Offset:         1,
-	}
-	col.Debug(true)
-	docs, err := col.Query(ctx, []string{"0001", "0002", "0003"}, option)
-	printErr(err)
-	t.Logf("total doc: %d", docs.Total)
-	for _, doc := range docs.Documents {
-		t.Logf("%+v", doc)
-	}
-}
-
-func TestSearchEmbedding(t *testing.T) {
-	col := cli.Database(database).Collection(embeddingCollection)
-	filter := entity.NewFilter(`bookName="三国演义"`)
-	searchRes, err := col.SearchById(ctx, []string{"0003"}, &entity.SearchDocumentOption{
-		Filter:         filter,                           // 过滤获取到结果
-		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          2,                                // 指定 Top K 的 K 值
-	})
-	printErr(err)
-	t.Log("SearchById-----------------")
-	for i, docs := range searchRes.Documents {
-		t.Logf("doc %d result: ", i)
-		for _, doc := range docs {
-			t.Logf("id: %s, vector: %v, field: %+v", doc.Id, doc.Vector, doc.Fields)
-		}
-	}
-
-	// searchByText
-	// 1. searchByText 提供按 文本 搜索的能力，需要开启embedding服务，传入embedding字段的文本值
-	// 2. 支持通过 filter 过滤数据
-	// 3. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
-	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
-
-	searchRes, err = col.SearchByText(ctx, map[string][]string{"segment": {"吕布"}}, &entity.SearchDocumentOption{
-		Params:         &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		RetrieveVector: false,                            // 是否需要返回向量字段，False：不返回，True：返回
-		Limit:          2,                                // 指定 Top K 的 K 值
-	})
-	printErr(err)
-	t.Log("searchByText-----------------")
-	for i, docs := range searchRes.Documents {
-		t.Logf("doc %d result: ", i)
-		for _, doc := range docs {
-			t.Logf("id: %s, vector: %v, field: %v", doc.Id, doc.Vector, doc.Fields)
-		}
-	}
 }
 
 func printErr(err error) {
