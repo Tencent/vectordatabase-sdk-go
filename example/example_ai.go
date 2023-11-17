@@ -5,17 +5,16 @@ import (
 	"log"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity/api/ai_collection"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_collection"
 )
 
 type AIDemo struct {
-	client *entity.VectorDBClient
+	client *tcvectordb.Client
 }
 
 func NewAIDemo(url, username, key string) (*AIDemo, error) {
-	cli, err := tcvectordb.NewClient(url, username, key, &entity.ClientOption{ReadConsistency: entity.EventualConsistency})
+	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +36,7 @@ func (d *AIDemo) Clear(ctx context.Context, database string) error {
 func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collection, fileName string) error {
 	// 删除collection，删除collection的同时，其中的数据也将被全部删除
 	log.Println("-------------------------- Delete Document --------------------------")
-	cdocDelResult, err := d.client.AIDatabase(database).Collection(collection).Delete(ctx, &entity.DeleteAIDocumentOption{
+	cdocDelResult, err := d.client.AIDatabase(database).Collection(collection).Delete(ctx, &tcvectordb.DeleteAIDocumentOption{
 		FileName: fileName,
 	})
 	if err != nil {
@@ -91,17 +90,17 @@ func (d *AIDemo) CreateCollection(ctx context.Context, database, collection stri
 	db := d.client.AIDatabase(database)
 
 	log.Println("------------------------- CreateCollection -------------------------")
-	index := entity.Indexes{}
-	index.FilterIndex = append(index.FilterIndex, entity.FilterIndex{FieldName: "teststr", FieldType: entity.String, IndexType: entity.FILTER})
+	index := tcvectordb.Indexes{}
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "teststr", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
 
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(ctx, collection, &entity.CreateAICollectionOption{
+	_, err := db.CreateCollection(ctx, collection, &tcvectordb.CreateAICollectionOption{
 		Description: "desc",
 		Indexes:     index,
-		AiConfig: &entity.AiConfig{
+		AiConfig: &tcvectordb.AiConfig{
 			ExpectedFileNum: 100,
 			AverageFileSize: 102400,
-			Language:        entity.LanguageChinese,
+			Language:        tcvectordb.LanguageChinese,
 			DocumentPreprocess: &ai_collection.DocumentPreprocess{
 				AppendTitleToChunk:    "1",
 				AppendKeywordsToChunk: "0",
@@ -124,11 +123,11 @@ func (d *AIDemo) CreateCollection(ctx context.Context, database, collection stri
 	return nil
 }
 
-func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath string) (*entity.UploadAIDocumentResult, error) {
+func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath string) (*tcvectordb.UploadAIDocumentResult, error) {
 	log.Println("---------------------------- UploadFile ---------------------------")
 	coll := d.client.AIDatabase(database).Collection(collection)
-	res, err := coll.Upload(ctx, filePath, &entity.UploadAIDocumentOption{
-		MetaData: map[string]entity.Field{
+	res, err := coll.Upload(ctx, filePath, &tcvectordb.UploadAIDocumentOption{
+		MetaData: map[string]tcvectordb.Field{
 			"teststr": {Val: "v1"},
 			"filekey": {Val: 1024},
 			"author":  {Val: "sam"},
@@ -144,7 +143,7 @@ func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath 
 func (d *AIDemo) GetFile(ctx context.Context, database, collection, fileName string) error {
 	coll := d.client.AIDatabase(database).Collection(collection)
 	log.Println("---------------------------- GetFile by Name ----------------------------")
-	result, err := coll.Query(ctx, &entity.QueryAIDocumentOption{
+	result, err := coll.Query(ctx, &tcvectordb.QueryAIDocumentOption{
 		FileName: fileName,
 	})
 	if err != nil {
@@ -163,9 +162,9 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string
 
 	log.Println("---------------------------- Search ----------------------------")
 	// 查找与给定查询向量相似的向量。支持输入文本信息检索与输入文本相似的内容，同时，支持搭配标量字段的 Filter 表达式一并检索。
-	res, err := coll.Search(ctx, "“什么是向量数据库", &entity.SearchAIDocumentOption{
+	res, err := coll.Search(ctx, "“什么是向量数据库", &tcvectordb.SearchAIDocumentOption{
 		ChunkExpand: []int{1, 0},
-		Filter:      entity.NewFilter(`teststr="v1"`),
+		Filter:      tcvectordb.NewFilter(`teststr="v1"`),
 		Limit:       2,
 	})
 	if err != nil {
@@ -176,8 +175,8 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string
 	}
 
 	log.Println("---------------------------- Update ----------------------------")
-	updateRes, err := coll.Update(ctx, &entity.UpdateAIDocumentOption{
-		QueryFilter: entity.NewFilter(`teststr="v1"`),
+	updateRes, err := coll.Update(ctx, &tcvectordb.UpdateAIDocumentOption{
+		QueryFilter: tcvectordb.NewFilter(`teststr="v1"`),
 		UpdateFields: map[string]interface{}{
 			"teststr": "v2",
 		},
@@ -188,8 +187,8 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string
 	log.Printf("updateResult: %+v", updateRes)
 
 	log.Println("---------------------------- Query ----------------------------")
-	queryRes, err := coll.Query(ctx, &entity.QueryAIDocumentOption{
-		Filter: entity.NewFilter(`teststr="v2"`),
+	queryRes, err := coll.Query(ctx, &tcvectordb.QueryAIDocumentOption{
+		Filter: tcvectordb.NewFilter(`teststr="v2"`),
 	})
 	if err != nil {
 		return err

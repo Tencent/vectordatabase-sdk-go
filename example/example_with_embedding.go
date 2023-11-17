@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 )
 
@@ -14,7 +13,7 @@ type EmbeddingDemo struct {
 }
 
 func NewEmbeddingDemo(url, username, key string) (*EmbeddingDemo, error) {
-	cli, err := tcvectordb.NewClient(url, username, key, &entity.ClientOption{ReadConsistency: entity.EventualConsistency})
+	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
 	}
@@ -60,29 +59,29 @@ func (d *EmbeddingDemo) CreateDBAndCollection(ctx context.Context, database, col
 	//             e5-large-v2                 ｜ 1024
 	//             multilingual-e5-base        ｜ 768
 	//     -----------------------------------------------------
-	index := entity.Indexes{}
-	index.VectorIndex = append(index.VectorIndex, entity.VectorIndex{
-		FilterIndex: entity.FilterIndex{
+	index := tcvectordb.Indexes{}
+	index.VectorIndex = append(index.VectorIndex, tcvectordb.VectorIndex{
+		FilterIndex: tcvectordb.FilterIndex{
 			FieldName: "vector",
-			FieldType: entity.Vector,
-			IndexType: entity.HNSW,
+			FieldType: tcvectordb.Vector,
+			IndexType: tcvectordb.HNSW,
 		},
 		Dimension:  768,
-		MetricType: entity.COSINE,
-		Params: &entity.HNSWParam{
+		MetricType: tcvectordb.COSINE,
+		Params: &tcvectordb.HNSWParam{
 			M:              16,
 			EfConstruction: 200,
 		},
 	})
-	index.FilterIndex = append(index.FilterIndex, entity.FilterIndex{FieldName: "id", FieldType: entity.String, IndexType: entity.PRIMARY})
-	index.FilterIndex = append(index.FilterIndex, entity.FilterIndex{FieldName: "bookName", FieldType: entity.String, IndexType: entity.FILTER})
-	index.FilterIndex = append(index.FilterIndex, entity.FilterIndex{FieldName: "page", FieldType: entity.Uint64, IndexType: entity.FILTER})
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY})
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
 
-	ebd := &entity.Embedding{VectorField: "vector", Field: "text", Model: entity.BGE_BASE_ZH}
+	ebd := &tcvectordb.Embedding{VectorField: "vector", Field: "text", Model: tcvectordb.BGE_BASE_ZH}
 	// 第二步：创建 Collection
 	// 创建支持 Embedding 的 Collection
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollection(ctx, collection, 3, 2, "test collection", index, &entity.CreateCollectionOption{
+	_, err = db.CreateCollection(ctx, collection, 3, 2, "test collection", index, &tcvectordb.CreateCollectionOption{
 		Embedding: ebd,
 	})
 	if err != nil {
@@ -133,10 +132,10 @@ func (d *EmbeddingDemo) UpsertData(ctx context.Context, database, collection str
 	// 1. 支持动态 Schema，除了 id、vector 字段必须写入，可以写入其他任意字段；
 	// 2. upsert 会执行覆盖写，若文档id已存在，则新数据会直接覆盖原有数据(删除原有数据，再插入新数据)
 
-	documentList := []entity.Document{
+	documentList := []tcvectordb.Document{
 		{
 			Id: "0001",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 21},
@@ -146,7 +145,7 @@ func (d *EmbeddingDemo) UpsertData(ctx context.Context, database, collection str
 		},
 		{
 			Id: "0002",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "西游记"},
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 22},
@@ -156,7 +155,7 @@ func (d *EmbeddingDemo) UpsertData(ctx context.Context, database, collection str
 		},
 		{
 			Id: "0003",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 23},
@@ -166,7 +165,7 @@ func (d *EmbeddingDemo) UpsertData(ctx context.Context, database, collection str
 		},
 		{
 			Id: "0004",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 24},
@@ -176,7 +175,7 @@ func (d *EmbeddingDemo) UpsertData(ctx context.Context, database, collection str
 		},
 		{
 			Id: "0005",
-			Fields: map[string]entity.Field{
+			Fields: map[string]tcvectordb.Field{
 				"bookName": {Val: "三国演义"},
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 25},
@@ -204,10 +203,10 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 	// 3. 如果没有主键 id 列表和 filter 则必须传入 limit 和 offset，类似 scan 的数据扫描功能
 	// 4. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
 	documentIds := []string{"0001", "0002", "0003", "0004", "0005"}
-	filter := entity.NewFilter(`bookName="三国演义"`)
+	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	outputField := []string{"id", "bookName"}
 
-	result, err := coll.Query(ctx, documentIds, &entity.QueryDocumentOption{
+	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentOption{
 		Filter:         filter,
 		RetrieveVector: true,
 		OutputFields:   outputField,
@@ -231,9 +230,9 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
 
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
-	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &entity.SearchDocumentOption{
+	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &tcvectordb.SearchDocumentOption{
 		Filter: filter,
-		Params: &entity.SearchDocParams{Ef: 200},
+		Params: &tcvectordb.SearchDocParams{Ef: 200},
 		Limit:  2,
 	})
 	if err != nil {
@@ -253,9 +252,9 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 
 	// searchByText 返回类型为 Dict，接口查询过程中 embedding 可能会出现截断，如发生截断将会返回响应 warn 信息，如需确认是否截断可以
 	// 使用 "warning" 作为 key 从 Dict 结果中获取警告信息，查询结果可以通过 "documents" 作为 key 从 Dict 结果中获取
-	searchResult, err = coll.SearchByText(ctx, map[string][]string{"text": {"细作探知这个消息，飞报吕布。"}}, &entity.SearchDocumentOption{
-		Params: &entity.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
-		Limit:  2,                                // 指定 Top K 的 K 值
+	searchResult, err = coll.SearchByText(ctx, map[string][]string{"text": {"细作探知这个消息，飞报吕布。"}}, &tcvectordb.SearchDocumentOption{
+		Params: &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
+		Limit:  2,                                    // 指定 Top K 的 K 值
 	})
 	if err != nil {
 		return err
