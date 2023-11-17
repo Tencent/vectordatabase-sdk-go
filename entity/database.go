@@ -24,11 +24,11 @@ import (
 
 // Database wrap the database parameters and collection interface to operating the collection api
 type Database struct {
-	CollectionInterface
-	AliasInterface
-	IndexInterface
-	DatabaseName string
-	Info         DatabaseItem
+	CollectionInterface `json:"-"`
+	AliasInterface      `json:"-"`
+	IndexInterface      `json:"-"`
+	DatabaseName        string
+	Info                DatabaseItem
 }
 
 func (d Database) IsAIDatabase() bool {

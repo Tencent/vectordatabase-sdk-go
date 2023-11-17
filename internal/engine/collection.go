@@ -69,6 +69,9 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		var column api.IndexColumn
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
+		if v.FieldType == entity.Array {
+			column.FieldElementType = string(v.ElemType)
+		}
 		column.IndexType = string(v.IndexType)
 		req.Indexes = append(req.Indexes, &column)
 	}
@@ -194,7 +197,13 @@ func (i *implementerCollection) Collection(name string) *entity.Collection {
 	docImpl.database = i.database
 	docImpl.collection = *coll
 
+	indexImpl := new(implementerIndex)
+	indexImpl.SdkClient = i.SdkClient
+	indexImpl.database = i.database
+	indexImpl.collection = *coll
+
 	coll.DocumentInterface = docImpl
+	coll.IndexInterface = indexImpl
 
 	return coll
 }

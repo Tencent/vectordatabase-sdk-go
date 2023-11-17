@@ -23,7 +23,7 @@ type AICollection struct {
 
 type CreateAICollectionOption struct {
 	Description string
-	Indexes     []FilterIndex
+	Indexes     Indexes
 	AiConfig    *AiConfig
 }
 

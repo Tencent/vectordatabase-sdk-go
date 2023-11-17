@@ -64,6 +64,8 @@ type GetCosTmpSecretOption struct {
 }
 
 type GetCosTmpSecretResult struct {
+	FileName                string `json:"fileName"`
+	FileId                  string `json:"fileId"`
 	CosEndpoint             string `json:"cosEndpoint"`
 	CosRegion               string `json:"cosRegion,omitempty"`
 	CosBucket               string `json:"cosBucket,omitempty"`
@@ -72,7 +74,6 @@ type GetCosTmpSecretResult struct {
 	TmpSecretKey            string `json:"tmpSecretKey"`
 	SessionToken            string `json:"token"`
 	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
-	FileId                  string `json:"fileId"`
 }
 
 type UploadAIDocumentOption struct {
@@ -81,13 +82,14 @@ type UploadAIDocumentOption struct {
 }
 
 type UploadAIDocumentResult struct {
-	CosEndpoint             string
-	CosRegion               string `json:"cosRegion,omitempty"`
-	CosBucket               string `json:"cosBucket,omitempty"`
-	UploadPath              string
-	TmpSecretID             string `json:"tmpSecretId"`
+	FileName                string `json:"fileName"`
+	FileId                  string `json:"fileId"`
+	CosEndpoint             string `json:"cosEndpoint"`
+	CosRegion               string `json:"cosRegion"`
+	CosBucket               string `json:"cosBucket"`
+	UploadPath              string `json:"uploadPath"`
+	TmpSecretID             string `json:"tmpSecretID"`
 	TmpSecretKey            string `json:"tmpSecretKey"`
-	SessionToken            string `json:"token"`
+	SessionToken            string `json:"sessionToken"`
 	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
-	FileId                  string
 }

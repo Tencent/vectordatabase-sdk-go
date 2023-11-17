@@ -105,17 +105,48 @@ func (f Field) String() string {
 	return fmt.Sprintf("%v", f.Val)
 }
 
-func (f Field) Int() int64 {
+func (f Field) StringArray() []string {
+	t := reflect.TypeOf(f.Val)
+	if t.Kind() != reflect.Slice && t.Kind() != reflect.Array {
+		return nil
+	}
+	v := reflect.ValueOf(f.Val)
+	res := make([]string, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		res[i], _ = v.Index(i).Interface().(string)
+	}
+	return res
+}
+
+func (f Field) Uint64Array() []uint64 {
+	t := reflect.TypeOf(f.Val)
+	if t.Kind() != reflect.Slice && t.Kind() != reflect.Array {
+		return nil
+	}
+	v := reflect.ValueOf(f.Val)
+	res := make([]uint64, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		switch v.Index(i).Kind() {
+		case reflect.Uint, reflect.Uint64:
+			res[i] = v.Index(i).Uint()
+		case reflect.Int, reflect.Int64:
+			res[i] = uint64(v.Index(i).Int())
+		}
+	}
+	return res
+}
+
+func (f Field) Uint64() uint64 {
 	switch v := f.Val.(type) {
 	case int, int8, int16, int32, int64:
-		return reflect.ValueOf(v).Int()
+		return uint64(reflect.ValueOf(v).Int())
 	case uint, uint8, uint16, uint32, uint64:
-		return int64(reflect.ValueOf(v).Uint())
+		return reflect.ValueOf(v).Uint()
 	case string:
-		n, _ := strconv.ParseInt(v, 10, 64)
+		n, _ := strconv.ParseUint(v, 10, 64)
 		return n
 	case float32, float64:
-		return int64(reflect.ValueOf(v).Float())
+		return uint64(reflect.ValueOf(v).Float())
 	}
 	return 0
 }
@@ -143,6 +174,8 @@ func (f Field) Type() FieldType {
 		return Uint64
 	case string:
 		return String
+	case []string, []uint64, []int64, []int, []uint:
+		return Array
 	}
 	return ""
 }

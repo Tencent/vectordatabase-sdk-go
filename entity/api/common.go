@@ -54,13 +54,14 @@ func Method(s interface{}) string {
 }
 
 type IndexColumn struct {
-	FieldName    string       `protobuf:"bytes,1,opt,name=fieldName,proto3" json:"fieldName,omitempty"`
-	FieldType    string       `protobuf:"bytes,2,opt,name=fieldType,proto3" json:"fieldType,omitempty"`
-	IndexType    string       `protobuf:"bytes,3,opt,name=indexType,proto3" json:"indexType,omitempty"`
-	Dimension    uint32       `protobuf:"varint,4,opt,name=dimension,proto3" json:"dimension,omitempty"`
-	MetricType   string       `protobuf:"bytes,5,opt,name=metricType,proto3" json:"metricType,omitempty"`
-	IndexedCount uint64       `protobuf:"varint,6,opt,name=indexedCount,proto3" json:"indexedCount,omitempty"`
-	Params       *IndexParams `protobuf:"bytes,8,opt,name=params,proto3" json:"params,omitempty"`
+	FieldName        string       `json:"fieldName,omitempty"`
+	FieldType        string       `json:"fieldType,omitempty"`
+	FieldElementType string       `json:"fieldElementType,omitempty"`
+	IndexType        string       `json:"indexType,omitempty"`
+	Dimension        uint32       `json:"dimension,omitempty"`
+	MetricType       string       `json:"metricType,omitempty"`
+	IndexedCount     uint64       `json:"indexedCount,omitempty"`
+	Params           *IndexParams `json:"params,omitempty"`
 }
 
 type IndexParams struct {
