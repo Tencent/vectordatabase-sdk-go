@@ -22,7 +22,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/entity"
@@ -231,16 +230,6 @@ func (i *implementerDocument) Update(ctx context.Context, options ...*entity.Upd
 	}
 	result.AffectedCount = int(res.AffectedCount)
 	return result, nil
-}
-
-func GetFieldInfo(field entity.Field) (string, entity.FieldType) {
-	switch field.Val.(type) {
-	case string:
-		return field.String(), entity.String
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-		return strconv.FormatInt(field.Int(), 10), entity.Uint64
-	}
-	return "", entity.String
 }
 
 func getFileTypeFromFileName(fileName string) entity.FileType {

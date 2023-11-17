@@ -69,6 +69,9 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		var column api.IndexColumn
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
+		if v.FieldType == entity.Array {
+			column.FieldElementType = string(v.ElemType)
+		}
 		column.IndexType = string(v.IndexType)
 		req.Indexes = append(req.Indexes, &column)
 	}

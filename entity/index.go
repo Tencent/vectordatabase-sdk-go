@@ -95,6 +95,7 @@ func (p *IVFPQParams) Name() string {
 type FilterIndex struct {
 	FieldName string
 	FieldType FieldType
+	ElemType  FieldType
 	IndexType IndexType
 }
 

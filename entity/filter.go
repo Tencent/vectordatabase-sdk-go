@@ -111,6 +111,81 @@ func In(key string, list interface{}) string {
 	return ""
 }
 
+func Include(key string, list interface{}) string {
+	if reflect.TypeOf(list).Kind() != reflect.Slice &&
+		reflect.TypeOf(list).Kind() != reflect.Array {
+		return ""
+	}
+	values := reflect.ValueOf(list)
+	if values.Len() == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i := 0; i < values.Len(); i++ {
+		b.WriteString(",")
+		v := values.Index(i)
+		if v.Kind() == reflect.String {
+			b.WriteString(fmt.Sprintf(`"%v"`, v.Interface()))
+		} else {
+			b.WriteString(fmt.Sprintf(`%v`, v.Interface()))
+		}
+	}
+	if b.Len() != 0 {
+		return fmt.Sprintf("%s include (%s)", key, b.String()[1:])
+	}
+	return ""
+}
+
+func Exclude(key string, list interface{}) string {
+	if reflect.TypeOf(list).Kind() != reflect.Slice &&
+		reflect.TypeOf(list).Kind() != reflect.Array {
+		return ""
+	}
+	values := reflect.ValueOf(list)
+	if values.Len() == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i := 0; i < values.Len(); i++ {
+		b.WriteString(",")
+		v := values.Index(i)
+		if v.Kind() == reflect.String {
+			b.WriteString(fmt.Sprintf(`"%v"`, v.Interface()))
+		} else {
+			b.WriteString(fmt.Sprintf(`%v`, v.Interface()))
+		}
+	}
+	if b.Len() != 0 {
+		return fmt.Sprintf("%s exclude (%s)", key, b.String()[1:])
+	}
+	return ""
+}
+
+func IncludeAll(key string, list interface{}) string {
+	if reflect.TypeOf(list).Kind() != reflect.Slice &&
+		reflect.TypeOf(list).Kind() != reflect.Array {
+		return ""
+	}
+	values := reflect.ValueOf(list)
+	if values.Len() == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i := 0; i < values.Len(); i++ {
+		b.WriteString(",")
+		v := values.Index(i)
+		if v.Kind() == reflect.String {
+			b.WriteString(fmt.Sprintf(`"%v"`, v.Interface()))
+		} else {
+			b.WriteString(fmt.Sprintf(`%v`, v.Interface()))
+		}
+	}
+	if b.Len() != 0 {
+		return fmt.Sprintf("%s include all (%s)", key, b.String()[1:])
+	}
+	return ""
+}
+
 func (f *Filter) Cond() string {
 	if f == nil {
 		return ""

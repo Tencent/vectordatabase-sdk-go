@@ -105,21 +105,10 @@ func TestCreateCollection(t *testing.T) {
 			},
 		},
 		FilterIndex: []entity.FilterIndex{
-			{
-				FieldName: "id",
-				FieldType: entity.String,
-				IndexType: entity.PRIMARY,
-			},
-			{
-				FieldName: "bookName",
-				FieldType: entity.String,
-				IndexType: entity.FILTER,
-			},
-			{
-				FieldName: "page",
-				FieldType: entity.Uint64,
-				IndexType: entity.FILTER,
-			},
+			{FieldName: "id", FieldType: entity.String, IndexType: entity.PRIMARY},
+			{FieldName: "bookName", FieldType: entity.String, IndexType: entity.FILTER},
+			{FieldName: "page", FieldType: entity.Uint64, IndexType: entity.FILTER},
+			{FieldName: "tag", FieldType: entity.Array, IndexType: entity.FILTER},
 		},
 	}
 
@@ -161,6 +150,7 @@ func TestUpsert(t *testing.T) {
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 21},
 				"segment":  {Val: "富贵功名，前缘分定，为人切莫欺心。"},
+				"tag":      {Val: []string{"孙悟空", "猪八戒", "唐僧"}},
 			},
 		},
 		{
@@ -171,6 +161,7 @@ func TestUpsert(t *testing.T) {
 				"author":   {Val: "吴承恩"},
 				"page":     {Val: 22},
 				"segment":  {Val: "正大光明，忠良善果弥深。些些狂妄天加谴，眼前不遇待时临。"},
+				"tag":      {Val: []string{"孙悟空", "猪八戒", "唐僧"}},
 			},
 		},
 		{
@@ -181,6 +172,7 @@ func TestUpsert(t *testing.T) {
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 23},
 				"segment":  {Val: "细作探知这个消息，飞报吕布。"},
+				"tag":      {Val: []string{"曹操", "诸葛亮", "刘备"}},
 			},
 		},
 		{
@@ -191,6 +183,7 @@ func TestUpsert(t *testing.T) {
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 24},
 				"segment":  {Val: "布大惊，与陈宫商议。宫曰：“闻刘玄德新领徐州，可往投之。”布从其言，竟投徐州来。有人报知玄德。"},
+				"tag":      {Val: []string{"曹操", "诸葛亮", "刘备"}},
 			},
 		},
 		{
@@ -201,6 +194,7 @@ func TestUpsert(t *testing.T) {
 				"author":   {Val: "罗贯中"},
 				"page":     {Val: 25},
 				"segment":  {Val: "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。"},
+				"tag":      {Val: []string{"曹操", "诸葛亮", "刘备"}},
 			},
 		},
 	}, &entity.UpsertDocumentOption{BuildIndex: &buildIndex})
@@ -212,7 +206,7 @@ func TestUpsert(t *testing.T) {
 func TestQuery(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 	option := &entity.QueryDocumentOption{
-		Filter: entity.NewFilter(`bookName="三国演义"`),
+		Filter: entity.NewFilter(entity.Include("tag", []string{"曹操", "刘备"})),
 		// OutputFields:   []string{"id", "bookName"},
 		// RetrieveVector: true,
 		// Limit: 100,
