@@ -69,6 +69,7 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 			if option.AiConfig.DocumentPreprocess != nil {
 				req.DocumentPreprocess = option.AiConfig.DocumentPreprocess
 			}
+			req.EnableWordsEmbedding = option.AiConfig.EnableWordsEmbedding
 			// if option.AiConfig.DocumentIndex != nil && option.AiConfig.DocumentIndex.EnableWordsSimilarity != nil {
 			// 	req.DocumentIndex = option.AiConfig.DocumentIndex
 			// } else {

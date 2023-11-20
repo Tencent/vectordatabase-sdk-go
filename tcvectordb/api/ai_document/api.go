@@ -72,6 +72,12 @@ type SearchOption struct {
 	ChunkExpand []int  `json:"chunkExpand"` // 搜索结果中，向前、向后补齐几个chunk的上下文
 	// MergeChunk  bool   `json:"mergeChunk"`  // Merge结果中相邻的Chunk
 	// Weights     SearchOptionWeight `json:"weights"`     // 多路召回
+	RerankOption *RerankOption `json:"rerank,omitempty"` // 多路召回
+}
+
+type RerankOption struct {
+	Enable                *bool   `json:"enable,omitempty"`
+	ExpectRecallMultiples float32 `json:"expectRecallMultiples,omitempty"`
 }
 
 type SearchOptionWeight struct {
