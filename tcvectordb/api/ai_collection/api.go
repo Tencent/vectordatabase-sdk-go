@@ -103,17 +103,18 @@ type TruncateRes struct {
 }
 
 type DescribeAICollectionItem struct {
-	Database           string              `json:"database"`
-	Collection         string              `json:"collection"`
-	Language           string              `json:"language"`
-	ExpectedFileNum    uint64              `json:"expectedFileNum"`
-	AverageFileSize    uint64              `json:"averageFileSize"`
-	CreateTime         string              `json:"createTime"`
-	Description        string              `json:"description"`
-	FilterIndexes      []api.IndexColumn   `json:"indexes"`
-	Alias              []string            `json:"alias"`
-	AiStatus           *AiStatus           `json:"aiStatus"`
-	DocumentPreprocess *DocumentPreprocess `json:"documentPreprocess"`
+	Database             string              `json:"database"`
+	Collection           string              `json:"collection"`
+	Language             string              `json:"language"`
+	ExpectedFileNum      uint64              `json:"expectedFileNum"`
+	AverageFileSize      uint64              `json:"averageFileSize"`
+	CreateTime           string              `json:"createTime"`
+	Description          string              `json:"description"`
+	FilterIndexes        []api.IndexColumn   `json:"indexes"`
+	Alias                []string            `json:"alias"`
+	AiStatus             *AiStatus           `json:"aiStatus"`
+	DocumentPreprocess   *DocumentPreprocess `json:"documentPreprocess"`
+	EnableWordsEmbedding *bool               `json:"enableWordsEmbedding,omitempty"`
 	// DocumentIndex      DocumentIndex      `json:"document_index"`
 }
 

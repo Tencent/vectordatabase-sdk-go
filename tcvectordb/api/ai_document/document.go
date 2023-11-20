@@ -8,12 +8,11 @@ import (
 
 // Document document struct for document api
 type QueryDocument struct {
-	Id            string                 `json:"id"`
-	ContentLength uint64                 `json:"_content_length"`
-	FileName      string                 `json:"_file_name"`
-	TextPrefix    string                 `json:"_text_prefix"`
-	FileInfo      map[string]interface{} `json:"_file_info"`
-	ScalarFields  map[string]interface{} `json:"-"`
+	Id           string                 `json:"id"`
+	FileName     string                 `json:"_file_name"`
+	TextPrefix   string                 `json:"_text_prefix"`
+	FileInfo     map[string]interface{} `json:"_file_info"`
+	ScalarFields map[string]interface{} `json:"-"`
 }
 
 // Deprecated

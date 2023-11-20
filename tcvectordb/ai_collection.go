@@ -216,6 +216,9 @@ func (i *implementerAICollection) toCollection(item *ai_collection.DescribeAICol
 		DocumentPreprocess: item.DocumentPreprocess,
 		// DocumentIndex:      &item.DocumentIndex,
 	}
+	if item.EnableWordsEmbedding != nil {
+		coll.AiConfig.EnableWordsEmbedding = item.EnableWordsEmbedding
+	}
 	if item.AiStatus != nil {
 		coll.IndexedDocuments = item.AiStatus.IndexedDocuments
 		coll.TotalDocuments = item.AiStatus.TotalDocuments
