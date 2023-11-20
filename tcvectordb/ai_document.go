@@ -113,6 +113,12 @@ func (i *implementerAIDocument) Search(ctx context.Context, content string, opti
 			// 	WordBm25:        option.Weights.WordBm25,
 			// },
 		}
+		if option.RerankOption != nil {
+			req.Search.Options.RerankOption = &ai_document.RerankOption{
+				Enable:                option.RerankOption.Enable,
+				ExpectRecallMultiples: option.RerankOption.ExpectRecallMultiples,
+			}
+		}
 		req.Search.OutputFields = option.OutputFields
 		req.Search.Limit = option.Limit
 	}

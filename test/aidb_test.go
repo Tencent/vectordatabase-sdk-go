@@ -24,6 +24,7 @@ import (
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_collection"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document"
 )
 
 var (
@@ -57,6 +58,7 @@ func TestAICreateCollection(t *testing.T) {
 		},
 	}
 
+	enableWordsEmbedding := true
 	coll, err := db.CreateCollection(ctx, aiCollectionName, &tcvectordb.CreateAICollectionOption{
 		Description: "test ai collection",
 		Indexes:     index,
@@ -67,6 +69,7 @@ func TestAICreateCollection(t *testing.T) {
 			DocumentPreprocess: &ai_collection.DocumentPreprocess{
 				AppendKeywordsToChunk: "1",
 			},
+			EnableWordsEmbedding: &enableWordsEmbedding,
 		},
 	})
 	printErr(err)
@@ -156,10 +159,15 @@ func TestAIQuery(t *testing.T) {
 func TestAISearch(t *testing.T) {
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
 
+	enableRerank := true
 	searchRes, err := col.Search(ctx, "什么是向量数据库", &tcvectordb.SearchAIDocumentOption{
 		// FileName: "README.md",
 		Filter: nil, // 过滤获取到结果
 		// Limit:  3,   // 指定 Top K 的 K 值
+		RerankOption: &ai_document.RerankOption{
+			Enable:                &enableRerank,
+			ExpectRecallMultiples: 2.5,
+		},
 	})
 	printErr(err)
 	for _, doc := range searchRes.Documents {

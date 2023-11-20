@@ -22,14 +22,15 @@ import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
 
 // CreateReq create collection request
 type CreateReq struct {
-	api.Meta           `path:"/ai/collection/create" tags:"ai" method:"Post" summary:"创建collection存储embedding文件集合"`
-	Database           string              `json:"database"`
-	Collection         string              `json:"collection"`
-	Description        string              `json:"description"`
-	ExpectedFileNum    uint64              `json:"expectedFileNum"`
-	AverageFileSize    uint64              `json:"averageFileSize"`
-	Language           string              `json:"language"`
-	DocumentPreprocess *DocumentPreprocess `json:"documentPreprocess"`
+	api.Meta             `path:"/ai/collection/create" tags:"ai" method:"Post" summary:"创建collection存储embedding文件集合"`
+	Database             string              `json:"database"`
+	Collection           string              `json:"collection"`
+	Description          string              `json:"description"`
+	ExpectedFileNum      uint64              `json:"expectedFileNum"`
+	AverageFileSize      uint64              `json:"averageFileSize"`
+	Language             string              `json:"language"`
+	DocumentPreprocess   *DocumentPreprocess `json:"documentPreprocess"`
+	EnableWordsEmbedding *bool               `json:"enableWordsEmbedding,omitempty"`
 	// DocumentIndex      *DocumentIndex      `json:"document_index"`
 	Indexes []api.IndexColumn `json:"indexes"`
 }

@@ -36,10 +36,11 @@ type QueryAIDocumentsResult struct {
 }
 
 type SearchAIDocumentOption struct {
-	FileName    string
-	Filter      *Filter
-	ResultType  string
-	ChunkExpand []int
+	FileName     string
+	Filter       *Filter
+	ResultType   string
+	ChunkExpand  []int
+	RerankOption *ai_document.RerankOption // 多路召回
 	// MergeChunk  bool
 	// Weights      SearchAIOptionWeight
 	OutputFields []string

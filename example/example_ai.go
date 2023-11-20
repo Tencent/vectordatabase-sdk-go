@@ -94,6 +94,8 @@ func (d *AIDemo) CreateCollection(ctx context.Context, database, collection stri
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "teststr", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
 
 	db.WithTimeout(time.Second * 30)
+
+	enableWordsEmbedding := true
 	_, err := db.CreateCollection(ctx, collection, &tcvectordb.CreateAICollectionOption{
 		Description: "desc",
 		Indexes:     index,
@@ -105,6 +107,7 @@ func (d *AIDemo) CreateCollection(ctx context.Context, database, collection stri
 				AppendTitleToChunk:    "1",
 				AppendKeywordsToChunk: "0",
 			},
+			EnableWordsEmbedding: &enableWordsEmbedding,
 		},
 	})
 	if err != nil {
@@ -162,10 +165,15 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string
 
 	log.Println("---------------------------- Search ----------------------------")
 	// 查找与给定查询向量相似的向量。支持输入文本信息检索与输入文本相似的内容，同时，支持搭配标量字段的 Filter 表达式一并检索。
+	enableRerank := true
 	res, err := coll.Search(ctx, "“什么是向量数据库", &tcvectordb.SearchAIDocumentOption{
 		ChunkExpand: []int{1, 0},
 		Filter:      tcvectordb.NewFilter(`teststr="v1"`),
 		Limit:       2,
+		RerankOption: &tcvectordb.RerankOption{
+			Enable:                &enableRerank,
+			ExpectRecallMultiples: 2.5,
+		},
 	})
 	if err != nil {
 		return err

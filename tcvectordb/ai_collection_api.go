@@ -51,10 +51,11 @@ type CreateAICollectionResult struct {
 }
 
 type AiConfig struct {
-	ExpectedFileNum    uint64                            `json:"expectedFileNum,omitempty"`
-	AverageFileSize    uint64                            `json:"averageFileSize,omitempty"`
-	Language           Language                          `json:"language,omitempty"`
-	DocumentPreprocess *ai_collection.DocumentPreprocess `json:"documentPreprocess,omitempty"`
+	ExpectedFileNum      uint64                            `json:"expectedFileNum,omitempty"`
+	AverageFileSize      uint64                            `json:"averageFileSize,omitempty"`
+	Language             Language                          `json:"language,omitempty"`
+	DocumentPreprocess   *ai_collection.DocumentPreprocess `json:"documentPreprocess,omitempty"`
+	EnableWordsEmbedding *bool                             `json:"enableWordsEmbedding,omitempty"`
 	// DocumentIndex      *ai_collection.DocumentIndex      `json:"documentIndex,omitempty"`
 }
 
