@@ -7,6 +7,7 @@ import (
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_collection"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document"
 )
 
 type AIDemo struct {
@@ -170,7 +171,7 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string
 		ChunkExpand: []int{1, 0},
 		Filter:      tcvectordb.NewFilter(`teststr="v1"`),
 		Limit:       2,
-		RerankOption: &tcvectordb.RerankOption{
+		RerankOption: &ai_document.RerankOption{
 			Enable:                &enableRerank,
 			ExpectRecallMultiples: 2.5,
 		},
