@@ -64,6 +64,7 @@ type DocumentInterface interface {
 type AIDocumentInterface interface {
 	SdkClient
 	Query(ctx context.Context, options ...*QueryAIDocumentOption) (*QueryAIDocumentsResult, error)
+	Get(ctx context.Context, options ...*GetAIDocumentOption) (*GetAIDocumentResult, error)
 	Search(ctx context.Context, content string, options ...*SearchAIDocumentOption) (*SearchAIDocumentResult, error)
 	Delete(ctx context.Context, options ...*DeleteAIDocumentOption) (*DeleteAIDocumentResult, error)
 	Update(ctx context.Context, options ...*UpdateAIDocumentOption) (*UpdateAIDocumentResult, error)

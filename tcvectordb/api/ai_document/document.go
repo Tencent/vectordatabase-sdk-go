@@ -7,28 +7,25 @@ import (
 )
 
 // Document document struct for document api
-type QueryDocument struct {
-	Id           string                 `json:"id"`
-	FileName     string                 `json:"_file_name"`
-	TextPrefix   string                 `json:"_text_prefix"`
-	FileInfo     map[string]interface{} `json:"_file_info"`
-	ScalarFields map[string]interface{} `json:"-"`
+type QueryDocumentSet struct {
+	DocumentSetId   string                 `json:"documentSetId"`
+	DocumentSetName string                 `json:"documentSetName"`
+	TextPrefix      string                 `json:"textPrefix"`
+	DocumentSetInfo DocumentSetInfo        `json:"documentSetInfo"`
+	ScalarFields    map[string]interface{} `json:"-"`
 }
 
-// Deprecated
-type QueryDocumentFileInfo struct {
-	FileSize       uint64 `json:"_file_size"`
-	CreateTime     string `json:"_create_time"`
-	FileKeywords   string `json:"_file_keywords"`
-	FileType       string `json:"_file_type"`
-	Indexed        uint64 `json:"_indexed"`
-	IndexedStatus  uint64 `json:"_indexed_status"`
-	LastUpdateTime int64  `json:"_last_update_time"`
-	TextLength     uint64 `json:"_text_length"`
+type DocumentSetInfo struct {
+	TextLength      uint64 `json:"textLength"`
+	ByteLength      uint64 `json:"byteLength"`
+	IndexedProgress uint64 `json:"indexedProgress"`
+	IndexedStatus   string `json:"indexedStatus"` // Ready | New | Loading | Failure
+	CreateTime      string `json:"createTime"`
+	LastUpdateTime  string `json:"lastUpdateTime"`
 }
 
-func (d QueryDocument) MarshalJSON() ([]byte, error) {
-	type Alias QueryDocument
+func (d QueryDocumentSet) MarshalJSON() ([]byte, error) {
+	type Alias QueryDocumentSet
 	res, err := json.Marshal(&struct {
 		*Alias
 	}{
@@ -56,8 +53,8 @@ func (d QueryDocument) MarshalJSON() ([]byte, error) {
 	return res, nil
 }
 
-func (d *QueryDocument) UnmarshalJSON(data []byte) error {
-	type Alias QueryDocument
+func (d *QueryDocumentSet) UnmarshalJSON(data []byte) error {
+	type Alias QueryDocumentSet
 	var temp Alias
 	err := json.Unmarshal(data, &temp)
 	if err != nil {
@@ -77,14 +74,21 @@ func (d *QueryDocument) UnmarshalJSON(data []byte) error {
 		delete(temp.ScalarFields, tags[0])
 	}
 
-	*d = QueryDocument(temp)
+	*d = QueryDocumentSet(temp)
 	return nil
 }
 
+type GetDocumentSet struct {
+	QueryDocumentSet
+	// 这里复用list结构，文本前缀不再返回，而是返回文本内容
+	TextPrefix string `json:"-"`
+	Text       string `json:"text"`
+}
+
 type SearchDocument struct {
-	Score      float64
-	Chunk      Chunk
-	SourceFile SourceFile
+	Score       float64     `json:"score"`
+	Chunk       Chunk       `json:"chunk"`
+	DocumentSet DocumentSet `json:"documentSet"`
 }
 
 type Chunk struct {
@@ -95,15 +99,14 @@ type Chunk struct {
 	NextChunks []string `json:"nextChunks"`
 }
 
-type SourceFile struct {
-	Id           string                 `json:"id"`
-	FileName     string                 `json:"_file_name"`
-	FileInfo     map[string]interface{} `json:"_file_info"`
-	ScalarFields map[string]interface{} `json:"-"`
+type DocumentSet struct {
+	Id              string                 `json:"id"`
+	DocumentSetName string                 `json:"documentSetName"`
+	ScalarFields    map[string]interface{} `json:"-"`
 }
 
-func (s SourceFile) MarshalJSON() ([]byte, error) {
-	type Alias SourceFile
+func (s DocumentSet) MarshalJSON() ([]byte, error) {
+	type Alias DocumentSet
 	res, err := json.Marshal(&struct {
 		*Alias
 	}{
@@ -131,8 +134,8 @@ func (s SourceFile) MarshalJSON() ([]byte, error) {
 	return res, nil
 }
 
-func (s *SourceFile) UnmarshalJSON(data []byte) error {
-	type Alias SourceFile
+func (s *DocumentSet) UnmarshalJSON(data []byte) error {
+	type Alias DocumentSet
 	var temp Alias
 	err := json.Unmarshal(data, &temp)
 	if err != nil {
@@ -152,6 +155,6 @@ func (s *SourceFile) UnmarshalJSON(data []byte) error {
 		delete(temp.ScalarFields, tags[0])
 	}
 
-	*s = SourceFile(temp)
+	*s = DocumentSet(temp)
 	return nil
 }

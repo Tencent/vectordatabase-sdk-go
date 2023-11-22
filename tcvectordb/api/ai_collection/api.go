@@ -22,17 +22,20 @@ import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
 
 // CreateReq create collection request
 type CreateReq struct {
-	api.Meta             `path:"/ai/collection/create" tags:"ai" method:"Post" summary:"创建collection存储embedding文件集合"`
-	Database             string              `json:"database"`
-	Collection           string              `json:"collection"`
-	Description          string              `json:"description"`
-	ExpectedFileNum      uint64              `json:"expectedFileNum"`
-	AverageFileSize      uint64              `json:"averageFileSize"`
-	Language             string              `json:"language"`
-	DocumentPreprocess   *DocumentPreprocess `json:"documentPreprocess"`
-	EnableWordsEmbedding *bool               `json:"enableWordsEmbedding,omitempty"`
-	// DocumentIndex      *DocumentIndex      `json:"document_index"`
-	Indexes []api.IndexColumn `json:"indexes"`
+	api.Meta           `path:"/ai/collectionView/create" tags:"ai" method:"Post" summary:"创建collection存储embedding文件集合"`
+	Database           string              `json:"database"`
+	CollectionView     string              `json:"collectionView"`
+	Description        string              `json:"description,omitempty"`
+	ExpectedFileNum    uint64              `json:"expectedFileNum,omitempty"`
+	AverageFileSize    uint64              `json:"averageFileSize,omitempty"`
+	Embedding          Embedding           `json:"embedding,omitempty"`
+	SplitterPreprocess *SplitterPreprocess `json:"splitterPreprocess,omitempty"`
+	Indexes            []api.IndexColumn   `json:"indexes,omitempty"`
+}
+
+type Embedding struct {
+	Language             string `json:"language,omitempty"`
+	EnableWordsEmbedding *bool  `json:"enableWordsEmbedding,omitempty"`
 }
 
 type CreateRes struct {
@@ -40,15 +43,15 @@ type CreateRes struct {
 	AffectedCount int `json:"affectedCount"`
 }
 
-type DocumentPreprocess struct {
+type SplitterPreprocess struct {
 	// AppendTitleToChunk
-	// "0", "": no process
-	// "1": append the file paragraph title to chunk for embedding
-	AppendTitleToChunk string `json:"appendTitleToChunk"`
+	// false: no process
+	// true: append the file paragraph title to chunk for embedding
+	AppendTitleToChunk *bool `json:"appendTitleToChunk,omitempty"`
 	// AppendKeywordsToChunk
-	// "0", "": no process
-	// "1": append the file keywords to chunk for embedding
-	AppendKeywordsToChunk string `json:"appendKeywordsToChunk"`
+	// false: no process
+	// true: append the file keywords to chunk for embedding
+	AppendKeywordsToChunk *bool `json:"appendKeywordsToChunk,omitempty"`
 }
 
 type DocumentIndex struct {
@@ -113,7 +116,7 @@ type DescribeAICollectionItem struct {
 	FilterIndexes        []api.IndexColumn   `json:"indexes"`
 	Alias                []string            `json:"alias"`
 	AiStatus             *AiStatus           `json:"aiStatus"`
-	DocumentPreprocess   *DocumentPreprocess `json:"documentPreprocess"`
+	DocumentPreprocess   *SplitterPreprocess `json:"documentPreprocess"`
 	EnableWordsEmbedding *bool               `json:"enableWordsEmbedding,omitempty"`
 	// DocumentIndex      DocumentIndex      `json:"document_index"`
 }

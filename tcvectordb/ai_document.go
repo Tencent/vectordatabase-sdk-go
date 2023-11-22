@@ -45,7 +45,7 @@ func (i *implementerAIDocument) Query(ctx context.Context, options ...*QueryAIDo
 	}
 	req := new(ai_document.QueryReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = i.collection.CollectionName
+	req.CollectionView = i.collection.CollectionName
 	if len(options) != 0 && options[0] != nil {
 		option := options[0]
 		filter := option.Filter
@@ -57,11 +57,9 @@ func (i *implementerAIDocument) Query(ctx context.Context, options ...*QueryAIDo
 		}
 
 		req.Query = &ai_document.QueryCond{
-			DocumentIds:  option.DocumentIds,
-			Filter:       filter.Cond(),
-			Limit:        option.Limit,
-			Offset:       option.Offset,
-			OutputFields: option.OutputFields,
+			Filter: filter.Cond(),
+			Limit:  option.Limit,
+			Offset: option.Offset,
 		}
 		if req.Query.Limit == 0 {
 			req.Query.Limit = 1
@@ -74,9 +72,34 @@ func (i *implementerAIDocument) Query(ctx context.Context, options ...*QueryAIDo
 	if err != nil {
 		return nil, err
 	}
-	result.AffectedCount = len(res.Documents)
+	result.AffectedCount = len(res.DocumentSets)
 	result.Total = int(res.Count)
-	result.Documents = res.Documents
+	result.Documents = res.DocumentSets
+	return result, nil
+}
+
+func (i *implementerAIDocument) Get(ctx context.Context, options ...*GetAIDocumentOption) (*GetAIDocumentResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, BaseDbTypeError
+	}
+	req := new(ai_document.GetReq)
+	res := new(ai_document.GetRes)
+
+	req.Database = i.database.DatabaseName
+	req.CollectionView = i.collection.CollectionName
+	if len(options) != 0 && options[0] != nil {
+		option := options[0]
+		req.DocumentSetId = option.DocumentSetId
+		req.DocumentSetName = option.DocumentSetName
+	}
+
+	result := new(GetAIDocumentResult)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+	result.Count = res.Count
+	result.DocumentSets = res.DocumentSets
 	return result, nil
 }
 
@@ -87,7 +110,7 @@ func (i *implementerAIDocument) Search(ctx context.Context, content string, opti
 	}
 	req := new(ai_document.SearchReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = i.collection.CollectionName
+	req.CollectionView = i.collection.CollectionName
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Search = new(ai_document.SearchCond)
 	req.Search.Content = content
@@ -140,7 +163,7 @@ func (i *implementerAIDocument) Delete(ctx context.Context, options ...*DeleteAI
 	}
 	req := new(ai_document.DeleteReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = i.collection.CollectionName
+	req.CollectionView = i.collection.CollectionName
 	if len(options) != 0 && options[0] != nil {
 		option := options[0]
 		filter := option.Filter
@@ -151,8 +174,9 @@ func (i *implementerAIDocument) Delete(ctx context.Context, options ...*DeleteAI
 			filter.And(fmt.Sprintf(`_file_name="%s"`, option.FileName))
 		}
 		req.Query = &ai_document.DeleteQueryCond{
-			DocumentIds: option.DocumentIds,
-			Filter:      filter.Cond(),
+			DocumentSetId: option.DocumentIds,
+			// todo: documentName
+			Filter: filter.Cond(),
 		}
 	}
 
@@ -172,7 +196,7 @@ func (i *implementerAIDocument) Update(ctx context.Context, options ...*UpdateAI
 	}
 	req := new(ai_document.UpdateReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = i.collection.CollectionName
+	req.CollectionView = i.collection.CollectionName
 
 	if len(options) != 0 && options[0] != nil {
 		option := options[0]
@@ -184,8 +208,9 @@ func (i *implementerAIDocument) Update(ctx context.Context, options ...*UpdateAI
 			filter = filter.And(fmt.Sprintf(`_file_name="%s"`, option.FileName))
 		}
 		req.Query = ai_document.UpdateQueryCond{
-			DocumentIds: option.QueryIds,
-			Filter:      filter.Cond(),
+			DocumentSetId:   option.QueryIds,
+			DocumentSetName: nil,
+			Filter:          filter.Cond(),
 		}
 		req.Update = option.UpdateFields
 	}
@@ -218,9 +243,8 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 
 	req := new(ai_document.UploadUrlReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = i.collection.CollectionName
-	req.FileName = filepath.Base(localFilePath)
-	req.FileType = string(fileType)
+	req.CollectionView = i.collection.CollectionName
+	req.DocumentSetName = filepath.Base(localFilePath)
 
 	res := new(ai_document.UploadUrlRes)
 	err := i.Request(ctx, req, res)
@@ -232,8 +256,8 @@ func (i *implementerAIDocument) GetCosTmpSecret(ctx context.Context, localFilePa
 		return nil, fmt.Errorf("get file upload url failed")
 	}
 	result := new(GetCosTmpSecretResult)
-	result.FileName = req.FileName
-	result.FileId = res.FileId
+	result.FileName = req.DocumentSetName
+	result.FileId = res.DocumentSetId
 	result.CosEndpoint = res.CosEndpoint
 	result.CosBucket = res.CosBucket
 	result.CosRegion = res.CosRegion
@@ -258,11 +282,6 @@ func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string
 	if len(options) != 0 && options[0] != nil {
 		option = options[0]
 		metaData = option.MetaData
-	}
-
-	fileType := getFileTypeFromFileName(localFilePath)
-	if option.FileType != "" {
-		fileType = option.FileType
 	}
 
 	res, err := i.GetCosTmpSecret(ctx, localFilePath, &GetCosTmpSecretOption{
@@ -296,8 +315,9 @@ func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string
 	if metaData == nil {
 		metaData = make(map[string]Field)
 	}
-	metaData["-fileType"] = Field{Val: string(fileType)}
+	// todo: fileid
 	metaData["-id"] = Field{Val: res.FileId}
+	metaData["-document-set-name"] = Field{Val: res.FileName}
 
 	for k, v := range metaData {
 		if v.Type() == "" {
@@ -305,6 +325,7 @@ func (i *implementerAIDocument) Upload(ctx context.Context, localFilePath string
 		}
 		header.Add("x-cos-meta-"+string(v.Type())+"-"+k, url.QueryEscape(v.String()))
 	}
+	fmt.Println(header)
 
 	opt := &cos.ObjectPutOptions{
 		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{

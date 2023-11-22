@@ -47,7 +47,7 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 	}
 	req := new(ai_collection.CreateReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = name
+	req.CollectionView = name
 
 	if len(options) != 0 && options[0] != nil {
 		option := options[0]
@@ -65,11 +65,13 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 		if option.AiConfig != nil {
 			req.ExpectedFileNum = option.AiConfig.ExpectedFileNum
 			req.AverageFileSize = option.AiConfig.AverageFileSize
-			req.Language = string(option.AiConfig.Language)
-			if option.AiConfig.DocumentPreprocess != nil {
-				req.DocumentPreprocess = option.AiConfig.DocumentPreprocess
+			req.Embedding = ai_collection.Embedding{
+				Language:             string(option.AiConfig.Language),
+				EnableWordsEmbedding: option.AiConfig.EnableWordsEmbedding,
 			}
-			req.EnableWordsEmbedding = option.AiConfig.EnableWordsEmbedding
+			if option.AiConfig.DocumentPreprocess != nil {
+				req.SplitterPreprocess = option.AiConfig.DocumentPreprocess
+			}
 			// if option.AiConfig.DocumentIndex != nil && option.AiConfig.DocumentIndex.EnableWordsSimilarity != nil {
 			// 	req.DocumentIndex = option.AiConfig.DocumentIndex
 			// } else {
@@ -88,11 +90,11 @@ func (i *implementerAICollection) CreateCollection(ctx context.Context, name str
 
 	coll := i.toCollection(&ai_collection.DescribeAICollectionItem{
 		Database:           req.Database,
-		Collection:         req.Collection,
-		Language:           req.Language,
+		Collection:         req.CollectionView,
+		Language:           req.Embedding.Language,
 		Description:        req.Description,
 		FilterIndexes:      req.Indexes,
-		DocumentPreprocess: req.DocumentPreprocess,
+		DocumentPreprocess: req.SplitterPreprocess,
 		// DocumentIndex:      *req.DocumentIndex,
 	})
 	result := new(CreateAICollectionResult)

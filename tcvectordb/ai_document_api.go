@@ -32,7 +32,17 @@ type QueryAIDocumentOption struct {
 type QueryAIDocumentsResult struct {
 	AffectedCount int
 	Total         int
-	Documents     []ai_document.QueryDocument
+	Documents     []ai_document.QueryDocumentSet
+}
+
+type GetAIDocumentOption struct {
+	DocumentSetId   string
+	DocumentSetName string
+}
+
+type GetAIDocumentResult struct {
+	Count        uint64
+	DocumentSets ai_document.GetDocumentSet `json:"documentSet"`
 }
 
 type SearchAIDocumentOption struct {

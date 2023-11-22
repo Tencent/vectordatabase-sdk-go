@@ -24,12 +24,11 @@ import (
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_collection"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document"
 )
 
 var (
-	aiDatabase       = "go-sdk-test-ai-db"
-	aiCollectionName = "go-sdk-test-ai-coll"
+	aiDatabase       = "lqs-db"
+	aiCollectionName = "lqs-coll"
 )
 
 func TestAICreateDatabase(t *testing.T) {
@@ -58,17 +57,15 @@ func TestAICreateCollection(t *testing.T) {
 		},
 	}
 
-	enableWordsEmbedding := true
+	enableWordsEmbedding := false
 	coll, err := db.CreateCollection(ctx, aiCollectionName, &tcvectordb.CreateAICollectionOption{
 		Description: "test ai collection",
 		Indexes:     index,
 		AiConfig: &tcvectordb.AiConfig{
-			ExpectedFileNum: 1000,
-			AverageFileSize: 1 << 20,
-			Language:        tcvectordb.LanguageChinese,
-			DocumentPreprocess: &ai_collection.DocumentPreprocess{
-				AppendKeywordsToChunk: "1",
-			},
+			ExpectedFileNum:      1000,
+			AverageFileSize:      1 << 20,
+			Language:             tcvectordb.LanguageChinese,
+			DocumentPreprocess:   &ai_collection.SplitterPreprocess{},
 			EnableWordsEmbedding: &enableWordsEmbedding,
 		},
 	})
@@ -122,13 +119,13 @@ func TestDropAICollection(t *testing.T) {
 }
 
 func TestGetCosSecret(t *testing.T) {
-	res, err := cli.AIDatabase(aiDatabase).Collection(aiCollectionName).GetCosTmpSecret(ctx, "./README.md", nil)
+	cli.Debug(true)
+	res, err := cli.AIDatabase(aiDatabase).Collection(aiCollectionName).GetCosTmpSecret(ctx, "../example/tcvdb.md")
 	printErr(err)
 	t.Logf("%+v", res)
 }
 
 func TestUploadFile(t *testing.T) {
-	defer cli.Close()
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
 
 	metaData := map[string]tcvectordb.Field{
@@ -138,6 +135,16 @@ func TestUploadFile(t *testing.T) {
 		FileType: "", MetaData: metaData})
 	printErr(err)
 	t.Logf("%+v", result)
+}
+
+func TestAIGet(t *testing.T) {
+	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
+	col.Debug(true)
+	res, err := col.Get(ctx, &tcvectordb.GetAIDocumentOption{
+		DocumentSetName: "tcvdb.md",
+	})
+	printErr(err)
+	t.Logf("document: %+v", res)
 }
 
 func TestAIQuery(t *testing.T) {
@@ -159,15 +166,15 @@ func TestAIQuery(t *testing.T) {
 func TestAISearch(t *testing.T) {
 	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
 
-	enableRerank := true
+	// enableRerank := true
 	searchRes, err := col.Search(ctx, "什么是向量数据库", &tcvectordb.SearchAIDocumentOption{
 		// FileName: "README.md",
 		Filter: nil, // 过滤获取到结果
 		// Limit:  3,   // 指定 Top K 的 K 值
-		RerankOption: &ai_document.RerankOption{
-			Enable:                &enableRerank,
-			ExpectRecallMultiples: 2.5,
-		},
+		// RerankOption: &ai_document.RerankOption{
+		// 	Enable:                &enableRerank,
+		// 	ExpectRecallMultiples: 2.5,
+		// },
 	})
 	printErr(err)
 	for _, doc := range searchRes.Documents {

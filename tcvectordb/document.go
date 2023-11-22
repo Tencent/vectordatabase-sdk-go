@@ -20,6 +20,7 @@ package tcvectordb
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -254,6 +255,9 @@ func checkFileSize(localFilePath string, maxContentLength int64) (bool, error) {
 	fileInfo, err := os.Stat(localFilePath)
 	if err != nil {
 		return false, err
+	}
+	if fileInfo.Size() == 0 {
+		return false, errors.New("file size cannot be 0")
 	}
 
 	if fileInfo.Size() <= maxContentLength {
