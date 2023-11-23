@@ -20,10 +20,6 @@ package tcvectordb
 
 import (
 	"context"
-	"errors"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/document"
 )
@@ -230,38 +226,4 @@ func (i *implementerDocument) Update(ctx context.Context, options ...*UpdateDocu
 	}
 	result.AffectedCount = int(res.AffectedCount)
 	return result, nil
-}
-
-func getFileTypeFromFileName(fileName string) FileType {
-	extension := filepath.Ext(fileName)
-	extension = strings.ToLower(extension)
-	// 不带后缀的文件，默认为markdown文件
-	if extension == "" {
-		return MarkdownFileType
-	} else if extension == ".md" || extension == ".markdown" {
-		return MarkdownFileType
-	} else {
-		return UnSupportFileType
-	}
-}
-
-func isMarkdownFile(localFilePath string) bool {
-	extension := filepath.Ext(localFilePath)
-	extension = strings.ToLower(extension)
-	return extension == ".md" || extension == ".markdown"
-}
-
-func checkFileSize(localFilePath string, maxContentLength int64) (bool, error) {
-	fileInfo, err := os.Stat(localFilePath)
-	if err != nil {
-		return false, err
-	}
-	if fileInfo.Size() == 0 {
-		return false, errors.New("file size cannot be 0")
-	}
-
-	if fileInfo.Size() <= maxContentLength {
-		return true, nil
-	}
-	return false, nil
 }

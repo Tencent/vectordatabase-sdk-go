@@ -1,4 +1,4 @@
-package ai_document
+package ai_document_set
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 type QueryDocumentSet struct {
 	DocumentSetId   string                 `json:"documentSetId"`
 	DocumentSetName string                 `json:"documentSetName"`
+	Text            string                 `json:"text"`
 	TextPrefix      string                 `json:"textPrefix"`
 	DocumentSetInfo DocumentSetInfo        `json:"documentSetInfo"`
 	ScalarFields    map[string]interface{} `json:"-"`
@@ -78,17 +79,10 @@ func (d *QueryDocumentSet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type GetDocumentSet struct {
-	QueryDocumentSet
-	// 这里复用list结构，文本前缀不再返回，而是返回文本内容
-	TextPrefix string `json:"-"`
-	Text       string `json:"text"`
-}
-
 type SearchDocument struct {
-	Score       float64     `json:"score"`
-	Chunk       Chunk       `json:"chunk"`
-	DocumentSet DocumentSet `json:"documentSet"`
+	Score       float64           `json:"score"`
+	Chunk       Chunk             `json:"chunk"`
+	DocumentSet SearchDocumentSet `json:"documentSet"`
 }
 
 type Chunk struct {
@@ -99,14 +93,14 @@ type Chunk struct {
 	NextChunks []string `json:"nextChunks"`
 }
 
-type DocumentSet struct {
-	Id              string                 `json:"id"`
+type SearchDocumentSet struct {
+	DocumentSetId   string                 `json:"documentSetId"`
 	DocumentSetName string                 `json:"documentSetName"`
 	ScalarFields    map[string]interface{} `json:"-"`
 }
 
-func (s DocumentSet) MarshalJSON() ([]byte, error) {
-	type Alias DocumentSet
+func (s SearchDocumentSet) MarshalJSON() ([]byte, error) {
+	type Alias SearchDocumentSet
 	res, err := json.Marshal(&struct {
 		*Alias
 	}{
@@ -134,8 +128,8 @@ func (s DocumentSet) MarshalJSON() ([]byte, error) {
 	return res, nil
 }
 
-func (s *DocumentSet) UnmarshalJSON(data []byte) error {
-	type Alias DocumentSet
+func (s *SearchDocumentSet) UnmarshalJSON(data []byte) error {
+	type Alias SearchDocumentSet
 	var temp Alias
 	err := json.Unmarshal(data, &temp)
 	if err != nil {
@@ -155,6 +149,6 @@ func (s *DocumentSet) UnmarshalJSON(data []byte) error {
 		delete(temp.ScalarFields, tags[0])
 	}
 
-	*s = DocumentSet(temp)
+	*s = SearchDocumentSet(temp)
 	return nil
 }

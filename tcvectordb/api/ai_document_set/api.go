@@ -16,7 +16,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package ai_document
+package ai_document_set
 
 import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
 
@@ -58,19 +58,19 @@ type SearchRes struct {
 
 // SearchCond search filter condition
 type SearchCond struct {
-	Content      string       `json:"content"`
-	Filter       string       `json:"filter"`
-	Options      SearchOption `json:"options"`
-	OutputFields []string     `json:"outputfields"`    // 输出字段
-	Limit        int64        `json:"limit,omitempty"` // 结果数量
+	Content         string       `json:"content"`
+	DocumentSetName []string     `json:"documentSetName"`
+	Options         SearchOption `json:"options"`
+	Filter          string       `json:"filter"`
+	Limit           int64        `json:"limit,omitempty"` // 结果数量
 }
 
 type SearchOption struct {
-	ResultType  string `json:"resultType"`  // chunks|paragraphs|file
-	ChunkExpand []int  `json:"chunkExpand"` // 搜索结果中，向前、向后补齐几个chunk的上下文
+	// ResultType  string `json:"resultType"`  // chunks|paragraphs|file
+	ChunkExpand  []int         `json:"chunkExpand"`      // 搜索结果中，向前、向后补齐几个chunk的上下文
+	RerankOption *RerankOption `json:"rerank,omitempty"` // 多路召回
 	// MergeChunk  bool   `json:"mergeChunk"`  // Merge结果中相邻的Chunk
 	// Weights     SearchOptionWeight `json:"weights"`     // 多路召回
-	RerankOption *RerankOption `json:"rerank,omitempty"` // 多路召回
 }
 
 type RerankOption struct {
@@ -167,6 +167,6 @@ type GetReq struct {
 
 type GetRes struct {
 	api.CommonRes
-	Count        uint64         `json:"count"`
-	DocumentSets GetDocumentSet `json:"documentSet"`
+	Count        uint64           `json:"count"`
+	DocumentSets QueryDocumentSet `json:"documentSet"`
 }

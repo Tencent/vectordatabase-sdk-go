@@ -18,43 +18,46 @@
 
 package tcvectordb
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document"
+import (
+	"io"
 
-type QueryAIDocumentOption struct {
-	FileName     string
-	DocumentIds  []string
-	Filter       *Filter
-	Limit        int64
-	Offset       int64
-	OutputFields []string
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
+)
+
+type AIDocumentSet struct {
+	ai_document_set.QueryDocumentSet
 }
 
-type QueryAIDocumentsResult struct {
-	AffectedCount int
-	Total         int
-	Documents     []ai_document.QueryDocumentSet
+type QueryAIDocumentSetParams struct {
+	Filter *Filter
+	Limit  int64
+	Offset int64
 }
 
-type GetAIDocumentOption struct {
+type QueryAIDocumentSetResult struct {
+	Count     uint64
+	Documents []AIDocumentSet
+}
+
+type GetAIDocumentSetParams struct {
 	DocumentSetId   string
 	DocumentSetName string
 }
 
-type GetAIDocumentResult struct {
+type GetAIDocumentSetResult struct {
 	Count        uint64
-	DocumentSets ai_document.GetDocumentSet `json:"documentSet"`
+	DocumentSets AIDocumentSet `json:"documentSet"`
 }
 
-type SearchAIDocumentOption struct {
-	FileName     string
-	Filter       *Filter
-	ResultType   string
-	ChunkExpand  []int
-	RerankOption *ai_document.RerankOption // 多路召回
+type SearchAIDocumentSetParams struct {
+	Content         string
+	DocumentSetName []string
+	ExpandChunk     []int                         // 搜索结果中，向前、向后补齐几个chunk的上下文
+	RerankOption    *ai_document_set.RerankOption // 多路召回
 	// MergeChunk  bool
 	// Weights      SearchAIOptionWeight
-	OutputFields []string
-	Limit        int64
+	Filter *Filter
+	Limit  int64
 }
 
 type SearchAIOptionWeight struct {
@@ -63,38 +66,37 @@ type SearchAIOptionWeight struct {
 	WordBm25        float64 `json:"wordBm25,omitempty"`
 }
 
-type SearchAIDocumentResult struct {
-	Documents []ai_document.SearchDocument
+type SearchAIDocumentSetResult struct {
+	Documents []ai_document_set.SearchDocument
 }
 
-type DeleteAIDocumentOption struct {
-	FileName    string
-	DocumentIds []string
-	Filter      *Filter
+type DeleteAIDocumentSetParams struct {
+	DocumentSetNames []string
+	DocumentSetIds   []string
+	Filter           *Filter
 }
 
-type DeleteAIDocumentResult struct {
+type DeleteAIDocumentSetResult struct {
 	AffectedCount uint64 `json:"affectedCount"`
 }
 
-type UpdateAIDocumentOption struct {
-	FileName     string
-	QueryIds     []string
-	QueryFilter  *Filter
-	UpdateFields map[string]interface{}
+type UpdateAIDocumentSetParams struct {
+	DocumentSetId   []string
+	DocumentSetName []string
+	Filter          *Filter
 }
 
-type UpdateAIDocumentResult struct {
+type UpdateAIDocumentSetResult struct {
 	AffectedCount uint64 `json:"affectedCount"`
 }
 
-type GetCosTmpSecretOption struct {
-	FileType FileType
+type GetCosTmpSecretParams struct {
+	DocumentSetName string
 }
 
 type GetCosTmpSecretResult struct {
-	FileName                string `json:"fileName"`
-	FileId                  string `json:"fileId"`
+	DocumentSetId           string `json:"documentSetId"`
+	DocumentSetName         string `json:"documentSetName"`
 	CosEndpoint             string `json:"cosEndpoint"`
 	CosRegion               string `json:"cosRegion,omitempty"`
 	CosBucket               string `json:"cosBucket,omitempty"`
@@ -105,14 +107,16 @@ type GetCosTmpSecretResult struct {
 	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
 }
 
-type UploadAIDocumentOption struct {
-	FileType FileType
-	MetaData map[string]Field
+type LoadAndSplitTextParams struct {
+	DocumentSetName string
+	Reader          io.ReadCloser
+	LocalFilePath   string
+	MetaData        map[string]Field
 }
 
-type UploadAIDocumentResult struct {
-	FileName                string `json:"fileName"`
-	FileId                  string `json:"fileId"`
+type LoadAndSplitTextResult struct {
+	DocumentSetId           string `json:"documentSetId"`
+	DocumentSetName         string `json:"documentSetName"`
 	CosEndpoint             string `json:"cosEndpoint"`
 	CosRegion               string `json:"cosRegion"`
 	CosBucket               string `json:"cosBucket"`

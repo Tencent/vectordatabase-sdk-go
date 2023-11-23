@@ -60,14 +60,3 @@ type DocumentInterface interface {
 	Delete(ctx context.Context, options ...*DeleteDocumentOption) (result *DeleteDocumentResult, err error)
 	Update(ctx context.Context, options ...*UpdateDocumentOption) (*UpdateDocumentResult, error)
 }
-
-type AIDocumentInterface interface {
-	SdkClient
-	Query(ctx context.Context, options ...*QueryAIDocumentOption) (*QueryAIDocumentsResult, error)
-	Get(ctx context.Context, options ...*GetAIDocumentOption) (*GetAIDocumentResult, error)
-	Search(ctx context.Context, content string, options ...*SearchAIDocumentOption) (*SearchAIDocumentResult, error)
-	Delete(ctx context.Context, options ...*DeleteAIDocumentOption) (*DeleteAIDocumentResult, error)
-	Update(ctx context.Context, options ...*UpdateAIDocumentOption) (*UpdateAIDocumentResult, error)
-	Upload(ctx context.Context, localFilePath string, options ...*UploadAIDocumentOption) (*UploadAIDocumentResult, error)
-	GetCosTmpSecret(ctx context.Context, localFilePath string, options ...*GetCosTmpSecretOption) (*GetCosTmpSecretResult, error)
-}
