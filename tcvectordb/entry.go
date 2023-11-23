@@ -22,16 +22,6 @@ import (
 	"context"
 )
 
-type AICollectionInterface interface {
-	SdkClient
-	CreateCollection(ctx context.Context, name string, options ...*CreateAICollectionOption) (result *CreateAICollectionResult, err error)
-	DescribeCollection(ctx context.Context, name string, options ...*DescribeAICollectionOption) (result *DescribeAICollectionResult, err error)
-	DropCollection(ctx context.Context, name string, options ...*DropAICollectionOption) (result *DropAICollectionResult, err error)
-	TruncateCollection(ctx context.Context, name string, options ...*TruncateAICollectionOption) (result *TruncateAICollectionResult, err error)
-	ListCollection(ctx context.Context, options ...*ListAICollectionOption) (result *ListAICollectionResult, err error)
-	Collection(name string) *AICollection
-}
-
 type AliasInterface interface {
 	SdkClient
 	SetAlias(ctx context.Context, collectionName, aliasName string, options ...*SetAliasOption) (result *SetAliasResult, err error)

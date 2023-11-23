@@ -22,7 +22,7 @@ import "time"
 
 // AIDatabase wrap the database parameters and collection interface to operating the ai_collection api
 type AIDatabase struct {
-	AICollectionInterface
+	CollectionViewInterface
 	AIAliasInterface
 	DatabaseName string
 	Info         DatabaseItem
@@ -33,11 +33,11 @@ func (d AIDatabase) IsAIDatabase() bool {
 }
 
 func (d *AIDatabase) Debug(v bool) {
-	d.AICollectionInterface.Debug(v)
+	d.CollectionViewInterface.Debug(v)
 }
 
 func (d *AIDatabase) WithTimeout(t time.Duration) {
-	d.AICollectionInterface.WithTimeout(t)
+	d.CollectionViewInterface.WithTimeout(t)
 }
 
 type CreateAIDatabaseOption struct{}

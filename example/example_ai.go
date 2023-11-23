@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_collection"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document"
+	collection_view "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/collection_view"
 )
 
 type AIDemo struct {
@@ -34,10 +34,10 @@ func (d *AIDemo) Clear(ctx context.Context, database string) error {
 	return nil
 }
 
-func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collection, fileName string) error {
-	// 删除collection，删除collection的同时，其中的数据也将被全部删除
+func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collectionView, fileName string) error {
+	// 删除Document
 	log.Println("-------------------------- Delete Document --------------------------")
-	cdocDelResult, err := d.client.AIDatabase(database).Collection(collection).Delete(ctx, &tcvectordb.DeleteAIDocumentOption{
+	cdocDelResult, err := d.client.AIDatabase(database).CollectionView(collectionView).Delete(ctx, &tcvectordb.DeleteAIDocumentOption{
 		FileName: fileName,
 	})
 	if err != nil {
@@ -45,16 +45,16 @@ func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collection, fileNa
 	}
 	log.Printf("delete document result: %+v", cdocDelResult)
 
-	// 删除collection，删除collection的同时，其中的数据也将被全部删除
-	log.Println("-------------------------- DropCollection --------------------------")
-	colDropResult, err := d.client.AIDatabase(database).DropCollection(ctx, collection)
+	// 删除collectionView，删除collectionView的同时，其中的数据也将被全部删除
+	log.Println("-------------------------- DropCollectionView --------------------------")
+	colDropResult, err := d.client.AIDatabase(database).DropCollectionView(ctx, collectionView)
 	if err != nil {
 		return err
 	}
 	log.Printf("drop collection result: %+v", colDropResult)
 
 	log.Println("--------------------------- DropDatabase ---------------------------")
-	// 删除db，db下的所有collection都将被删除
+	// 删除db，db下的所有collectionView都将被删除
 	dbDropResult, err := d.client.DropAIDatabase(ctx, database)
 	if err != nil {
 		return err
@@ -87,49 +87,51 @@ func (d *AIDemo) CreateAIDatabase(ctx context.Context, database string) error {
 	return nil
 }
 
-func (d *AIDemo) CreateCollection(ctx context.Context, database, collection string) error {
+func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionView string) error {
 	db := d.client.AIDatabase(database)
 
-	log.Println("------------------------- CreateCollection -------------------------")
+	log.Println("------------------------- CreateCollectionView -------------------------")
 	index := tcvectordb.Indexes{}
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "teststr", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
 
 	db.WithTimeout(time.Second * 30)
 
 	enableWordsEmbedding := true
-	_, err := db.CreateCollection(ctx, collection, &tcvectordb.CreateAICollectionOption{
+	appendTitleToChunk := true
+	appendKeywordsToChunk := false
+
+	_, err := db.CreateCollectionView(ctx, collectionView, &tcvectordb.CreateCollectionViewOption{
 		Description: "desc",
 		Indexes:     index,
-		AiConfig: &tcvectordb.AiConfig{
-			ExpectedFileNum: 100,
-			AverageFileSize: 102400,
-			Language:        tcvectordb.LanguageChinese,
-			DocumentPreprocess: &ai_collection.DocumentPreprocess{
-				AppendTitleToChunk:    "1",
-				AppendKeywordsToChunk: "0",
-			},
+		Embedding: &collection_view.DocumentEmbedding{
+			Language:             string(tcvectordb.LanguageChinese),
 			EnableWordsEmbedding: &enableWordsEmbedding,
 		},
+		SplitterPreprocess: &collection_view.SplitterPreprocess{
+			AppendTitleToChunk:    &appendTitleToChunk,
+			AppendKeywordsToChunk: &appendKeywordsToChunk,
+		},
 	})
+
 	if err != nil {
 		return err
 	}
 
-	log.Println("-------------------------- ListCollection --------------------------")
-	// 列出所有 Collection
-	collListRes, err := db.ListCollection(ctx)
+	log.Println("-------------------------- ListCollectionViews --------------------------")
+	// 列出所有 CollectionView
+	collListRes, err := db.ListCollectionViews(ctx)
 	if err != nil {
 		return err
 	}
-	for _, col := range collListRes.Collections {
-		log.Printf("ListCollection: %+v", col)
+	for _, col := range collListRes.CollectionViews {
+		log.Printf("ListCollectionViews: %+v", col)
 	}
 	return nil
 }
 
 func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath string) (*tcvectordb.UploadAIDocumentResult, error) {
 	log.Println("---------------------------- UploadFile ---------------------------")
-	coll := d.client.AIDatabase(database).Collection(collection)
+	coll := d.client.AIDatabase(database).CollectionView(collection)
 	res, err := coll.Upload(ctx, filePath, &tcvectordb.UploadAIDocumentOption{
 		MetaData: map[string]tcvectordb.Field{
 			"teststr": {Val: "v1"},
@@ -145,7 +147,7 @@ func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath 
 }
 
 func (d *AIDemo) GetFile(ctx context.Context, database, collection, fileName string) error {
-	coll := d.client.AIDatabase(database).Collection(collection)
+	coll := d.client.AIDatabase(database).CollectionView(collection)
 	log.Println("---------------------------- GetFile by Name ----------------------------")
 	result, err := coll.Query(ctx, &tcvectordb.QueryAIDocumentOption{
 		FileName: fileName,
@@ -160,9 +162,9 @@ func (d *AIDemo) GetFile(ctx context.Context, database, collection, fileName str
 	return nil
 }
 
-func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string) error {
+func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView string) error {
 	db := d.client.AIDatabase(database)
-	coll := db.Collection(collection)
+	coll := db.CollectionView(collectionView)
 
 	log.Println("---------------------------- Search ----------------------------")
 	// 查找与给定查询向量相似的向量。支持输入文本信息检索与输入文本相似的内容，同时，支持搭配标量字段的 Filter 表达式一并检索。
@@ -208,17 +210,17 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collection string
 	return nil
 }
 
-func (d *AIDemo) Alias(ctx context.Context, database, collection, alias string) error {
+func (d *AIDemo) Alias(ctx context.Context, database, collectionView, alias string) error {
 	db := d.client.AIDatabase(database)
 	log.Println("---------------------------- SetAlias ----------------------------")
-	setRes, err := db.SetAlias(ctx, collection, alias)
+	setRes, err := db.SetAlias(ctx, collectionView, alias)
 	if err != nil {
 		return err
 	}
 	log.Printf("SetAlias result: %+v", setRes)
 
-	log.Println("----------------------- DescribeCollection -----------------------")
-	collRes, err := db.DescribeCollection(ctx, collection)
+	log.Println("----------------------- DescribeCollectionView -----------------------")
+	collRes, err := db.DescribeCollectionView(ctx, collectionView)
 	if err != nil {
 		return err
 	}
