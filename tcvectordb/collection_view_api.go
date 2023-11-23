@@ -24,7 +24,7 @@ import (
 	collection_view "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/collection_view"
 )
 
-// Collection wrap the collection parameters and document interface to operating the document api
+// CollectionView wrap the collectionView parameters and document interface to operating the document api
 type CollectionView struct {
 	AIDocumentInterface
 	DatabaseName          string

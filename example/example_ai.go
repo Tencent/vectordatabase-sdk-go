@@ -35,7 +35,7 @@ func (d *AIDemo) Clear(ctx context.Context, database string) error {
 }
 
 func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collectionView, fileName string) error {
-	// 删除collection，删除collection的同时，其中的数据也将被全部删除
+	// 删除Document
 	log.Println("-------------------------- Delete Document --------------------------")
 	cdocDelResult, err := d.client.AIDatabase(database).CollectionView(collectionView).Delete(ctx, &tcvectordb.DeleteAIDocumentOption{
 		FileName: fileName,
@@ -45,7 +45,7 @@ func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collectionView, fi
 	}
 	log.Printf("delete document result: %+v", cdocDelResult)
 
-	// 删除collection，删除collection的同时，其中的数据也将被全部删除
+	// 删除collectionView，删除collectionView的同时，其中的数据也将被全部删除
 	log.Println("-------------------------- DropCollectionView --------------------------")
 	colDropResult, err := d.client.AIDatabase(database).DropCollectionView(ctx, collectionView)
 	if err != nil {
@@ -54,7 +54,7 @@ func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collectionView, fi
 	log.Printf("drop collection result: %+v", colDropResult)
 
 	log.Println("--------------------------- DropDatabase ---------------------------")
-	// 删除db，db下的所有collection都将被删除
+	// 删除db，db下的所有collectionView都将被删除
 	dbDropResult, err := d.client.DropAIDatabase(ctx, database)
 	if err != nil {
 		return err
@@ -118,13 +118,13 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 	}
 
 	log.Println("-------------------------- ListCollectionViews --------------------------")
-	// 列出所有 Collection
+	// 列出所有 CollectionView
 	collListRes, err := db.ListCollectionViews(ctx)
 	if err != nil {
 		return err
 	}
 	for _, col := range collListRes.CollectionViews {
-		log.Printf("ListCollection: %+v", col)
+		log.Printf("ListCollectionViews: %+v", col)
 	}
 	return nil
 }

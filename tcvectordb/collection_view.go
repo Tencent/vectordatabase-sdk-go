@@ -45,11 +45,10 @@ type implementerCollectionView struct {
 	database AIDatabase
 }
 
-// CreateCollection create a collection. It returns collection struct if err is nil.
+// CreateCollectionView create a collectionView. It returns collection struct if err is nil.
 // The parameter `name` must be a unique string, otherwise an error will be returned.
-// The parameter `shardNum`, `replicasNum` must bigger than 0, `description` could be empty.
-// You can set the index field in Indexes, the vectorIndex must be set one currently, and
-// the filterIndex sets at least one primaryKey value.
+// The parameter `description` could be empty.
+// You can set the index field in Indexes.
 func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, name string, options ...*CreateCollectionViewOption) (*CreateAICollectionResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -102,8 +101,8 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 	return result, nil
 }
 
-// DescribeCollection get a collection detail.
-// It returns the collection object to get collecton parameters or operate document api
+// DescribeCollectionView get a collectionView detail.
+// It returns the collectionView object to get collectionView parameters or operate document api
 func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, name string, option ...*DescribeCollectionViewOption) (*DescribeCollectionViewResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -125,7 +124,7 @@ func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, 
 	return result, nil
 }
 
-// DropCollection drop a collection. If collection not exist, it return nil.
+// DropCollectionView drop a collectionView. If collectionView not exist, it return nil.
 func (i *implementerCollectionView) DropCollectionView(ctx context.Context, name string, option ...*DropCollectionViewOption) (result *DropCollectionViewResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -166,8 +165,8 @@ func (i *implementerCollectionView) TruncateCollectionView(ctx context.Context, 
 	return
 }
 
-// ListCollectionView get collection list.
-// It return the list of collection, each collection same as DescribeCollection return.
+// ListCollectionViews get collectionView list.
+// It return the list of collectionView, each collectionView is as same as DescribeCollectionView return.
 func (i *implementerCollectionView) ListCollectionViews(ctx context.Context, option ...*ListCollectionViewsOption) (*ListCollectionViewsResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -186,8 +185,8 @@ func (i *implementerCollectionView) ListCollectionViews(ctx context.Context, opt
 	return result, nil
 }
 
-// Collection get a collection interface to operate the document api. It could not send http request to vectordb.
-// If you want to show collection parameters, use DescribeCollection.
+// CollectionView get a collectionView interface to operate the document api. It could not send http request to vectordb.
+// If you want to show collectionView parameters, use DescribeCollectionView.
 func (i *implementerCollectionView) CollectionView(name string) *CollectionView {
 	coll := new(CollectionView)
 	coll.DatabaseName = i.database.DatabaseName

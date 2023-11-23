@@ -63,7 +63,7 @@ func TestAICreateCollectionView(t *testing.T) {
 	appendKeywordsToChunk := false
 
 	coll, err := db.CreateCollectionView(ctx, CollectionViewName, &tcvectordb.CreateCollectionViewOption{
-		Description: "test ai collection",
+		Description: "test ai collectionView",
 		Indexes:     index,
 		Embedding: &collection_view.DocumentEmbedding{
 			Language:             string(tcvectordb.LanguageChinese),
@@ -97,15 +97,15 @@ func TestAIAlias(t *testing.T) {
 	_, err := db.SetAlias(ctx, CollectionViewName, collectionAlias, nil)
 	printErr(err)
 
-	// 查看 Collection 信息
+	// 查看 CollectionView 信息
 	colRes, err := db.DescribeCollectionView(ctx, CollectionViewName, nil)
 	printErr(err)
 	t.Logf("%+v", colRes)
 
-	// 删除 Collection 的 alias
+	// 删除 CollectionView 的 alias
 	db.DeleteAlias(ctx, collectionAlias, nil)
 
-	// 查看 Collection 信息
+	// 查看 CollectionView 信息
 	colRes, err = db.DescribeCollectionView(ctx, CollectionViewName, nil)
 	printErr(err)
 	t.Logf("%+v", colRes)
