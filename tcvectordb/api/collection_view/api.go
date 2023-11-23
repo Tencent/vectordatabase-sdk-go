@@ -20,7 +20,7 @@ package collection_view
 
 import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
 
-// CreateReq create collection request
+// CreateReq create CollectionView request
 type CreateReq struct {
 	api.Meta       `path:"/ai/collectionView/create" tags:"ai" method:"Post" summary:"创建collection存储embedding文件集合"`
 	Database       string `json:"database"`
@@ -54,14 +54,14 @@ type SplitterPreprocess struct {
 	AppendKeywordsToChunk *bool `json:"appendKeywordsToChunk,omitempty"`
 }
 
-// DescribeReq get collection detail request
+// DescribeReq get collectionView detail request
 type DescribeReq struct {
 	api.Meta       `path:"/ai/collectionView/describe" tags:"Collection" method:"Post" summary:"返回collection信息"`
 	Database       string `json:"database"`
 	CollectionView string `json:"collectionView"`
 }
 
-// DescribeRes get collection detail response
+// DescribeRes get collectionView detail response
 type DescribeRes struct {
 	api.CommonRes
 	CollectionView *DescribeCollectionViewItem `json:"collectionView"`
@@ -88,14 +88,14 @@ type Status struct {
 	UnIndexedDocumentSets uint64 `json:"unIndexedDocumentSets"`
 }
 
-// DropReq delete collection request
+// DropReq delete collectionView request
 type DropReq struct {
 	api.Meta       `path:"/ai/collectionView/drop" tags:"Collection" method:"Post" summary:"删除collection，并删除collection中的所有文档，如果collectio不经存在返回失败"`
 	Database       string `json:"database"`
 	CollectionView string `json:"collectionView"`
 }
 
-// DropReq delete collection response
+// DropReq delete collectionView response
 type DropRes struct {
 	api.CommonRes
 	AffectedCount uint64 `json:"affectedCount"`
