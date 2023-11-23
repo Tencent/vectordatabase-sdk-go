@@ -34,7 +34,7 @@ var _ AIDocumentInterface = &implementerAIDocument{}
 type implementerAIDocument struct {
 	SdkClient
 	database   AIDatabase
-	collection AICollection
+	collection CollectionView
 }
 
 // Query query the ai_document by ai_document ids.
