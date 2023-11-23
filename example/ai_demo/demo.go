@@ -26,7 +26,7 @@ func main() {
 	printErr(err)
 	err = testVdb.CreateAIDatabase(ctx, database)
 	printErr(err)
-	err = testVdb.CreateCollection(ctx, database, collectionName)
+	err = testVdb.CreateCollectionView(ctx, database, collectionName)
 	printErr(err)
 	fileInfo, err := testVdb.UploadFile(ctx, database, collectionName, "../tcvdb.md")
 	printErr(err)

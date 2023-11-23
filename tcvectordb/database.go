@@ -169,7 +169,7 @@ func (i *implementerDatabase) AIDatabase(name string) *AIDatabase {
 		DbType: AIDOCDbType,
 	}
 
-	collImpl := new(implementerAICollection)
+	collImpl := new(implementerCollectionView)
 	collImpl.SdkClient = i.SdkClient
 	collImpl.database = *database
 
@@ -177,7 +177,7 @@ func (i *implementerDatabase) AIDatabase(name string) *AIDatabase {
 	aliasImpl.database = *database
 	aliasImpl.SdkClient = i.SdkClient
 
-	database.AICollectionInterface = collImpl
+	database.CollectionViewInterface = collImpl
 	database.AIAliasInterface = aliasImpl
 
 	return database
