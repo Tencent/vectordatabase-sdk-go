@@ -40,8 +40,7 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("http://11.141.218.143:8100", "root", "C3nPLfYCirIPPwAlHoV0105r2EOykc4CeBoowOJI", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
-	// cli, err = tcvectordb.NewClient("http://lb-3fuz86n6-e8g7tor5zvbql29p.clb.ap-guangzhou.tencentclb.com:60000", "root", "tko5oh7A8xXc4POf3piBXeXSYhBFH5eAtMgXTrDd", &tcvectordb.ClientParams{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewClient("", "root", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}

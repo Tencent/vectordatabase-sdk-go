@@ -13,8 +13,8 @@
 * TruncateCollection返回值AffectedCount修改为TruncateCollectionResult
 * ListCollection返回值[]*Collection修改为ListCollectionResult
 
-### AICollectionInterface
-* 新增AI collection相关接口
+### AICollectionViewInterface
+* 新增AI collectionView相关接口
 
 ### AliasInterface
 * 接口名称修改，AliasSet替换为SetAlias，返回值修改为SetAliasResult
@@ -32,5 +32,5 @@
 * Search\SearchById\SearchByText移动filter、hnswparam、retrieveVector、limit到option中；返回值修改为SearchDocumentResult
 * Delete移动documentIds到option中，返回值添加DeleteDocumentResult
 
-### AIDocumentInterface
-* 新增AI document相关接口
+### AIDocumentSetsInterface
+* 新增AI documentSet相关接口
