@@ -26,52 +26,44 @@ import (
 
 // CollectionView wrap the collectionView parameters and document interface to operating the document api
 type CollectionView struct {
-	AIDocumentSetInterface
-	DatabaseName          string
-	CollectionName        string
-	Alias                 []string
-	Embedding             *collection_view.DocumentEmbedding  `json:"embedding,omitempty"`
-	SplitterPreprocess    *collection_view.SplitterPreprocess `json:"splitterPreprocess,omitempty"`
-	IndexedDocumentSets   uint64
-	TotalDocumentSets     uint64
-	UnIndexedDocumentSets uint64
-	FilterIndexes         []FilterIndex
-	Description           string
-	CreateTime            time.Time
+	AIDocumentSetInterface `json:"-"`
+	DatabaseName           string                              `json:"databaseName"`
+	CollectionViewName     string                              `json:"collectionViewName"`
+	Alias                  []string                            `json:"alias"`
+	Embedding              *collection_view.DocumentEmbedding  `json:"embedding"`
+	SplitterPreprocess     *collection_view.SplitterPreprocess `json:"splitterPreprocess"`
+	IndexedDocumentSets    uint64                              `json:"indexedDocumentSets"`
+	TotalDocumentSets      uint64                              `json:"totalDocumentSets"`
+	UnIndexedDocumentSets  uint64                              `json:"unIndexedDocumentSets"`
+	FilterIndexes          []FilterIndex                       `json:"filterIndexes"`
+	Description            string                              `json:"description"`
+	CreateTime             time.Time                           `json:"createTime"`
 }
 
-type CreateCollectionViewOption struct {
+type CreateCollectionViewParams struct {
 	Description        string
-	Indexes            Indexes
-	Embedding          *collection_view.DocumentEmbedding  `json:"embedding,omitempty"`
-	SplitterPreprocess *collection_view.SplitterPreprocess `json:"splitterPreprocess,omitempty"`
+	Indexes            Indexes                             `json:"indexes"`
+	Embedding          *collection_view.DocumentEmbedding  `json:"embedding"`
+	SplitterPreprocess *collection_view.SplitterPreprocess `json:"splitterPreprocess"`
 }
 
 type CreateAICollectionResult struct {
-	CollectionView
-	AffectedCount int
+	CollectionView `json:"collectionView"`
+	AffectedCount  int
 }
-
-type DescribeCollectionViewOption struct{}
 
 type DescribeCollectionViewResult struct {
-	CollectionView
+	CollectionView `json:"collectionView"`
 }
-
-type DropCollectionViewOption struct{}
 
 type DropCollectionViewResult struct {
 	AffectedCount int
 }
 
-type TruncateCollectionViewOption struct{}
-
 type TruncateCollectionViewResult struct {
 	AffectedCount int
 }
 
-type ListCollectionViewsOption struct{}
-
 type ListCollectionViewsResult struct {
-	CollectionViews []*CollectionView
+	CollectionViews []*CollectionView `json:"collectionViews"`
 }

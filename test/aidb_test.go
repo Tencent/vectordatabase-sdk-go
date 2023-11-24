@@ -61,7 +61,7 @@ func TestAICreateCollectionView(t *testing.T) {
 	appendTitleToChunk := true
 	appendKeywordsToChunk := false
 
-	coll, err := db.CreateCollectionView(ctx, CollectionViewName, &tcvectordb.CreateCollectionViewOption{
+	coll, err := db.CreateCollectionView(ctx, CollectionViewName, &tcvectordb.CreateCollectionViewParams{
 		Description: "test ai collectionView",
 		Indexes:     index,
 		Embedding: &collection_view.DocumentEmbedding{
@@ -74,47 +74,47 @@ func TestAICreateCollectionView(t *testing.T) {
 		},
 	})
 	printErr(err)
-	log.Printf("CreateCollectionView success: %v: %v", coll.DatabaseName, coll.CollectionName)
+	log.Printf("CreateCollectionView success: %v: %v", coll.DatabaseName, coll.CollectionViewName)
 }
 
 func TestAIListCollectionViews(t *testing.T) {
 	db := cli.AIDatabase(aiDatabase)
 	t.Logf("ListCollectionViews ================")
-	coll, err := db.ListCollectionViews(ctx, nil)
+	coll, err := db.ListCollectionViews(ctx)
 	printErr(err)
 	for _, col := range coll.CollectionViews {
 		t.Logf("%+v", col)
 	}
 	t.Logf("DescribeCollectionView ================")
-	col, err := db.DescribeCollectionView(ctx, CollectionViewName, nil)
+	col, err := db.DescribeCollectionView(ctx, CollectionViewName)
 	printErr(err)
 	t.Logf("%+v", col)
 }
 
 func TestAIAlias(t *testing.T) {
 	db := cli.AIDatabase(aiDatabase)
-	_, err := db.SetAlias(ctx, CollectionViewName, collectionAlias, nil)
+	_, err := db.SetAlias(ctx, CollectionViewName, collectionAlias)
 	printErr(err)
 
 	// 查看 CollectionView 信息
-	colRes, err := db.DescribeCollectionView(ctx, CollectionViewName, nil)
+	colRes, err := db.DescribeCollectionView(ctx, CollectionViewName)
 	printErr(err)
 	t.Logf("%+v", colRes)
 
 	// 删除 CollectionView 的 alias
-	db.DeleteAlias(ctx, collectionAlias, nil)
+	db.DeleteAlias(ctx, collectionAlias)
 
 	// 查看 CollectionView 信息
-	colRes, err = db.DescribeCollectionView(ctx, CollectionViewName, nil)
+	colRes, err = db.DescribeCollectionView(ctx, CollectionViewName)
 	printErr(err)
 	t.Logf("%+v", colRes)
 }
 
-func TestDropAICollection(t *testing.T) {
-	res, err := cli.AIDatabase(aiDatabase).DropCollectionView(ctx, CollectionViewName, nil)
+func TestDropCollectionView(t *testing.T) {
+	res, err := cli.AIDatabase(aiDatabase).DropCollectionView(ctx, CollectionViewName)
 	printErr(err)
 	t.Logf("%v", res)
-	coll, err := cli.AIDatabase(aiDatabase).ListCollectionViews(ctx, nil)
+	coll, err := cli.AIDatabase(aiDatabase).ListCollectionViews(ctx)
 	printErr(err)
 	t.Log("list collectionViews:")
 	for _, col := range coll.CollectionViews {
@@ -123,45 +123,52 @@ func TestDropAICollection(t *testing.T) {
 }
 
 func TestGetCosSecret(t *testing.T) {
-	res, err := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName).GetCosTmpSecret(ctx, "./README.md", nil)
+	res, err := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName).GetCosTmpSecret(ctx, tcvectordb.GetCosTmpSecretParams{
+		"tcvdb.md",
+	})
 	printErr(err)
 	t.Logf("%+v", res)
 }
 
-func TestUploadFile(t *testing.T) {
+func TestLoadAndSplitText(t *testing.T) {
 	defer cli.Close()
 	col := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName)
 
 	metaData := map[string]tcvectordb.Field{
 		"author":  {Val: "sam"},
 		"fileKey": {Val: 1024}}
-	result, err := col.Upload(ctx, "../example/tcvdb.md", &tcvectordb.UploadAIDocumentOption{
-		FileType: "", MetaData: metaData})
+	result, err := col.LoadAndSplitText(ctx, tcvectordb.LoadAndSplitTextParams{
+		LocalFilePath: "../example/tcvdb.md",
+		MetaData:      metaData,
+	})
 	printErr(err)
 	t.Logf("%+v", result)
 }
 
-func TestAIGet(t *testing.T) {
-	col := cli.AIDatabase(aiDatabase).Collection(aiCollectionName)
-	col.Debug(true)
-	res, err := col.Get(ctx, &tcvectordb.GetAIDocumentOption{
-		DocumentSetName: "tcvdb.md",
-	})
+func TestAIGetDocumentSet(t *testing.T) {
+	col := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName)
+	t.Logf("==============================GetDocumentSetByName==============================")
+	res, err := col.GetDocumentSetByName(ctx, "tcvdb.md")
+	printErr(err)
+	t.Logf("document: %+v", res)
+
+	t.Logf("==============================GetDocumentSetById==============================")
+	res, err = col.GetDocumentSetById(ctx, res.DocumentSets.DocumentSetId)
 	printErr(err)
 	t.Logf("document: %+v", res)
 }
 
 func TestAIQuery(t *testing.T) {
 	col := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName)
-	option := &tcvectordb.QueryAIDocumentOption{
-		// Filter:       tcvectordb.NewFilter(`_file_name="README.md"`),
-		OutputFields: []string{},
-		Limit:        3,
-		Offset:       0,
+	param := tcvectordb.QueryAIDocumentSetParams{
+		DocumentSetName: []string{"tcvdb.md"},
+		// Filter: tcvectordb.NewFilter(`documentSetName="tcvdb.md"`),
+		Limit:  3,
+		Offset: 0,
 	}
-	result, err := col.Query(ctx, option)
+	result, err := col.Query(ctx, param)
 	printErr(err)
-	t.Logf("total doc: %d", result.Total)
+	t.Logf("total doc: %d", result.Count)
 	for _, doc := range result.Documents {
 		t.Logf("document: %+v", doc)
 	}
@@ -171,7 +178,8 @@ func TestAISearch(t *testing.T) {
 	col := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName)
 
 	// enableRerank := true
-	searchRes, err := col.Search(ctx, "什么是向量数据库", &tcvectordb.SearchAIDocumentOption{
+	searchRes, err := col.Search(ctx, tcvectordb.SearchAIDocumentSetParams{
+		Content: "什么是向量数据库",
 		// FileName: "README.md",
 		Filter: nil, // 过滤获取到结果
 		// Limit:  3,   // 指定 Top K 的 K 值
@@ -189,17 +197,15 @@ func TestAISearch(t *testing.T) {
 func TestAIUpdate(t *testing.T) {
 	fileName := "tcvdb.md"
 	col := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName)
-	result, err := col.Update(ctx, &tcvectordb.UpdateAIDocumentOption{
-		FileName: fileName,
-		UpdateFields: map[string]interface{}{
-			"author": "jack",
-		},
+	result, err := col.Update(ctx, map[string]interface{}{
+		"author": "jack",
+	}, tcvectordb.UpdateAIDocumentSetParams{
+		DocumentSetName: []string{fileName},
 	})
 	printErr(err)
 	t.Logf("affect count: %d", result.AffectedCount)
-	docs, err := col.Query(ctx, &tcvectordb.QueryAIDocumentOption{
-		FileName: fileName,
-		Limit:    1,
+	docs, err := col.Query(ctx, tcvectordb.QueryAIDocumentSetParams{
+		Limit: 1,
 	})
 	printErr(err)
 	for _, doc := range docs.Documents {
@@ -208,11 +214,12 @@ func TestAIUpdate(t *testing.T) {
 }
 
 func TestAIDelete(t *testing.T) {
-	fileName := "tcvdb.md"
+	documentSetName := "tcvdb.md"
+	// documentSetId := "1177451546364084224"
 	col := cli.AIDatabase(aiDatabase).CollectionView(CollectionViewName)
-	result, err := col.Delete(ctx, &tcvectordb.DeleteAIDocumentOption{
-		// DocumentIds: []string{fileId},
-		FileName: fileName,
+	result, err := col.Delete(ctx, tcvectordb.DeleteAIDocumentSetParams{
+		DocumentSetNames: []string{documentSetName},
+		// DocumentSetIds: []string{documentSetId},
 	})
 	printErr(err)
 	t.Logf("%v", result)
@@ -220,7 +227,7 @@ func TestAIDelete(t *testing.T) {
 
 func TestAITruncate(t *testing.T) {
 	db := cli.AIDatabase(aiDatabase)
-	result, err := db.TruncateCollectionView(ctx, CollectionViewName, nil)
+	result, err := db.TruncateCollectionView(ctx, CollectionViewName)
 	printErr(err)
 	t.Logf("result: %+v", result)
 }

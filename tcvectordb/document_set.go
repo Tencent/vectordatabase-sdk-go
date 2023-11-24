@@ -37,7 +37,7 @@ var _ AIDocumentSetInterface = &implementerAIDocumentSet{}
 
 type AIDocumentSetInterface interface {
 	SdkClient
-	Query(ctx context.Context, params ...*QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error)
+	Query(ctx context.Context, params QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error)
 	GetDocumentSetByName(ctx context.Context, documentSetName string) (*GetAIDocumentSetResult, error)
 	GetDocumentSetById(ctx context.Context, documentSetId string) (*GetAIDocumentSetResult, error)
 	Search(ctx context.Context, param SearchAIDocumentSetParams) (*SearchAIDocumentSetResult, error)
@@ -57,7 +57,7 @@ type implementerAIDocumentSet struct {
 
 // Query query the ai_document_set by ai_document_set ids.
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
-func (i *implementerAIDocumentSet) Query(ctx context.Context, params ...*QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error) {
+func (i *implementerAIDocumentSet) Query(ctx context.Context, param QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -65,15 +65,11 @@ func (i *implementerAIDocumentSet) Query(ctx context.Context, params ...*QueryAI
 	res := new(ai_document_set.QueryRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionName
-	if len(params) != 0 && params[0] != nil {
-		param := params[0]
-
-		req.Query = &ai_document_set.QueryCond{
-			Filter: param.Filter.Cond(),
-			Limit:  param.Limit,
-			Offset: param.Offset,
-		}
+	req.CollectionView = i.collectionView.CollectionViewName
+	req.Query = &ai_document_set.QueryCond{
+		Filter: param.Filter.Cond(),
+		Limit:  param.Limit,
+		Offset: param.Offset,
 	}
 
 	result := new(QueryAIDocumentSetResult)
@@ -104,7 +100,7 @@ func (i *implementerAIDocumentSet) get(ctx context.Context, param GetAIDocumentS
 	res := new(ai_document_set.GetRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionName
+	req.CollectionView = i.collectionView.CollectionViewName
 	req.DocumentSetId = param.DocumentSetId
 	req.DocumentSetName = param.DocumentSetName
 
@@ -127,7 +123,7 @@ func (i *implementerAIDocumentSet) Search(ctx context.Context, param SearchAIDoc
 	res := new(ai_document_set.SearchRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionName
+	req.CollectionView = i.collectionView.CollectionViewName
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Search = new(ai_document_set.SearchCond)
 
@@ -178,7 +174,7 @@ func (i *implementerAIDocumentSet) Delete(ctx context.Context, param DeleteAIDoc
 	res := new(ai_document_set.DeleteRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionName
+	req.CollectionView = i.collectionView.CollectionViewName
 	req.Query = &ai_document_set.DeleteQueryCond{
 		DocumentSetId:   param.DocumentSetIds,
 		DocumentSetName: param.DocumentSetNames,
@@ -202,7 +198,7 @@ func (i *implementerAIDocumentSet) Update(ctx context.Context, updateFields map[
 	res := new(ai_document_set.UpdateRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionName
+	req.CollectionView = i.collectionView.CollectionViewName
 
 	req.Query = ai_document_set.UpdateQueryCond{
 		DocumentSetId:   param.DocumentSetId,
@@ -229,7 +225,7 @@ func (i *implementerAIDocumentSet) GetCosTmpSecret(ctx context.Context, param Ge
 	res := new(ai_document_set.UploadUrlRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionName
+	req.CollectionView = i.collectionView.CollectionViewName
 	req.DocumentSetName = param.DocumentSetName
 
 	err := i.Request(ctx, req, res)
@@ -260,6 +256,11 @@ func (i *implementerAIDocumentSet) LoadAndSplitText(ctx context.Context, param L
 		return nil, BaseDbTypeError
 	}
 
+	size, err := i.loadAndSplitTextCheckParams(&param)
+	if err != nil {
+		return nil, err
+	}
+
 	res, err := i.GetCosTmpSecret(ctx, GetCosTmpSecretParams{
 		DocumentSetName: param.DocumentSetName,
 	})
@@ -267,10 +268,6 @@ func (i *implementerAIDocumentSet) LoadAndSplitText(ctx context.Context, param L
 		return nil, err
 	}
 
-	size, err := i.loadAndSplitTextCheckParams(&param)
-	if err != nil {
-		return nil, err
-	}
 	if size > res.MaxSupportContentLength {
 		return nil, fmt.Errorf("fileSize is invalid, support max content length is %v bytes", res.MaxSupportContentLength)
 	}
@@ -360,9 +357,39 @@ func (i *implementerAIDocumentSet) loadAndSplitTextCheckParams(param *LoadAndSpl
 }
 
 func (i *implementerAIDocumentSet) toDocumentSet(item ai_document_set.QueryDocumentSet) *AIDocumentSet {
-
 	documentSet := new(AIDocumentSet)
-
 	documentSet.QueryDocumentSet = item
+
+	docSetImpl := new(implementerAIDocumentSetChunk)
+	docSetImpl.database = i.database
+	docSetImpl.collectionView = i.collectionView
+	docSetImpl.documentSet = *documentSet
+
+	documentSet.AIDocumentSetChunkInterface = docSetImpl
 	return documentSet
+}
+
+type AIDocumentSetChunkInterface interface {
+	Search(ctx context.Context, param SearchAIDocumentSetSingleParams) (*SearchAIDocumentSetResult, error)
+	Delete(ctx context.Context) (*DeleteAIDocumentSetResult, error)
+}
+
+type implementerAIDocumentSetChunk struct {
+	SdkClient
+	database       AIDatabase
+	collectionView CollectionView
+	documentSet    AIDocumentSet
+}
+
+func (i *implementerAIDocumentSetChunk) Search(ctx context.Context, param SearchAIDocumentSetSingleParams) (*SearchAIDocumentSetResult, error) {
+	return i.collectionView.Search(ctx, SearchAIDocumentSetParams{
+		Content:         param.Content,
+		DocumentSetName: []string{i.documentSet.DocumentSetName},
+		ExpandChunk:     param.ExpandChunk,
+		RerankOption:    param.RerankOption,
+	})
+}
+
+func (i *implementerAIDocumentSetChunk) Delete(ctx context.Context) (*DeleteAIDocumentSetResult, error) {
+	return i.collectionView.DeleteByIds(ctx, i.documentSet.DocumentSetId)
 }

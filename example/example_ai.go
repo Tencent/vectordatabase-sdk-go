@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document"
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 	collection_view "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/collection_view"
 )
 
@@ -34,11 +34,11 @@ func (d *AIDemo) Clear(ctx context.Context, database string) error {
 	return nil
 }
 
-func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collectionView, fileName string) error {
+func (d *AIDemo) DeleteAndDrop(ctx context.Context, database, collectionView, documentSetName string) error {
 	// 删除Document
 	log.Println("-------------------------- Delete Document --------------------------")
-	cdocDelResult, err := d.client.AIDatabase(database).CollectionView(collectionView).Delete(ctx, &tcvectordb.DeleteAIDocumentOption{
-		FileName: fileName,
+	cdocDelResult, err := d.client.AIDatabase(database).CollectionView(collectionView).Delete(ctx, tcvectordb.DeleteAIDocumentSetParams{
+		DocumentSetNames: []string{documentSetName},
 	})
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 	appendTitleToChunk := true
 	appendKeywordsToChunk := false
 
-	_, err := db.CreateCollectionView(ctx, collectionView, &tcvectordb.CreateCollectionViewOption{
+	_, err := db.CreateCollectionView(ctx, collectionView, &tcvectordb.CreateCollectionViewParams{
 		Description: "desc",
 		Indexes:     index,
 		Embedding: &collection_view.DocumentEmbedding{
@@ -129,10 +129,11 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 	return nil
 }
 
-func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath string) (*tcvectordb.UploadAIDocumentResult, error) {
+func (d *AIDemo) LoadAndSplitText(ctx context.Context, database, collection, filePath string) (*tcvectordb.LoadAndSplitTextResult, error) {
 	log.Println("---------------------------- UploadFile ---------------------------")
 	coll := d.client.AIDatabase(database).CollectionView(collection)
-	res, err := coll.Upload(ctx, filePath, &tcvectordb.UploadAIDocumentOption{
+	res, err := coll.LoadAndSplitText(ctx, tcvectordb.LoadAndSplitTextParams{
+		LocalFilePath: "tcvdb.md",
 		MetaData: map[string]tcvectordb.Field{
 			"teststr": {Val: "v1"},
 			"filekey": {Val: 1024},
@@ -149,13 +150,13 @@ func (d *AIDemo) UploadFile(ctx context.Context, database, collection, filePath 
 func (d *AIDemo) GetFile(ctx context.Context, database, collection, fileName string) error {
 	coll := d.client.AIDatabase(database).CollectionView(collection)
 	log.Println("---------------------------- GetFile by Name ----------------------------")
-	result, err := coll.Query(ctx, &tcvectordb.QueryAIDocumentOption{
-		FileName: fileName,
+	result, err := coll.Query(ctx, tcvectordb.QueryAIDocumentSetParams{
+		Filter: tcvectordb.NewFilter(`"Document`),
 	})
 	if err != nil {
 		return err
 	}
-	log.Printf("QueryResult: total: %v, affect: %v", result.Total, result.AffectedCount)
+	log.Printf("QueryResult: count: %v", result.Count)
 	for _, doc := range result.Documents {
 		log.Printf("QueryDocument: %+v", doc)
 	}
@@ -169,11 +170,12 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 	log.Println("---------------------------- Search ----------------------------")
 	// 查找与给定查询向量相似的向量。支持输入文本信息检索与输入文本相似的内容，同时，支持搭配标量字段的 Filter 表达式一并检索。
 	enableRerank := true
-	res, err := coll.Search(ctx, "“什么是向量数据库", &tcvectordb.SearchAIDocumentOption{
-		ChunkExpand: []int{1, 0},
+	res, err := coll.Search(ctx, tcvectordb.SearchAIDocumentSetParams{
+		Content:     "什么是向量数据库",
+		ExpandChunk: []int{1, 0},
 		Filter:      tcvectordb.NewFilter(`teststr="v1"`),
 		Limit:       2,
-		RerankOption: &ai_document.RerankOption{
+		RerankOption: &ai_document_set.RerankOption{
 			Enable:                &enableRerank,
 			ExpectRecallMultiples: 2.5,
 		},
@@ -186,11 +188,10 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 	}
 
 	log.Println("---------------------------- Update ----------------------------")
-	updateRes, err := coll.Update(ctx, &tcvectordb.UpdateAIDocumentOption{
-		QueryFilter: tcvectordb.NewFilter(`teststr="v1"`),
-		UpdateFields: map[string]interface{}{
-			"teststr": "v2",
-		},
+	updateRes, err := coll.Update(ctx, map[string]interface{}{
+		"teststr": "v2",
+	}, tcvectordb.UpdateAIDocumentSetParams{
+		Filter: tcvectordb.NewFilter(`teststr="v1"`),
 	})
 	if err != nil {
 		return err
@@ -198,7 +199,7 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 	log.Printf("updateResult: %+v", updateRes)
 
 	log.Println("---------------------------- Query ----------------------------")
-	queryRes, err := coll.Query(ctx, &tcvectordb.QueryAIDocumentOption{
+	queryRes, err := coll.Query(ctx, tcvectordb.QueryAIDocumentSetParams{
 		Filter: tcvectordb.NewFilter(`teststr="v2"`),
 	})
 	if err != nil {

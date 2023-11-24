@@ -30,11 +30,11 @@ import (
 
 type CollectionViewInterface interface {
 	SdkClient
-	CreateCollectionView(ctx context.Context, name string, options ...*CreateCollectionViewOption) (result *CreateAICollectionResult, err error)
-	DescribeCollectionView(ctx context.Context, name string, options ...*DescribeCollectionViewOption) (result *DescribeCollectionViewResult, err error)
-	DropCollectionView(ctx context.Context, name string, options ...*DropCollectionViewOption) (result *DropCollectionViewResult, err error)
-	TruncateCollectionView(ctx context.Context, name string, options ...*TruncateCollectionViewOption) (result *TruncateCollectionViewResult, err error)
-	ListCollectionViews(ctx context.Context, options ...*ListCollectionViewsOption) (result *ListCollectionViewsResult, err error)
+	CreateCollectionView(ctx context.Context, name string, params ...*CreateCollectionViewParams) (result *CreateAICollectionResult, err error)
+	DescribeCollectionView(ctx context.Context, name string) (result *DescribeCollectionViewResult, err error)
+	DropCollectionView(ctx context.Context, name string) (result *DropCollectionViewResult, err error)
+	TruncateCollectionView(ctx context.Context, name string) (result *TruncateCollectionViewResult, err error)
+	ListCollectionViews(ctx context.Context) (result *ListCollectionViewsResult, err error)
 	CollectionView(name string) *CollectionView
 }
 
@@ -49,7 +49,7 @@ type implementerCollectionView struct {
 // The parameter `name` must be a unique string, otherwise an error will be returned.
 // The parameter `description` could be empty.
 // You can set the index field in Indexes.
-func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, name string, options ...*CreateCollectionViewOption) (*CreateAICollectionResult, error) {
+func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, name string, params ...*CreateCollectionViewParams) (*CreateAICollectionResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -57,8 +57,8 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 	req.Database = i.database.DatabaseName
 	req.CollectionView = name
 
-	if len(options) != 0 && options[0] != nil {
-		option := options[0]
+	if len(params) != 0 && params[0] != nil {
+		option := params[0]
 		req.Description = option.Description
 
 		for _, v := range option.Indexes.FilterIndex {
@@ -103,7 +103,7 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 
 // DescribeCollectionView get a collectionView detail.
 // It returns the collectionView object to get collectionView parameters or operate document api
-func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, name string, option ...*DescribeCollectionViewOption) (*DescribeCollectionViewResult, error) {
+func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, name string) (*DescribeCollectionViewResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -125,7 +125,7 @@ func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, 
 }
 
 // DropCollectionView drop a collectionView. If collectionView not exist, it return nil.
-func (i *implementerCollectionView) DropCollectionView(ctx context.Context, name string, option ...*DropCollectionViewOption) (result *DropCollectionViewResult, err error) {
+func (i *implementerCollectionView) DropCollectionView(ctx context.Context, name string) (result *DropCollectionViewResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -146,7 +146,7 @@ func (i *implementerCollectionView) DropCollectionView(ctx context.Context, name
 	return
 }
 
-func (i *implementerCollectionView) TruncateCollectionView(ctx context.Context, name string, option ...*TruncateCollectionViewOption) (result *TruncateCollectionViewResult, err error) {
+func (i *implementerCollectionView) TruncateCollectionView(ctx context.Context, name string) (result *TruncateCollectionViewResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -167,7 +167,7 @@ func (i *implementerCollectionView) TruncateCollectionView(ctx context.Context, 
 
 // ListCollectionViews get collectionView list.
 // It return the list of collectionView, each collectionView is as same as DescribeCollectionView return.
-func (i *implementerCollectionView) ListCollectionViews(ctx context.Context, option ...*ListCollectionViewsOption) (*ListCollectionViewsResult, error) {
+func (i *implementerCollectionView) ListCollectionViews(ctx context.Context) (*ListCollectionViewsResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -190,7 +190,7 @@ func (i *implementerCollectionView) ListCollectionViews(ctx context.Context, opt
 func (i *implementerCollectionView) CollectionView(name string) *CollectionView {
 	coll := new(CollectionView)
 	coll.DatabaseName = i.database.DatabaseName
-	coll.CollectionName = name
+	coll.CollectionViewName = name
 
 	docImpl := new(implementerAIDocumentSet)
 	docImpl.SdkClient = i.SdkClient
@@ -204,7 +204,7 @@ func (i *implementerCollectionView) CollectionView(name string) *CollectionView 
 func (i *implementerCollectionView) toCollectionView(item *collection_view.DescribeCollectionViewItem) *CollectionView {
 	coll := new(CollectionView)
 	coll.DatabaseName = i.database.DatabaseName
-	coll.CollectionName = item.CollectionView
+	coll.CollectionViewName = item.CollectionView
 	coll.Description = item.Description
 	coll.Alias = item.Alias
 	coll.CreateTime, _ = time.Parse("2006-01-02 15:04:05", item.CreateTime)

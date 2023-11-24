@@ -40,8 +40,8 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	// cli, err = tcvectordb.NewClient("http://21.0.83.124:8100", "root", "r81OtTBXUIoJIp1AukZHkxvqRDTNixtIHPC5c9hT", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
-	cli, err = tcvectordb.NewClient("http://lb-3fuz86n6-e8g7tor5zvbql29p.clb.ap-guangzhou.tencentclb.com:60000", "root", "tko5oh7A8xXc4POf3piBXeXSYhBFH5eAtMgXTrDd", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewClient("http://21.0.83.124:8100", "root", "r81OtTBXUIoJIp1AukZHkxvqRDTNixtIHPC5c9hT", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	// cli, err = tcvectordb.NewClient("http://lb-3fuz86n6-e8g7tor5zvbql29p.clb.ap-guangzhou.tencentclb.com:60000", "root", "tko5oh7A8xXc4POf3piBXeXSYhBFH5eAtMgXTrDd", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
@@ -201,7 +201,7 @@ func TestUpsert(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
-	col := cli.Database(aiDatabase).Collection(aiCollectionName)
+	col := cli.Database(aiDatabase).Collection(CollectionViewName)
 	option := &tcvectordb.QueryDocumentOption{
 		// Filter: tcvectordb.NewFilter(tcvectordb.Include("tag", []string{"曹操", "刘备"})),
 		// OutputFields:   []string{"id", "bookName"},
@@ -209,7 +209,6 @@ func TestQuery(t *testing.T) {
 		Limit: 100,
 	}
 	// documentId := []string{"0001", "0002", "0003", "0004", "0005"}
-	col.Debug(true)
 	result, err := col.Query(ctx, nil, option)
 	printErr(err)
 	log.Printf("total doc: %d", result.Total)

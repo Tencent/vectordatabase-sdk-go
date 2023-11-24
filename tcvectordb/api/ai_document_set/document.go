@@ -81,16 +81,16 @@ func (d *QueryDocumentSet) UnmarshalJSON(data []byte) error {
 
 type SearchDocument struct {
 	Score       float64           `json:"score"`
-	Chunk       Chunk             `json:"chunk"`
+	Data        Data              `json:"data"`
 	DocumentSet SearchDocumentSet `json:"documentSet"`
 }
 
-type Chunk struct {
-	Text       string   `json:"text"`
-	StartPos   int      `json:"startPos"`
-	EndPos     int      `json:"endPos"`
-	PreChunks  []string `json:"preChunks"`
-	NextChunks []string `json:"nextChunks"`
+type Data struct {
+	Text     string   `json:"text"`
+	StartPos int      `json:"startPos"`
+	EndPos   int      `json:"endPos"`
+	Pre      []string `json:"pre"`
+	Next     []string `json:"next"`
 }
 
 type SearchDocumentSet struct {

@@ -18,12 +18,12 @@
 
 package tcvectordb
 
-type SetAIAliasOption struct{}
+type SetAIAliasParams struct{}
 type SetAIAliasResult struct {
 	AffectedCount int
 }
 
-type DeleteAIAliasOption struct{}
+type DeleteAIAliasParams struct{}
 type DeleteAIAliasResult struct {
 	AffectedCount int
 }

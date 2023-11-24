@@ -16,8 +16,8 @@ func printErr(err error) {
 
 func main() {
 	database := "go-sdk-demo-ai-db"
-	collectionName := "go-sdk-demo-ai-col"
-	collectionAlias := "go-sdk-demo-ai-alias"
+	collectionView := "go-sdk-demo-ai-col"
+	collectionViewAlias := "go-sdk-demo-ai-alias"
 
 	ctx := context.Background()
 	testVdb, err := example.NewAIDemo("vdb http url or ip and post", "vdb username", "key get from web console")
@@ -26,17 +26,17 @@ func main() {
 	printErr(err)
 	err = testVdb.CreateAIDatabase(ctx, database)
 	printErr(err)
-	err = testVdb.CreateCollectionView(ctx, database, collectionName)
+	err = testVdb.CreateCollectionView(ctx, database, collectionView)
 	printErr(err)
-	fileInfo, err := testVdb.UploadFile(ctx, database, collectionName, "../tcvdb.md")
+	loadFileRes, err := testVdb.LoadAndSplitText(ctx, database, collectionView, "../tcvdb.md")
 	printErr(err)
 	time.Sleep(time.Second * 30) // 等待后台解析文件完成
-	err = testVdb.GetFile(ctx, database, collectionName, fileInfo.FileName)
+	err = testVdb.GetFile(ctx, database, collectionView, loadFileRes.DocumentSetName)
 	printErr(err)
-	err = testVdb.QueryAndSearch(ctx, database, collectionName)
+	err = testVdb.QueryAndSearch(ctx, database, collectionView)
 	printErr(err)
-	err = testVdb.Alias(ctx, database, collectionName, collectionAlias)
+	err = testVdb.Alias(ctx, database, collectionView, collectionViewAlias)
 	printErr(err)
-	err = testVdb.DeleteAndDrop(ctx, database, collectionName, fileInfo.FileName)
+	err = testVdb.DeleteAndDrop(ctx, database, collectionView, loadFileRes.DocumentSetName)
 	printErr(err)
 }

@@ -25,55 +25,58 @@ import (
 )
 
 type AIDocumentSet struct {
+	AIDocumentSetChunkInterface
 	ai_document_set.QueryDocumentSet
 }
 
 type QueryAIDocumentSetParams struct {
-	Filter *Filter
-	Limit  int64
-	Offset int64
+	DocumentSetId   []string `json:"documentSetId"`
+	DocumentSetName []string `json:"documentSetName"`
+	Filter          *Filter  `json:"filter"`
+	Limit           int64    `json:"limit"`
+	Offset          int64    `json:"offset"`
 }
 
 type QueryAIDocumentSetResult struct {
-	Count     uint64
-	Documents []AIDocumentSet
+	Count     uint64          `json:"count"`
+	Documents []AIDocumentSet `json:"documents"`
 }
 
 type GetAIDocumentSetParams struct {
-	DocumentSetId   string
-	DocumentSetName string
+	DocumentSetId   string `json:"documentSetId"`
+	DocumentSetName string `json:"documentSetName"`
 }
 
 type GetAIDocumentSetResult struct {
 	Count        uint64
-	DocumentSets AIDocumentSet `json:"documentSet"`
+	DocumentSets AIDocumentSet `json:"documentSets"`
 }
 
 type SearchAIDocumentSetParams struct {
-	Content         string
-	DocumentSetName []string
-	ExpandChunk     []int                         // 搜索结果中，向前、向后补齐几个chunk的上下文
-	RerankOption    *ai_document_set.RerankOption // 多路召回
+	Content         string                        `json:"content"`
+	DocumentSetName []string                      `json:"documentSetName"`
+	ExpandChunk     []int                         `json:"expandChunk"`  // 搜索结果中，向前、向后补齐几个chunk的上下文
+	RerankOption    *ai_document_set.RerankOption `json:"rerankOption"` // 多路召回
 	// MergeChunk  bool
 	// Weights      SearchAIOptionWeight
-	Filter *Filter
-	Limit  int64
+	Filter *Filter `json:"filter"`
+	Limit  int64   `json:"limit"`
 }
 
 type SearchAIOptionWeight struct {
-	ChunkSimilarity float64 `json:"chunkSimilarity,omitempty"`
-	WordSimilarity  float64 `json:"wordSimilarity,omitempty"`
-	WordBm25        float64 `json:"wordBm25,omitempty"`
+	ChunkSimilarity float64 `json:"chunkSimilarity"`
+	WordSimilarity  float64 `json:"wordSimilarity"`
+	WordBm25        float64 `json:"wordBm25"`
 }
 
 type SearchAIDocumentSetResult struct {
-	Documents []ai_document_set.SearchDocument
+	Documents []ai_document_set.SearchDocument `json:"documents"`
 }
 
 type DeleteAIDocumentSetParams struct {
-	DocumentSetNames []string
-	DocumentSetIds   []string
-	Filter           *Filter
+	DocumentSetNames []string `json:"documentSetNames"`
+	DocumentSetIds   []string `json:"documentSetIds"`
+	Filter           *Filter  `json:"filter"`
 }
 
 type DeleteAIDocumentSetResult struct {
@@ -81,9 +84,9 @@ type DeleteAIDocumentSetResult struct {
 }
 
 type UpdateAIDocumentSetParams struct {
-	DocumentSetId   []string
-	DocumentSetName []string
-	Filter          *Filter
+	DocumentSetId   []string `json:"documentSetId"`
+	DocumentSetName []string `json:"documentSetName"`
+	Filter          *Filter  `json:"filter"`
 }
 
 type UpdateAIDocumentSetResult struct {
@@ -91,15 +94,15 @@ type UpdateAIDocumentSetResult struct {
 }
 
 type GetCosTmpSecretParams struct {
-	DocumentSetName string
+	DocumentSetName string `json:"documentSetName"`
 }
 
 type GetCosTmpSecretResult struct {
 	DocumentSetId           string `json:"documentSetId"`
 	DocumentSetName         string `json:"documentSetName"`
 	CosEndpoint             string `json:"cosEndpoint"`
-	CosRegion               string `json:"cosRegion,omitempty"`
-	CosBucket               string `json:"cosBucket,omitempty"`
+	CosRegion               string `json:"cosRegion"`
+	CosBucket               string `json:"cosBucket"`
 	UploadPath              string `json:"uploadPath"`
 	TmpSecretID             string `json:"tmpSecretId"`
 	TmpSecretKey            string `json:"tmpSecretKey"`
@@ -125,4 +128,10 @@ type LoadAndSplitTextResult struct {
 	TmpSecretKey            string `json:"tmpSecretKey"`
 	SessionToken            string `json:"sessionToken"`
 	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
+}
+
+type SearchAIDocumentSetSingleParams struct {
+	Content      string                        `json:"content"`
+	ExpandChunk  []int                         `json:"expandChunk"` // 搜索结果中，向前、向后补齐几个chunk的上下文
+	RerankOption *ai_document_set.RerankOption `json:"rerankOption"`
 }
