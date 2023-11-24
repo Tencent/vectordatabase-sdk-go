@@ -34,7 +34,11 @@ type AIAliasInterface interface {
 
 type implementerAIAlias struct {
 	SdkClient
-	database AIDatabase
+	database *AIDatabase
+}
+
+type SetAIAliasResult struct {
+	AffectedCount int
 }
 
 func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionView, aliasName string) (*SetAIAliasResult, error) {
@@ -54,6 +58,10 @@ func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionView, alias
 	}
 	result.AffectedCount = res.AffectedCount
 	return result, nil
+}
+
+type DeleteAIAliasResult struct {
+	AffectedCount int
 }
 
 func (i *implementerAIAlias) DeleteAlias(ctx context.Context, aliasName string) (*DeleteAIAliasResult, error) {

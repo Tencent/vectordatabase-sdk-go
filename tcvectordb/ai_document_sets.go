@@ -33,14 +33,14 @@ import (
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
-var _ AIDocumentSetInterface = &implementerAIDocumentSet{}
+var _ AIDocumentSetsInterface = &implementerAIDocumentSets{}
 
-type AIDocumentSetInterface interface {
+type AIDocumentSetsInterface interface {
 	SdkClient
 	Query(ctx context.Context, params QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error)
 	GetDocumentSetByName(ctx context.Context, documentSetName string) (*GetAIDocumentSetResult, error)
 	GetDocumentSetById(ctx context.Context, documentSetId string) (*GetAIDocumentSetResult, error)
-	Search(ctx context.Context, param SearchAIDocumentSetParams) (*SearchAIDocumentSetResult, error)
+	Search(ctx context.Context, param SearchAIDocumentSetsParams) (*SearchAIDocumentSetResult, error)
 	DeleteByIds(ctx context.Context, documentSetIds ...string) (result *DeleteAIDocumentSetResult, err error)
 	DeleteByNames(ctx context.Context, documentSetNames ...string) (result *DeleteAIDocumentSetResult, err error)
 	Delete(ctx context.Context, param DeleteAIDocumentSetParams) (*DeleteAIDocumentSetResult, error)
@@ -49,15 +49,35 @@ type AIDocumentSetInterface interface {
 	GetCosTmpSecret(ctx context.Context, param GetCosTmpSecretParams) (*GetCosTmpSecretResult, error)
 }
 
-type implementerAIDocumentSet struct {
+type AIDocumentSet struct {
+	AIDocumentSetInterface
+	ai_document_set.QueryDocumentSet
+	DatabaseName       string
+	CollectionViewName string
+}
+
+type implementerAIDocumentSets struct {
 	SdkClient
-	database       AIDatabase
-	collectionView CollectionView
+	database       *AIDatabase
+	collectionView *AICollectionView
+}
+
+type QueryAIDocumentSetParams struct {
+	DocumentSetId   []string `json:"documentSetId"`
+	DocumentSetName []string `json:"documentSetName"`
+	Filter          *Filter  `json:"filter"`
+	Limit           int64    `json:"limit"`
+	Offset          int64    `json:"offset"`
+}
+
+type QueryAIDocumentSetResult struct {
+	Count     uint64          `json:"count"`
+	Documents []AIDocumentSet `json:"documents"`
 }
 
 // Query query the ai_document_set by ai_document_set ids.
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
-func (i *implementerAIDocumentSet) Query(ctx context.Context, param QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error) {
+func (i *implementerAIDocumentSets) Query(ctx context.Context, param QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -84,15 +104,25 @@ func (i *implementerAIDocumentSet) Query(ctx context.Context, param QueryAIDocum
 	return result, nil
 }
 
-func (i *implementerAIDocumentSet) GetDocumentSetByName(ctx context.Context, documentSetName string) (*GetAIDocumentSetResult, error) {
+type GetAIDocumentSetParams struct {
+	DocumentSetId   string `json:"documentSetId"`
+	DocumentSetName string `json:"documentSetName"`
+}
+
+type GetAIDocumentSetResult struct {
+	AIDocumentSet `json:"documentSets"`
+	Count         uint64
+}
+
+func (i *implementerAIDocumentSets) GetDocumentSetByName(ctx context.Context, documentSetName string) (*GetAIDocumentSetResult, error) {
 	return i.get(ctx, GetAIDocumentSetParams{DocumentSetName: documentSetName})
 }
 
-func (i *implementerAIDocumentSet) GetDocumentSetById(ctx context.Context, documentSetId string) (*GetAIDocumentSetResult, error) {
+func (i *implementerAIDocumentSets) GetDocumentSetById(ctx context.Context, documentSetId string) (*GetAIDocumentSetResult, error) {
 	return i.get(ctx, GetAIDocumentSetParams{DocumentSetId: documentSetId})
 }
 
-func (i *implementerAIDocumentSet) get(ctx context.Context, param GetAIDocumentSetParams) (*GetAIDocumentSetResult, error) {
+func (i *implementerAIDocumentSets) get(ctx context.Context, param GetAIDocumentSetParams) (*GetAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -110,12 +140,27 @@ func (i *implementerAIDocumentSet) get(ctx context.Context, param GetAIDocumentS
 		return nil, err
 	}
 	result.Count = res.Count
-	result.DocumentSets = *i.toDocumentSet(res.DocumentSets)
+	result.AIDocumentSet = *i.toDocumentSet(res.DocumentSets)
 	return result, nil
 }
 
+type SearchAIDocumentSetsParams struct {
+	Content         string                        `json:"content"`
+	DocumentSetName []string                      `json:"documentSetName"`
+	ExpandChunk     []int                         `json:"expandChunk"`  // 搜索结果中，向前、向后补齐几个chunk的上下文
+	RerankOption    *ai_document_set.RerankOption `json:"rerankOption"` // 多路召回
+	// MergeChunk  bool
+	// Weights      SearchAIOptionWeight
+	Filter *Filter `json:"filter"`
+	Limit  int64   `json:"limit"`
+}
+
+type SearchAIDocumentSetResult struct {
+	Documents []ai_document_set.SearchDocument `json:"documents"`
+}
+
 // Search search ai_document_set topK by vector. The optional parameters filter will add the filter condition to search.
-func (i *implementerAIDocumentSet) Search(ctx context.Context, param SearchAIDocumentSetParams) (*SearchAIDocumentSetResult, error) {
+func (i *implementerAIDocumentSets) Search(ctx context.Context, param SearchAIDocumentSetsParams) (*SearchAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -157,16 +202,26 @@ func (i *implementerAIDocumentSet) Search(ctx context.Context, param SearchAIDoc
 	return result, nil
 }
 
-func (i *implementerAIDocumentSet) DeleteByIds(ctx context.Context, documentSetIds ...string) (result *DeleteAIDocumentSetResult, err error) {
+type DeleteAIDocumentSetParams struct {
+	DocumentSetNames []string `json:"documentSetNames"`
+	DocumentSetIds   []string `json:"documentSetIds"`
+	Filter           *Filter  `json:"filter"`
+}
+
+type DeleteAIDocumentSetResult struct {
+	AffectedCount uint64 `json:"affectedCount"`
+}
+
+func (i *implementerAIDocumentSets) DeleteByIds(ctx context.Context, documentSetIds ...string) (result *DeleteAIDocumentSetResult, err error) {
 	return i.Delete(ctx, DeleteAIDocumentSetParams{DocumentSetIds: documentSetIds})
 }
 
-func (i *implementerAIDocumentSet) DeleteByNames(ctx context.Context, documentSetNames ...string) (result *DeleteAIDocumentSetResult, err error) {
+func (i *implementerAIDocumentSets) DeleteByNames(ctx context.Context, documentSetNames ...string) (result *DeleteAIDocumentSetResult, err error) {
 	return i.Delete(ctx, DeleteAIDocumentSetParams{DocumentSetNames: documentSetNames})
 }
 
 // Delete delete documentSet by documentSetId or documentSetName ids
-func (i *implementerAIDocumentSet) Delete(ctx context.Context, param DeleteAIDocumentSetParams) (result *DeleteAIDocumentSetResult, err error) {
+func (i *implementerAIDocumentSets) Delete(ctx context.Context, param DeleteAIDocumentSetParams) (result *DeleteAIDocumentSetResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -190,7 +245,17 @@ func (i *implementerAIDocumentSet) Delete(ctx context.Context, param DeleteAIDoc
 	return
 }
 
-func (i *implementerAIDocumentSet) Update(ctx context.Context, updateFields map[string]interface{}, param UpdateAIDocumentSetParams) (*UpdateAIDocumentSetResult, error) {
+type UpdateAIDocumentSetParams struct {
+	DocumentSetId   []string `json:"documentSetId"`
+	DocumentSetName []string `json:"documentSetName"`
+	Filter          *Filter  `json:"filter"`
+}
+
+type UpdateAIDocumentSetResult struct {
+	AffectedCount uint64 `json:"affectedCount"`
+}
+
+func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map[string]interface{}, param UpdateAIDocumentSetParams) (*UpdateAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -216,7 +281,24 @@ func (i *implementerAIDocumentSet) Update(ctx context.Context, updateFields map[
 	return result, nil
 }
 
-func (i *implementerAIDocumentSet) GetCosTmpSecret(ctx context.Context, param GetCosTmpSecretParams) (*GetCosTmpSecretResult, error) {
+type GetCosTmpSecretParams struct {
+	DocumentSetName string `json:"documentSetName"`
+}
+
+type GetCosTmpSecretResult struct {
+	DocumentSetId           string `json:"documentSetId"`
+	DocumentSetName         string `json:"documentSetName"`
+	CosEndpoint             string `json:"cosEndpoint"`
+	CosRegion               string `json:"cosRegion"`
+	CosBucket               string `json:"cosBucket"`
+	UploadPath              string `json:"uploadPath"`
+	TmpSecretID             string `json:"tmpSecretId"`
+	TmpSecretKey            string `json:"tmpSecretKey"`
+	SessionToken            string `json:"token"`
+	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
+}
+
+func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param GetCosTmpSecretParams) (*GetCosTmpSecretResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -251,16 +333,27 @@ func (i *implementerAIDocumentSet) GetCosTmpSecret(ctx context.Context, param Ge
 	return result, nil
 }
 
-func (i *implementerAIDocumentSet) LoadAndSplitText(ctx context.Context, param LoadAndSplitTextParams) (result *LoadAndSplitTextResult, err error) {
+type LoadAndSplitTextParams struct {
+	DocumentSetName string
+	Reader          io.Reader
+	LocalFilePath   string
+	MetaData        map[string]Field
+}
+
+type LoadAndSplitTextResult struct {
+	GetCosTmpSecretResult
+}
+
+func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param LoadAndSplitTextParams) (result *LoadAndSplitTextResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
 
-	size, err := i.loadAndSplitTextCheckParams(&param)
+	size, reader, err := i.loadAndSplitTextCheckParams(&param)
 	if err != nil {
 		return nil, err
 	}
-
+	defer reader.Close()
 	res, err := i.GetCosTmpSecret(ctx, GetCosTmpSecretParams{
 		DocumentSetName: param.DocumentSetName,
 	})
@@ -299,97 +392,68 @@ func (i *implementerAIDocumentSet) LoadAndSplitText(ctx context.Context, param L
 
 	opt := &cos.ObjectPutOptions{
 		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
-			XCosMetaXXX: &header,
+			ContentLength: size,
+			XCosMetaXXX:   &header,
 		},
 	}
 
-	_, err = c.Object.PutFromFile(ctx, res.UploadPath, param.LocalFilePath, opt)
+	_, err = c.Object.Put(ctx, res.UploadPath, reader, opt)
 	if err != nil {
 		return nil, err
 	}
 	result = new(LoadAndSplitTextResult)
-	result.DocumentSetId = res.DocumentSetId
-	result.DocumentSetName = res.DocumentSetName
-	result.CosEndpoint = res.CosEndpoint
-	result.CosRegion = res.CosRegion
-	result.CosBucket = res.CosBucket
-	result.UploadPath = res.UploadPath
-	result.TmpSecretID = res.TmpSecretID
-	result.TmpSecretKey = res.TmpSecretKey
-	result.SessionToken = res.SessionToken
-	result.MaxSupportContentLength = res.MaxSupportContentLength
+	result.GetCosTmpSecretResult = *res
 	return result, nil
 }
 
-func (i *implementerAIDocumentSet) loadAndSplitTextCheckParams(param *LoadAndSplitTextParams) (size int64, err error) {
+func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSplitTextParams) (size int64, reader io.ReadCloser, err error) {
 	if param.DocumentSetName == "" {
 		if param.LocalFilePath == "" {
-			return 0, errors.New("need param: DocumentSetName")
+			return 0, nil, errors.New("need param: DocumentSetName")
 		}
 		param.DocumentSetName = filepath.Base(param.LocalFilePath)
 	}
 	if param.LocalFilePath != "" {
-		fileInfo, err := os.Stat(param.LocalFilePath)
-		if err != nil {
-			return 0, err
-		}
-		size = fileInfo.Size()
-
 		fd, err := os.Open(param.LocalFilePath)
 		if err != nil {
-			return 0, err
+			return 0, nil, err
 		}
-		param.Reader = fd
+		reader = fd
+		fstat, err := fd.Stat()
+		if err != nil {
+			return 0, nil, err
+		}
+		size = fstat.Size()
 	} else {
 		bytesBuf := bytes.NewBuffer(nil)
 		written, err := io.Copy(bytesBuf, param.Reader)
 		if err != nil {
-			return 0, err
+			return 0, nil, err
 		}
+
 		size = written
-		param.Reader = io.NopCloser(bytesBuf)
-	}
-	if size == 0 {
-		return 0, errors.New("file size cannot be 0")
+		reader = io.NopCloser(bytesBuf)
 	}
 
-	return size, nil
+	if size == 0 {
+		return 0, nil, errors.New("file size cannot be 0")
+	}
+
+	return size, reader, nil
 }
 
-func (i *implementerAIDocumentSet) toDocumentSet(item ai_document_set.QueryDocumentSet) *AIDocumentSet {
+func (i *implementerAIDocumentSets) toDocumentSet(item ai_document_set.QueryDocumentSet) *AIDocumentSet {
 	documentSet := new(AIDocumentSet)
 	documentSet.QueryDocumentSet = item
+	documentSet.DatabaseName = i.database.DatabaseName
+	documentSet.CollectionViewName = i.collectionView.CollectionViewName
 
-	docSetImpl := new(implementerAIDocumentSetChunk)
+	docSetImpl := new(implementerAIDocumentSet)
+	docSetImpl.SdkClient = i.SdkClient
 	docSetImpl.database = i.database
 	docSetImpl.collectionView = i.collectionView
-	docSetImpl.documentSet = *documentSet
+	docSetImpl.documentSet = documentSet
 
-	documentSet.AIDocumentSetChunkInterface = docSetImpl
+	documentSet.AIDocumentSetInterface = docSetImpl
 	return documentSet
-}
-
-type AIDocumentSetChunkInterface interface {
-	Search(ctx context.Context, param SearchAIDocumentSetSingleParams) (*SearchAIDocumentSetResult, error)
-	Delete(ctx context.Context) (*DeleteAIDocumentSetResult, error)
-}
-
-type implementerAIDocumentSetChunk struct {
-	SdkClient
-	database       AIDatabase
-	collectionView CollectionView
-	documentSet    AIDocumentSet
-}
-
-func (i *implementerAIDocumentSetChunk) Search(ctx context.Context, param SearchAIDocumentSetSingleParams) (*SearchAIDocumentSetResult, error) {
-	return i.collectionView.Search(ctx, SearchAIDocumentSetParams{
-		Content:         param.Content,
-		DocumentSetName: []string{i.documentSet.DocumentSetName},
-		ExpandChunk:     param.ExpandChunk,
-		RerankOption:    param.RerankOption,
-	})
-}
-
-func (i *implementerAIDocumentSetChunk) Delete(ctx context.Context) (*DeleteAIDocumentSetResult, error) {
-	return i.collectionView.DeleteByIds(ctx, i.documentSet.DocumentSetId)
 }

@@ -1,4 +1,4 @@
-package example
+package main
 
 import (
 	"context"
@@ -102,7 +102,7 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 	// 创建collection耗时较长，需要调整客户端的timeout
 	// 这里以三可用区实例作为参考，具体实例不同的规格所支持的shard和replicas区间不同，需要参考官方文档
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollection(ctx, collection, 3, 2, "test collection", index)
+	_, err = db.CreateCollection(ctx, collection, 3, 0, "test collection", index)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 
 	log.Println("---------------------------- DeleteAlias ---------------------------")
 	// 删除 Collection 的 alias
-	delAliasRes, err := db.DeleteAlias(ctx, alias, nil)
+	delAliasRes, err := db.DeleteAlias(ctx, alias)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	outputField := []string{"id", "bookName"}
 
-	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentOption{
+	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
 		Filter:         filter,
 		RetrieveVector: true,
 		OutputFields:   outputField,
@@ -249,7 +249,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
 
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
-	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &tcvectordb.SearchDocumentOption{
+	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &tcvectordb.SearchDocumentParams{
 		Filter: filter,
 		Params: &tcvectordb.SearchDocParams{Ef: 200},
 		Limit:  2,
@@ -272,7 +272,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	// 批量相似性查询，根据指定的多个向量查找多个 Top K 个相似性结果
 	searchResult, err = coll.Search(ctx,
 		[][]float32{{0.3123, 0.43, 0.213}, {0.233, 0.12, 0.97}}, //指定检索向量，最多指定20个
-		&tcvectordb.SearchDocumentOption{
+		&tcvectordb.SearchDocumentParams{
 			Params:         &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 			RetrieveVector: false,                                // 是否需要返回向量字段，False：不返回，True：返回
 			Limit:          10,                                   // 指定 Top K 的 K 值
@@ -305,7 +305,7 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 	updateField := map[string]tcvectordb.Field{
 		"page": {Val: 24},
 	}
-	result, err := coll.Update(ctx, &tcvectordb.UpdateDocumentOption{
+	result, err := coll.Update(ctx, tcvectordb.UpdateDocumentParams{
 		QueryIds:     documentId,
 		QueryFilter:  filter,
 		UpdateFields: updateField,
@@ -322,7 +322,7 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 
 	// filter 限制只会删除 id="0001" 成功
 	filter = tcvectordb.NewFilter(`bookName="西游记"`)
-	delResult, err := coll.Delete(ctx, &tcvectordb.DeleteDocumentOption{
+	delResult, err := coll.Delete(ctx, tcvectordb.DeleteDocumentParams{
 		Filter:      filter,
 		DocumentIds: documentId,
 	})
@@ -350,4 +350,33 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 	}
 	log.Printf("TruncateResult: %+v", truncateRes)
 	return nil
+}
+
+func printErr(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func main() {
+	database := "go-sdk-demo-db"
+	collectionName := "go-sdk-demo-col"
+	collectionAlias := "go-sdk-demo-alias"
+
+	ctx := context.Background()
+	testVdb, err := NewDemo("vdb http url or ip and post", "vdb username", "key get from web console")
+	// testVdb := NewDemo("http://127.0.0.1:80", "root","vdb-key")
+	printErr(err)
+	err = testVdb.Clear(ctx, database)
+	printErr(err)
+	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)
+	printErr(err)
+	err = testVdb.UpsertData(ctx, database, collectionName)
+	printErr(err)
+	err = testVdb.QueryData(ctx, database, collectionName)
+	printErr(err)
+	err = testVdb.UpdateAndDelete(ctx, database, collectionName)
+	printErr(err)
+	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
+	printErr(err)
 }

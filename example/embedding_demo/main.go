@@ -1,4 +1,4 @@
-package example
+package main
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 type EmbeddingDemo struct {
-	Demo
+	client *tcvectordb.Client
 }
 
 func NewEmbeddingDemo(url, username, key string) (*EmbeddingDemo, error) {
@@ -19,7 +19,36 @@ func NewEmbeddingDemo(url, username, key string) (*EmbeddingDemo, error) {
 	}
 	// disable/enable http request log print
 	// cli.Debug(false)
-	return &EmbeddingDemo{Demo: Demo{client: cli}}, nil
+	return &EmbeddingDemo{client: cli}, nil
+}
+
+func (d *EmbeddingDemo) Clear(ctx context.Context, database string) error {
+	log.Println("--------------------------- DropDatabase ---------------------------")
+	result, err := d.client.DropDatabase(ctx, database)
+	if err != nil {
+		return err
+	}
+	log.Printf("drop database result: %+v", result)
+	return nil
+}
+
+func (d *EmbeddingDemo) DeleteAndDrop(ctx context.Context, database, collection string) error {
+	// 删除collection，删除collection的同时，其中的数据也将被全部删除
+	log.Println("-------------------------- DropCollection --------------------------")
+	colDropResult, err := d.client.Database(database).DropCollection(ctx, collection)
+	if err != nil {
+		return err
+	}
+	log.Printf("drop collection result: %+v", colDropResult)
+
+	log.Println("--------------------------- DropDatabase ---------------------------")
+	// 删除db，db下的所有collection都将被删除
+	dbDropResult, err := d.client.DropDatabase(ctx, database)
+	if err != nil {
+		return err
+	}
+	log.Printf("drop database result: %+v", dbDropResult)
+	return nil
 }
 
 func (d *EmbeddingDemo) CreateDBAndCollection(ctx context.Context, database, collection, alias string) error {
@@ -81,7 +110,7 @@ func (d *EmbeddingDemo) CreateDBAndCollection(ctx context.Context, database, col
 	// 第二步：创建 Collection
 	// 创建支持 Embedding 的 Collection
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollection(ctx, collection, 3, 2, "test collection", index, &tcvectordb.CreateCollectionOption{
+	_, err = db.CreateCollection(ctx, collection, 3, 0, "test collection", index, &tcvectordb.CreateCollectionParams{
 		Embedding: ebd,
 	})
 	if err != nil {
@@ -115,7 +144,7 @@ func (d *EmbeddingDemo) CreateDBAndCollection(ctx context.Context, database, col
 
 	log.Println("---------------------------- DeleteAlias ---------------------------")
 	// 删除 Collection 的 alias
-	delAliasRes, err := db.DeleteAlias(ctx, alias, nil)
+	delAliasRes, err := db.DeleteAlias(ctx, alias)
 	if err != nil {
 		return err
 	}
@@ -206,7 +235,7 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	outputField := []string{"id", "bookName"}
 
-	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentOption{
+	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
 		Filter:         filter,
 		RetrieveVector: true,
 		OutputFields:   outputField,
@@ -230,7 +259,7 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
 
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
-	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &tcvectordb.SearchDocumentOption{
+	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &tcvectordb.SearchDocumentParams{
 		Filter: filter,
 		Params: &tcvectordb.SearchDocParams{Ef: 200},
 		Limit:  2,
@@ -252,7 +281,7 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 
 	// searchByText 返回类型为 Dict，接口查询过程中 embedding 可能会出现截断，如发生截断将会返回响应 warn 信息，如需确认是否截断可以
 	// 使用 "warning" 作为 key 从 Dict 结果中获取警告信息，查询结果可以通过 "documents" 作为 key 从 Dict 结果中获取
-	searchResult, err = coll.SearchByText(ctx, map[string][]string{"text": {"细作探知这个消息，飞报吕布。"}}, &tcvectordb.SearchDocumentOption{
+	searchResult, err = coll.SearchByText(ctx, map[string][]string{"text": {"细作探知这个消息，飞报吕布。"}}, &tcvectordb.SearchDocumentParams{
 		Params: &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 		Limit:  2,                                    // 指定 Top K 的 K 值
 	})
@@ -267,4 +296,94 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 		}
 	}
 	return nil
+}
+
+func (d *EmbeddingDemo) UpdateAndDelete(ctx context.Context, database, collection string) error {
+	// 获取 Collection 对象
+	db := d.client.Database(database)
+	coll := db.Collection(collection)
+
+	log.Println("------------------------------ Update ------------------------------")
+	// update
+	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
+
+	// filter 限制仅会更新 id = "0003"
+	documentId := []string{"0001", "0003"}
+	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
+	updateField := map[string]tcvectordb.Field{
+		"page": {Val: 24},
+	}
+	result, err := coll.Update(ctx, tcvectordb.UpdateDocumentParams{
+		QueryIds:     documentId,
+		QueryFilter:  filter,
+		UpdateFields: updateField,
+	})
+	if err != nil {
+		return err
+	}
+	log.Printf("UpdateResult: %+v", result)
+
+	log.Println("------------------------------ Delete ------------------------------")
+	// delete
+	// 1. delete 提供基于 [主键查询] 和 [Filter 过滤] 的数据删除能力
+	// 2. 删除功能会受限于 collection 的索引类型，部分索引类型不支持删除操作
+
+	// filter 限制只会删除 id="0001" 成功
+	filter = tcvectordb.NewFilter(`bookName="西游记"`)
+	delResult, err := coll.Delete(ctx, tcvectordb.DeleteDocumentParams{
+		Filter:      filter,
+		DocumentIds: documentId,
+	})
+	if err != nil {
+		return err
+	}
+	log.Printf("DeleteResult: %+v", delResult)
+
+	log.Println("--------------------------- RebuildIndex ---------------------------")
+	// rebuild_index
+	// 索引重建，重建期间不支持写入
+	indexRebuildRes, err := coll.RebuildIndex(ctx)
+	if err != nil {
+		return err
+	}
+	log.Printf("%+v", indexRebuildRes)
+
+	log.Println("------------------------ TruncateCollection ------------------------")
+	// truncate_collection
+	// 清空 Collection
+	time.Sleep(time.Second * 5)
+	truncateRes, err := db.TruncateCollection(ctx, collection)
+	if err != nil {
+		return err
+	}
+	log.Printf("TruncateResult: %+v", truncateRes)
+	return nil
+}
+
+func printErr(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func main() {
+	database := "go-sdk-demo-db"
+	collectionName := "go-sdk-demo-em-col"
+	collectionAlias := "go-sdk-demo-em-alias"
+
+	ctx := context.Background()
+	testVdb, err := NewEmbeddingDemo("vdb http url or ip and post", "vdb username", "key get from web console")
+	printErr(err)
+	err = testVdb.Clear(ctx, database)
+	printErr(err)
+	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)
+	printErr(err)
+	err = testVdb.UpsertData(ctx, database, collectionName)
+	printErr(err)
+	err = testVdb.QueryData(ctx, database, collectionName)
+	printErr(err)
+	err = testVdb.UpdateAndDelete(ctx, database, collectionName)
+	printErr(err)
+	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
+	printErr(err)
 }

@@ -20,16 +20,34 @@ package tcvectordb
 
 import (
 	"encoding/json"
-	"time"
 )
 
-type RebuildIndexResult struct {
-	TaskIds []string
+type Indexes struct {
+	VectorIndex []VectorIndex
+	FilterIndex []FilterIndex
 }
 
-type RebuildIndexOption struct {
-	DropBeforeRebuild bool
-	Throttle          int
+type FilterIndex struct {
+	FieldName string
+	FieldType FieldType
+	ElemType  FieldType
+	IndexType IndexType
+}
+
+func (i *FilterIndex) IsPrimaryKey() bool {
+	return i.IndexType == PRIMARY
+}
+
+func (i *FilterIndex) IsVectorField() bool {
+	return i.FieldType == Vector
+}
+
+type VectorIndex struct {
+	FilterIndex
+	Dimension    uint32
+	MetricType   MetricType
+	IndexedCount uint64
+	Params       IndexParams
 }
 
 type IndexParams interface {
@@ -90,44 +108,4 @@ func (p *IVFPQParams) MarshalJson() ([]byte, error) {
 
 func (p *IVFPQParams) Name() string {
 	return string(IVF_PQ)
-}
-
-type FilterIndex struct {
-	FieldName string
-	FieldType FieldType
-	ElemType  FieldType
-	IndexType IndexType
-}
-
-func (i *FilterIndex) IsPrimaryKey() bool {
-	return i.IndexType == PRIMARY
-}
-
-func (i *FilterIndex) IsVectorField() bool {
-	return i.FieldType == Vector
-}
-
-type VectorIndex struct {
-	FilterIndex
-	Dimension    uint32
-	MetricType   MetricType
-	IndexedCount uint64
-	Params       IndexParams
-}
-
-type Indexes struct {
-	VectorIndex []VectorIndex
-	FilterIndex []FilterIndex
-}
-
-type IndexStatus struct {
-	Status    string
-	StartTime time.Time
-}
-
-type Embedding struct {
-	Field       string         `json:"field,omitempty"`
-	VectorField string         `json:"vectorField,omitempty"`
-	Model       EmbeddingModel `json:"model,omitempty"`
-	Enabled     bool           `json:"enabled,omitempty"` // 返回数据
 }

@@ -19,51 +19,53 @@
 package tcvectordb
 
 import (
-	"time"
+	"context"
+
+	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/index"
 )
 
-// Database wrap the database parameters and collection interface to operating the collection api
-type Database struct {
-	CollectionInterface `json:"-"`
-	AliasInterface      `json:"-"`
-	IndexInterface      `json:"-"`
-	DatabaseName        string
-	Info                DatabaseItem
+var _ IndexInterface = &implementerIndex{}
+
+type IndexInterface interface {
+	SdkClient
+	RebuildIndex(ctx context.Context, params ...*RebuildIndexParams) (result *RebuildIndexResult, err error)
 }
 
-func (d Database) IsAIDatabase() bool {
-	return d.Info.DbType == AIDOCDbType || d.Info.DbType == DbTypeAI
+type implementerIndex struct {
+	SdkClient
+	database   *Database
+	collection *Collection
 }
 
-type DatabaseItem struct {
-	CreateTime string `json:"createTime,omitempty"`
-	DbType     string `json:"dbType,omitempty"`
+type RebuildIndexParams struct {
+	DropBeforeRebuild bool
+	Throttle          int
 }
 
-func (d *Database) Debug(v bool) {
-	d.CollectionInterface.Debug(v)
+type RebuildIndexResult struct {
+	TaskIds []string
 }
 
-func (d *Database) WithTimeout(t time.Duration) {
-	d.CollectionInterface.WithTimeout(t)
-}
+func (i *implementerIndex) RebuildIndex(ctx context.Context, params ...*RebuildIndexParams) (*RebuildIndexResult, error) {
+	if i.database.IsAIDatabase() {
+		return nil, AIDbTypeError
+	}
+	req := new(index.RebuildReq)
+	req.Database = i.database.DatabaseName
+	req.Collection = i.collection.CollectionName
 
-type CreateDatabaseOption struct{}
+	if len(params) != 0 && params[0] != nil {
+		param := params[0]
+		req.DropBeforeRebuild = param.DropBeforeRebuild
+		req.Throttle = int32(param.Throttle)
+	}
 
-type CreateDatabaseResult struct {
-	Database
-	AffectedCount int
-}
-
-type DropDatabaseOption struct{}
-
-type DropDatabaseResult struct {
-	AffectedCount int
-}
-
-type ListDatabaseOption struct{}
-
-type ListDatabaseResult struct {
-	Databases   []Database
-	AIDatabases []AIDatabase
+	res := new(index.RebuildRes)
+	err := i.Request(ctx, req, &res)
+	if err != nil {
+		return nil, err
+	}
+	result := new(RebuildIndexResult)
+	result.TaskIds = res.TaskIds
+	return result, nil
 }
