@@ -192,12 +192,12 @@ func (i *implementerCollectionView) CollectionView(name string) *CollectionView 
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionName = name
 
-	docImpl := new(implementerAIDocument)
+	docImpl := new(implementerAIDocumentSet)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.database = i.database
-	docImpl.collection = *coll
+	docImpl.collectionView = *coll
 
-	coll.AIDocumentInterface = docImpl
+	coll.AIDocumentSetInterface = docImpl
 	return coll
 }
 
@@ -236,10 +236,10 @@ func (i *implementerCollectionView) toCollectionView(item *collection_view.Descr
 		coll.FilterIndexes = append(coll.FilterIndexes, filter)
 	}
 
-	docImpl := new(implementerAIDocument)
+	docImpl := new(implementerAIDocumentSet)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.database = i.database
-	docImpl.collection = *coll
-	coll.AIDocumentInterface = docImpl
+	docImpl.collectionView = *coll
+	coll.AIDocumentSetInterface = docImpl
 	return coll
 }

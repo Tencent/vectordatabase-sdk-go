@@ -26,7 +26,7 @@ import (
 
 // CollectionView wrap the collectionView parameters and document interface to operating the document api
 type CollectionView struct {
-	AIDocumentInterface
+	AIDocumentSetInterface
 	DatabaseName          string
 	CollectionName        string
 	Alias                 []string

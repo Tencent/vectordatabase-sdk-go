@@ -52,7 +52,7 @@ type AIDocumentSetInterface interface {
 type implementerAIDocumentSet struct {
 	SdkClient
 	database       AIDatabase
-	collectionView AICollection
+	collectionView CollectionView
 }
 
 // Query query the ai_document_set by ai_document_set ids.

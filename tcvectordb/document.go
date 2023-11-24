@@ -26,6 +26,18 @@ import (
 
 var _ DocumentInterface = &implementerDocument{}
 
+// DocumentInterface document api
+type DocumentInterface interface {
+	SdkClient
+	Upsert(ctx context.Context, documents []Document, options ...*UpsertDocumentOption) (result *UpsertDocumentResult, err error)
+	Query(ctx context.Context, documentIds []string, options ...*QueryDocumentOption) (result *QueryDocumentResult, err error)
+	Search(ctx context.Context, vectors [][]float32, options ...*SearchDocumentOption) (result *SearchDocumentResult, err error)
+	SearchById(ctx context.Context, documentIds []string, options ...*SearchDocumentOption) (*SearchDocumentResult, error)
+	SearchByText(ctx context.Context, text map[string][]string, options ...*SearchDocumentOption) (*SearchDocumentResult, error)
+	Delete(ctx context.Context, options ...*DeleteDocumentOption) (result *DeleteDocumentResult, err error)
+	Update(ctx context.Context, options ...*UpdateDocumentOption) (*UpdateDocumentResult, error)
+}
+
 type implementerDocument struct {
 	SdkClient
 	database   Database

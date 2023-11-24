@@ -26,6 +26,11 @@ import (
 
 var _ IndexInterface = &implementerIndex{}
 
+type IndexInterface interface {
+	SdkClient
+	RebuildIndex(ctx context.Context, options ...*RebuildIndexOption) (result *RebuildIndexResult, err error)
+}
+
 type implementerIndex struct {
 	SdkClient
 	database   Database

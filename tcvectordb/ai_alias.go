@@ -26,6 +26,12 @@ import (
 
 var _ AIAliasInterface = &implementerAIAlias{}
 
+type AIAliasInterface interface {
+	SdkClient
+	SetAlias(ctx context.Context, collectionName, aliasName string, options ...*SetAIAliasOption) (result *SetAIAliasResult, err error)
+	DeleteAlias(ctx context.Context, aliasName string, options ...*DeleteAIAliasOption) (result *DeleteAIAliasResult, err error)
+}
+
 type implementerAIAlias struct {
 	SdkClient
 	database AIDatabase

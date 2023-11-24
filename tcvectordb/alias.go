@@ -26,6 +26,12 @@ import (
 
 var _ AliasInterface = &implementerAlias{}
 
+type AliasInterface interface {
+	SdkClient
+	SetAlias(ctx context.Context, collectionName, aliasName string, options ...*SetAliasOption) (result *SetAliasResult, err error)
+	DeleteAlias(ctx context.Context, aliasName string, options ...*DeleteAliasOption) (result *DeleteAliasResult, err error)
+}
+
 type implementerAlias struct {
 	SdkClient
 	database Database
