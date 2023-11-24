@@ -1,4 +1,4 @@
-package ai_document
+package ai_document_set
 
 import (
 	"encoding/json"
@@ -7,28 +7,26 @@ import (
 )
 
 // Document document struct for document api
-type QueryDocument struct {
-	Id           string                 `json:"id"`
-	FileName     string                 `json:"_file_name"`
-	TextPrefix   string                 `json:"_text_prefix"`
-	FileInfo     map[string]interface{} `json:"_file_info"`
-	ScalarFields map[string]interface{} `json:"-"`
+type QueryDocumentSet struct {
+	DocumentSetId   string                 `json:"documentSetId"`
+	DocumentSetName string                 `json:"documentSetName"`
+	Text            string                 `json:"text"`
+	TextPrefix      string                 `json:"textPrefix"`
+	DocumentSetInfo DocumentSetInfo        `json:"documentSetInfo"`
+	ScalarFields    map[string]interface{} `json:"-"`
 }
 
-// Deprecated
-type QueryDocumentFileInfo struct {
-	FileSize       uint64 `json:"_file_size"`
-	CreateTime     string `json:"_create_time"`
-	FileKeywords   string `json:"_file_keywords"`
-	FileType       string `json:"_file_type"`
-	Indexed        uint64 `json:"_indexed"`
-	IndexedStatus  uint64 `json:"_indexed_status"`
-	LastUpdateTime int64  `json:"_last_update_time"`
-	TextLength     uint64 `json:"_text_length"`
+type DocumentSetInfo struct {
+	TextLength      uint64 `json:"textLength"`
+	ByteLength      uint64 `json:"byteLength"`
+	IndexedProgress uint64 `json:"indexedProgress"`
+	IndexedStatus   string `json:"indexedStatus"` // Ready | New | Loading | Failure
+	CreateTime      string `json:"createTime"`
+	LastUpdateTime  string `json:"lastUpdateTime"`
 }
 
-func (d QueryDocument) MarshalJSON() ([]byte, error) {
-	type Alias QueryDocument
+func (d QueryDocumentSet) MarshalJSON() ([]byte, error) {
+	type Alias QueryDocumentSet
 	res, err := json.Marshal(&struct {
 		*Alias
 	}{
@@ -56,8 +54,8 @@ func (d QueryDocument) MarshalJSON() ([]byte, error) {
 	return res, nil
 }
 
-func (d *QueryDocument) UnmarshalJSON(data []byte) error {
-	type Alias QueryDocument
+func (d *QueryDocumentSet) UnmarshalJSON(data []byte) error {
+	type Alias QueryDocumentSet
 	var temp Alias
 	err := json.Unmarshal(data, &temp)
 	if err != nil {
@@ -77,33 +75,32 @@ func (d *QueryDocument) UnmarshalJSON(data []byte) error {
 		delete(temp.ScalarFields, tags[0])
 	}
 
-	*d = QueryDocument(temp)
+	*d = QueryDocumentSet(temp)
 	return nil
 }
 
 type SearchDocument struct {
-	Score      float64
-	Chunk      Chunk
-	SourceFile SourceFile
+	Score       float64           `json:"score"`
+	Data        Data              `json:"data"`
+	DocumentSet SearchDocumentSet `json:"documentSet"`
 }
 
-type Chunk struct {
-	Text       string   `json:"text"`
-	StartPos   int      `json:"startPos"`
-	EndPos     int      `json:"endPos"`
-	PreChunks  []string `json:"preChunks"`
-	NextChunks []string `json:"nextChunks"`
+type Data struct {
+	Text     string   `json:"text"`
+	StartPos int      `json:"startPos"`
+	EndPos   int      `json:"endPos"`
+	Pre      []string `json:"pre"`
+	Next     []string `json:"next"`
 }
 
-type SourceFile struct {
-	Id           string                 `json:"id"`
-	FileName     string                 `json:"_file_name"`
-	FileInfo     map[string]interface{} `json:"_file_info"`
-	ScalarFields map[string]interface{} `json:"-"`
+type SearchDocumentSet struct {
+	DocumentSetId   string                 `json:"documentSetId"`
+	DocumentSetName string                 `json:"documentSetName"`
+	ScalarFields    map[string]interface{} `json:"-"`
 }
 
-func (s SourceFile) MarshalJSON() ([]byte, error) {
-	type Alias SourceFile
+func (s SearchDocumentSet) MarshalJSON() ([]byte, error) {
+	type Alias SearchDocumentSet
 	res, err := json.Marshal(&struct {
 		*Alias
 	}{
@@ -131,8 +128,8 @@ func (s SourceFile) MarshalJSON() ([]byte, error) {
 	return res, nil
 }
 
-func (s *SourceFile) UnmarshalJSON(data []byte) error {
-	type Alias SourceFile
+func (s *SearchDocumentSet) UnmarshalJSON(data []byte) error {
+	type Alias SearchDocumentSet
 	var temp Alias
 	err := json.Unmarshal(data, &temp)
 	if err != nil {
@@ -152,6 +149,6 @@ func (s *SourceFile) UnmarshalJSON(data []byte) error {
 		delete(temp.ScalarFields, tags[0])
 	}
 
-	*s = SourceFile(temp)
+	*s = SearchDocumentSet(temp)
 	return nil
 }

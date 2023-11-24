@@ -16,38 +16,36 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package ai_document
+package ai_document_set
 
 import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
 
 // QueryReq query document request
 type QueryReq struct {
-	api.Meta   `path:"/ai/document/query" tags:"Document" method:"Post"`
-	Database   string     `json:"database"`
-	Collection string     `json:"collection"`
-	Query      *QueryCond `json:"query"`
+	api.Meta       `path:"/ai/documentSet/query" tags:"Document" method:"Post"`
+	Database       string     `json:"database"`
+	CollectionView string     `json:"collectionView"`
+	Query          *QueryCond `json:"query"`
 }
 
 type QueryCond struct {
-	DocumentIds  []string `json:"documentIds,omitempty"`
-	Filter       string   `json:"filter,omitempty"`
-	Limit        int64    `json:"limit,omitempty"`
-	Offset       int64    `json:"offset,omitempty"`
-	OutputFields []string `json:"outputFields,omitempty"`
+	Filter string `json:"filter,omitempty"`
+	Limit  int64  `json:"limit,omitempty"`
+	Offset int64  `json:"offset,omitempty"`
 }
 
 // QueryRes query document response
 type QueryRes struct {
 	api.CommonRes
-	Count     uint64          `json:"count"`
-	Documents []QueryDocument `json:"documents"`
+	Count        uint64             `json:"count"`
+	DocumentSets []QueryDocumentSet `json:"documentSets"`
 }
 
 // SearchReq search documents request
 type SearchReq struct {
-	api.Meta        `path:"/ai/document/search" tags:"Document" method:"Post"`
-	Database        string      `protobuf:"bytes,1,opt,name=database,proto3" json:"database"`
-	Collection      string      `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection"` // 索引名称
+	api.Meta        `path:"/ai/documentSet/search" tags:"Document" method:"Post"`
+	Database        string      `json:"database"`
+	CollectionView  string      `json:"collectionView"`
 	ReadConsistency string      `json:"readConsistency"`
 	Search          *SearchCond `json:"search"`
 }
@@ -60,19 +58,19 @@ type SearchRes struct {
 
 // SearchCond search filter condition
 type SearchCond struct {
-	Content      string       `json:"content"`
-	Filter       string       `json:"filter"`
-	Options      SearchOption `json:"options"`
-	OutputFields []string     `json:"outputfields"`    // 输出字段
-	Limit        int64        `json:"limit,omitempty"` // 结果数量
+	Content         string       `json:"content"`
+	DocumentSetName []string     `json:"documentSetName"`
+	Options         SearchOption `json:"options"`
+	Filter          string       `json:"filter"`
+	Limit           int64        `json:"limit,omitempty"` // 结果数量
 }
 
 type SearchOption struct {
-	ResultType  string `json:"resultType"`  // chunks|paragraphs|file
-	ChunkExpand []int  `json:"chunkExpand"` // 搜索结果中，向前、向后补齐几个chunk的上下文
+	// ResultType  string `json:"resultType"`  // chunks|paragraphs|file
+	ChunkExpand  []int         `json:"chunkExpand"`      // 搜索结果中，向前、向后补齐几个chunk的上下文
+	RerankOption *RerankOption `json:"rerank,omitempty"` // 多路召回
 	// MergeChunk  bool   `json:"mergeChunk"`  // Merge结果中相邻的Chunk
 	// Weights     SearchOptionWeight `json:"weights"`     // 多路召回
-	RerankOption *RerankOption `json:"rerank,omitempty"` // 多路召回
 }
 
 type RerankOption struct {
@@ -94,15 +92,16 @@ type SearchParams struct {
 
 // DeleteReq delete document request
 type DeleteReq struct {
-	api.Meta   `path:"/ai/document/delete" tags:"Document" method:"Post"`
-	Database   string           `json:"database"`
-	Collection string           `json:"collection"`
-	Query      *DeleteQueryCond `json:"query"`
+	api.Meta       `path:"/ai/documentSet/delete" tags:"Document" method:"Post"`
+	Database       string           `json:"database"`
+	CollectionView string           `json:"collectionView"`
+	Query          *DeleteQueryCond `json:"query"`
 }
 
 type DeleteQueryCond struct {
-	DocumentIds []string `json:"documentIds"`
-	Filter      string   `json:"filter"`
+	DocumentSetId   []string `json:"documentSetId"`
+	DocumentSetName []string `json:"documentSetName"`
+	Filter          string   `json:"filter"`
 }
 
 // DeleteRes delete document request
@@ -112,16 +111,17 @@ type DeleteRes struct {
 }
 
 type UpdateReq struct {
-	api.Meta   `path:"/ai/document/update" tags:"Document" method:"Post" summary:"基于[主键查询]和[ Filter 过滤]的部分字段更新或者新增非索引字段"`
-	Database   string                 `json:"database"`
-	Collection string                 `json:"collection"`
-	Query      UpdateQueryCond        `json:"query"`
-	Update     map[string]interface{} `json:"update"`
+	api.Meta       `path:"/ai/documentSet/update" tags:"Document" method:"Post""`
+	Database       string                 `json:"database"`
+	CollectionView string                 `json:"collectionView"`
+	Query          UpdateQueryCond        `json:"query"`
+	Update         map[string]interface{} `json:"update"`
 }
 
 type UpdateQueryCond struct {
-	DocumentIds []string `json:"documentIds"`
-	Filter      string   `json:"filter"`
+	DocumentSetId   []string `json:"documentSetId"`
+	DocumentSetName []string `json:"documentSetName"`
+	Filter          string   `json:"filter"`
 }
 
 type UpdateRes struct {
@@ -130,22 +130,21 @@ type UpdateRes struct {
 }
 
 type UploadUrlReq struct {
-	api.Meta   `path:"/ai/document/uploadurl" tags:"Document" method:"Post" summary:"获取cos上传签名"`
-	Database   string `json:"database"`
-	Collection string `json:"collection"`
-	FileName   string `json:"fileName"`
-	FileType   string `json:"fileType"`
+	api.Meta        `path:"/ai/documentSet/uploadUrl" tags:"Document" method:"Post" summary:"获取cos上传签名"`
+	Database        string `json:"database"`
+	CollectionView  string `json:"collectionView"`
+	DocumentSetName string `json:"documentSetName"`
 }
 
 type UploadUrlRes struct {
 	api.CommonRes
+	DocumentSetId   string           `json:"documentSetId"`
 	CosEndpoint     string           `json:"cosEndpoint"`
-	CosRegion       string           `json:"cosRegion,omitempty"`
-	CosBucket       string           `json:"cosBucket,omitempty"`
+	CosRegion       string           `json:"cosRegion"`
+	CosBucket       string           `json:"cosBucket"`
 	UploadPath      string           `json:"uploadPath"`
 	Credentials     *Credentials     `json:"credentials"`
 	UploadCondition *UploadCondition `json:"uploadCondition"`
-	FileId          string           `json:"fileId"`
 }
 
 type UploadCondition struct {
@@ -156,4 +155,18 @@ type Credentials struct {
 	TmpSecretID  string `json:"TmpSecretId"`
 	TmpSecretKey string `json:"TmpSecretKey"`
 	SessionToken string `json:"Token"`
+}
+
+type GetReq struct {
+	api.Meta        `path:"/ai/documentSet/get" tags:"Document" method:"Post""`
+	Database        string `json:"database"`
+	CollectionView  string `json:"collectionView"`
+	DocumentSetName string `json:"documentSetName"`
+	DocumentSetId   string `json:"documentSetId"`
+}
+
+type GetRes struct {
+	api.CommonRes
+	Count        uint64           `json:"count"`
+	DocumentSets QueryDocumentSet `json:"documentSet"`
 }

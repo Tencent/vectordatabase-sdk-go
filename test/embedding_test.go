@@ -12,7 +12,7 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	db := cli.Database(database)
 
 	// 设置embedding字段和模型
-	option := &tcvectordb.CreateCollectionOption{
+	param := &tcvectordb.CreateCollectionParams{
 		Embedding: &tcvectordb.Embedding{
 			Field:       "segment",
 			VectorField: "vector",
@@ -56,10 +56,10 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	}
 
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 0, "desription doc", index, option)
+	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 0, "desription doc", index, param)
 	printErr(err)
 
-	col, err := db.DescribeCollection(ctx, embeddingCollection, nil)
+	col, err := db.DescribeCollection(ctx, embeddingCollection)
 	printErr(err)
 	log.Printf("%+v", col)
 }
@@ -122,14 +122,14 @@ func TestUpsertEmbedding(t *testing.T) {
 func TestQueryEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	option := &tcvectordb.QueryDocumentOption{
+	param := &tcvectordb.QueryDocumentParams{
 		Filter:         tcvectordb.NewFilter(`bookName="三国演义"`),
 		OutputFields:   []string{"id", "bookName", "segment"},
 		RetrieveVector: false,
 		Limit:          2,
 		Offset:         1,
 	}
-	docs, err := col.Query(ctx, []string{"0001", "0002", "0003"}, option)
+	docs, err := col.Query(ctx, nil, param)
 	printErr(err)
 	log.Printf("total doc: %d", docs.Total)
 	for _, doc := range docs.Documents {
@@ -140,7 +140,7 @@ func TestQueryEmbedding(t *testing.T) {
 func TestSearchEmbedding(t *testing.T) {
 	col := cli.Database(database).Collection(embeddingCollection)
 
-	searchRes, err := col.SearchByText(ctx, map[string][]string{"segment": {"吕布"}}, &tcvectordb.SearchDocumentOption{
+	searchRes, err := col.SearchByText(ctx, map[string][]string{"segment": {"吕布"}}, &tcvectordb.SearchDocumentParams{
 		Params:         &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 		RetrieveVector: false,                                // 是否需要返回向量字段，False：不返回，True：返回
 		Limit:          2,                                    // 指定 Top K 的 K 值

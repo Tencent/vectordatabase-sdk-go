@@ -21,6 +21,7 @@ package tcvectordb
 import (
 	"context"
 	"strings"
+	"time"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_database"
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/database"
@@ -31,11 +32,11 @@ var _ DatabaseInterface = &implementerDatabase{}
 // DatabaseInterface database api
 type DatabaseInterface interface {
 	SdkClient
-	CreateDatabase(ctx context.Context, name string, options ...*CreateDatabaseOption) (*CreateDatabaseResult, error)
-	DropDatabase(ctx context.Context, name string, options ...*DropDatabaseOption) (*DropDatabaseResult, error)
-	ListDatabase(ctx context.Context, options ...*ListDatabaseOption) (result *ListDatabaseResult, err error)
-	CreateAIDatabase(ctx context.Context, name string, options ...*CreateAIDatabaseOption) (result *CreateAIDatabaseResult, err error)
-	DropAIDatabase(ctx context.Context, name string, options ...*DropAIDatabaseOption) (result *DropAIDatabaseResult, err error)
+	CreateDatabase(ctx context.Context, name string) (*CreateDatabaseResult, error)
+	DropDatabase(ctx context.Context, name string) (*DropDatabaseResult, error)
+	ListDatabase(ctx context.Context) (result *ListDatabaseResult, err error)
+	CreateAIDatabase(ctx context.Context, name string) (result *CreateAIDatabaseResult, err error)
+	DropAIDatabase(ctx context.Context, name string) (result *DropAIDatabaseResult, err error)
 	Database(name string) *Database
 	AIDatabase(name string) *AIDatabase
 }
@@ -44,8 +45,13 @@ type implementerDatabase struct {
 	SdkClient
 }
 
+type CreateDatabaseResult struct {
+	Database
+	AffectedCount int
+}
+
 // CreateDatabase create database with database name. It returns error if name exist.
-func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string, option ...*CreateDatabaseOption) (result *CreateDatabaseResult, err error) {
+func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string) (result *CreateDatabaseResult, err error) {
 	req := database.CreateReq{
 		Database: name,
 	}
@@ -60,8 +66,13 @@ func (i *implementerDatabase) CreateDatabase(ctx context.Context, name string, o
 	return result, err
 }
 
+type CreateAIDatabaseResult struct {
+	AIDatabase
+	AffectedCount int32
+}
+
 // CreateAIDatabase create ai database with database name. It returns error if name exist.
-func (i *implementerDatabase) CreateAIDatabase(ctx context.Context, name string, option ...*CreateAIDatabaseOption) (result *CreateAIDatabaseResult, err error) {
+func (i *implementerDatabase) CreateAIDatabase(ctx context.Context, name string) (result *CreateAIDatabaseResult, err error) {
 	req := ai_database.CreateReq{
 		Database: name,
 	}
@@ -76,8 +87,12 @@ func (i *implementerDatabase) CreateAIDatabase(ctx context.Context, name string,
 	return result, err
 }
 
+type DropDatabaseResult struct {
+	AffectedCount int
+}
+
 // DropDatabase drop database with database name. If database not exist, it return nil.
-func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, option ...*DropDatabaseOption) (result *DropDatabaseResult, err error) {
+func (i *implementerDatabase) DropDatabase(ctx context.Context, name string) (result *DropDatabaseResult, err error) {
 	result = new(DropDatabaseResult)
 
 	req := database.DropReq{Database: name}
@@ -93,8 +108,12 @@ func (i *implementerDatabase) DropDatabase(ctx context.Context, name string, opt
 	return
 }
 
+type DropAIDatabaseResult struct {
+	AffectedCount int32
+}
+
 // DropAIDatabase drop ai database with database name. If database not exist, it return nil.
-func (i *implementerDatabase) DropAIDatabase(ctx context.Context, name string, option ...*DropAIDatabaseOption) (result *DropAIDatabaseResult, err error) {
+func (i *implementerDatabase) DropAIDatabase(ctx context.Context, name string) (result *DropAIDatabaseResult, err error) {
 	result = new(DropAIDatabaseResult)
 
 	req := ai_database.DropReq{Database: name}
@@ -110,8 +129,13 @@ func (i *implementerDatabase) DropAIDatabase(ctx context.Context, name string, o
 	return
 }
 
+type ListDatabaseResult struct {
+	Databases   []Database
+	AIDatabases []AIDatabase
+}
+
 // ListDatabase get database list. It returns the database list to operate the collection.
-func (i *implementerDatabase) ListDatabase(ctx context.Context, option ...*ListDatabaseOption) (result *ListDatabaseResult, err error) {
+func (i *implementerDatabase) ListDatabase(ctx context.Context) (result *ListDatabaseResult, err error) {
 	req := database.ListReq{}
 	res := new(database.ListRes)
 	err = i.Request(ctx, req, res)
@@ -145,14 +169,14 @@ func (i *implementerDatabase) Database(name string) *Database {
 
 	collImpl := new(implementerCollection)
 	collImpl.SdkClient = i.SdkClient
-	collImpl.database = *database
+	collImpl.database = database
 
 	aliasImpl := new(implementerAlias)
-	aliasImpl.database = *database
+	aliasImpl.database = database
 	aliasImpl.SdkClient = i.SdkClient
 
 	indexImpl := new(implementerIndex)
-	indexImpl.database = *database
+	indexImpl.database = database
 	indexImpl.SdkClient = i.SdkClient
 
 	database.CollectionInterface = collImpl
@@ -171,14 +195,60 @@ func (i *implementerDatabase) AIDatabase(name string) *AIDatabase {
 
 	collImpl := new(implementerCollectionView)
 	collImpl.SdkClient = i.SdkClient
-	collImpl.database = *database
+	collImpl.database = database
 
 	aliasImpl := new(implementerAIAlias)
-	aliasImpl.database = *database
+	aliasImpl.database = database
 	aliasImpl.SdkClient = i.SdkClient
 
-	database.CollectionViewInterface = collImpl
+	database.AICollectionViewInterface = collImpl
 	database.AIAliasInterface = aliasImpl
 
 	return database
+}
+
+// Database wrap the database parameters and collection interface to operating the collection api
+type Database struct {
+	CollectionInterface `json:"-"`
+	AliasInterface      `json:"-"`
+	IndexInterface      `json:"-"`
+	DatabaseName        string
+	Info                DatabaseItem
+}
+
+func (d Database) IsAIDatabase() bool {
+	return d.Info.DbType == AIDOCDbType || d.Info.DbType == DbTypeAI
+}
+
+type DatabaseItem struct {
+	CreateTime string `json:"createTime,omitempty"`
+	DbType     string `json:"dbType,omitempty"`
+}
+
+func (d *Database) Debug(v bool) {
+	d.CollectionInterface.Debug(v)
+}
+
+func (d *Database) WithTimeout(t time.Duration) {
+	d.CollectionInterface.WithTimeout(t)
+}
+
+// AIDatabase wrap the database parameters and collection interface to operating the ai_collection api
+type AIDatabase struct {
+	AICollectionViewInterface
+	AIAliasInterface
+	DatabaseName string
+	Info         DatabaseItem
+}
+
+func (d AIDatabase) IsAIDatabase() bool {
+	return d.Info.DbType == AIDOCDbType || d.Info.DbType == DbTypeAI
+}
+
+func (d *AIDatabase) Debug(v bool) {
+	d.AICollectionViewInterface.Debug(v)
+}
+
+func (d *AIDatabase) WithTimeout(t time.Duration) {
+	d.AICollectionViewInterface.WithTimeout(t)
 }

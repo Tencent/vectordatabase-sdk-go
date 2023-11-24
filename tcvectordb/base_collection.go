@@ -34,17 +34,25 @@ var _ CollectionInterface = &implementerCollection{}
 type CollectionInterface interface {
 	SdkClient
 	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
-		indexes Indexes, options ...*CreateCollectionOption) (*Collection, error)
-	DescribeCollection(ctx context.Context, name string, options ...*DescribeCollectionOption) (result *DescribeCollectionResult, err error)
-	DropCollection(ctx context.Context, name string, options ...*DropCollectionOption) (result *DropCollectionResult, err error)
-	TruncateCollection(ctx context.Context, name string, options ...*TruncateCollectionOption) (result *TruncateCollectionResult, err error)
-	ListCollection(ctx context.Context, options ...*ListCollectionOption) (result *ListCollectionResult, err error)
+		indexes Indexes, params ...*CreateCollectionParams) (*Collection, error)
+	ListCollection(ctx context.Context) (result *ListCollectionResult, err error)
+	DescribeCollection(ctx context.Context, name string) (result *DescribeCollectionResult, err error)
+	DropCollection(ctx context.Context, name string) (result *DropCollectionResult, err error)
+	TruncateCollection(ctx context.Context, name string) (result *TruncateCollectionResult, err error)
 	Collection(name string) *Collection
 }
 
 type implementerCollection struct {
 	SdkClient
-	database Database
+	database *Database
+}
+
+type CreateCollectionParams struct {
+	Embedding *Embedding
+}
+
+type CreateCollectionResult struct {
+	Collection
 }
 
 // CreateCollection create a collection. It returns collection struct if err is nil.
@@ -53,7 +61,7 @@ type implementerCollection struct {
 // You can set the index field in Indexes, the vectorIndex must be set one currently, and
 // the filterIndex sets at least one primaryKey value.
 func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32,
-	description string, indexes Indexes, options ...*CreateCollectionOption) (*Collection, error) {
+	description string, indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
 	}
@@ -86,12 +94,12 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		column.IndexType = string(v.IndexType)
 		req.Indexes = append(req.Indexes, &column)
 	}
-	if len(options) != 0 && options[0] != nil {
-		option := options[0]
-		if option.Embedding != nil {
-			req.Embedding.Field = option.Embedding.Field
-			req.Embedding.VectorField = option.Embedding.VectorField
-			req.Embedding.Model = string(option.Embedding.Model)
+	if len(params) != 0 && params[0] != nil {
+		param := params[0]
+		if param.Embedding != nil {
+			req.Embedding.Field = param.Embedding.Field
+			req.Embedding.VectorField = param.Embedding.VectorField
+			req.Embedding.Model = string(param.Embedding.Model)
 		}
 	}
 
@@ -110,9 +118,39 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	return coll, nil
 }
 
+type ListCollectionResult struct {
+	Collections []*Collection
+}
+
+// ListCollection get collection list.
+// It return the list of collection, each collection same as DescribeCollection return.
+func (i *implementerCollection) ListCollection(ctx context.Context) (*ListCollectionResult, error) {
+	if i.database.IsAIDatabase() {
+		return nil, AIDbTypeError
+	}
+	req := new(collection.ListReq)
+	req.Database = i.database.DatabaseName
+	res := new(collection.ListRes)
+	err := i.Request(ctx, req, &res)
+	if err != nil {
+		return nil, err
+	}
+	var collections []*Collection
+	for _, collection := range res.Collections {
+		collections = append(collections, i.toCollection(collection))
+	}
+	result := new(ListCollectionResult)
+	result.Collections = collections
+	return result, nil
+}
+
+type DescribeCollectionResult struct {
+	Collection
+}
+
 // DescribeCollection get a collection detail.
 // It returns the collection object to get collecton parameters or operate document api
-func (i *implementerCollection) DescribeCollection(ctx context.Context, name string, option ...*DescribeCollectionOption) (*DescribeCollectionResult, error) {
+func (i *implementerCollection) DescribeCollection(ctx context.Context, name string) (*DescribeCollectionResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
 	}
@@ -133,8 +171,12 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 	return result, nil
 }
 
+type DropCollectionResult struct {
+	AffectedCount int
+}
+
 // DropCollection drop a collection. If collection not exist, it return nil.
-func (i *implementerCollection) DropCollection(ctx context.Context, name string, option ...*DropCollectionOption) (result *DropCollectionResult, err error) {
+func (i *implementerCollection) DropCollection(ctx context.Context, name string) (result *DropCollectionResult, err error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
 	}
@@ -155,7 +197,11 @@ func (i *implementerCollection) DropCollection(ctx context.Context, name string,
 	return
 }
 
-func (i *implementerCollection) TruncateCollection(ctx context.Context, name string, option ...*TruncateCollectionOption) (result *TruncateCollectionResult, err error) {
+type TruncateCollectionResult struct {
+	AffectedCount int
+}
+
+func (i *implementerCollection) TruncateCollection(ctx context.Context, name string) (result *TruncateCollectionResult, err error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
 	}
@@ -174,28 +220,6 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 	return
 }
 
-// ListCollection get collection list.
-// It return the list of collection, each collection same as DescribeCollection return.
-func (i *implementerCollection) ListCollection(ctx context.Context, option ...*ListCollectionOption) (*ListCollectionResult, error) {
-	if i.database.IsAIDatabase() {
-		return nil, AIDbTypeError
-	}
-	req := new(collection.ListReq)
-	req.Database = i.database.DatabaseName
-	res := new(collection.ListRes)
-	err := i.Request(ctx, req, &res)
-	if err != nil {
-		return nil, err
-	}
-	var collections []*Collection
-	for _, collection := range res.Collections {
-		collections = append(collections, i.toCollection(collection))
-	}
-	result := new(ListCollectionResult)
-	result.Collections = collections
-	return result, nil
-}
-
 // Collection get a collection interface to operate the document api. It could not send http request to vectordb.
 // If you want to show collection parameters, use DescribeCollection.
 func (i *implementerCollection) Collection(name string) *Collection {
@@ -206,12 +230,12 @@ func (i *implementerCollection) Collection(name string) *Collection {
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.database = i.database
-	docImpl.collection = *coll
+	docImpl.collection = coll
 
 	indexImpl := new(implementerIndex)
 	indexImpl.SdkClient = i.SdkClient
 	indexImpl.database = i.database
-	indexImpl.collection = *coll
+	indexImpl.collection = coll
 
 	coll.DocumentInterface = docImpl
 	coll.IndexInterface = indexImpl
@@ -279,12 +303,12 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.database = i.database
-	docImpl.collection = *coll
+	docImpl.collection = coll
 	coll.DocumentInterface = docImpl
 	return coll
 }
 
-// optionParams option index parameters
+// optionParams param index parameters
 func optionParams(column *api.IndexColumn, v VectorIndex) {
 	column.Params = new(api.IndexParams)
 	if v.IndexType == HNSW {
@@ -306,4 +330,42 @@ func optionParams(column *api.IndexColumn, v VectorIndex) {
 			column.Params.Nlist = param.NList
 		}
 	}
+}
+
+// Collection wrap the collection parameters and document interface to operating the document api
+type Collection struct {
+	DocumentInterface `json:"-"`
+	IndexInterface    `json:"-"`
+	DatabaseName      string
+	CollectionName    string
+	DocumentCount     int64
+	Alias             []string
+	ShardNum          uint32
+	ReplicasNum       uint32
+	Indexes           Indexes
+	IndexStatus       IndexStatus
+	Embedding         Embedding
+	Description       string
+	Size              uint64
+	CreateTime        time.Time
+}
+
+func (c *Collection) Debug(v bool) {
+	c.DocumentInterface.Debug(v)
+}
+
+func (c *Collection) WithTimeout(t time.Duration) {
+	c.DocumentInterface.WithTimeout(t)
+}
+
+type Embedding struct {
+	Field       string         `json:"field,omitempty"`
+	VectorField string         `json:"vectorField,omitempty"`
+	Model       EmbeddingModel `json:"model,omitempty"`
+	Enabled     bool           `json:"enabled,omitempty"` // 返回数据
+}
+
+type IndexStatus struct {
+	Status    string
+	StartTime time.Time
 }

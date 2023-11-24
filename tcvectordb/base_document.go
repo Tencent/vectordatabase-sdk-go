@@ -20,23 +20,40 @@ package tcvectordb
 
 import (
 	"context"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/document"
 )
 
 var _ DocumentInterface = &implementerDocument{}
 
+// DocumentInterface document api
+type DocumentInterface interface {
+	SdkClient
+	Upsert(ctx context.Context, documents []Document, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error)
+	Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (result *QueryDocumentResult, err error)
+	Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+	SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+	SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+	Delete(ctx context.Context, param DeleteDocumentParams) (result *DeleteDocumentResult, err error)
+	Update(ctx context.Context, param UpdateDocumentParams) (result *UpdateDocumentResult, err error)
+}
+
 type implementerDocument struct {
 	SdkClient
-	database   Database
-	collection Collection
+	database   *Database
+	collection *Collection
+}
+
+type UpsertDocumentParams struct {
+	BuildIndex *bool
+}
+
+type UpsertDocumentResult struct {
+	AffectedCount int
 }
 
 // Upsert upsert documents into collection. Support for repeated insertion
-func (i *implementerDocument) Upsert(ctx context.Context, documents []Document, options ...*UpsertDocumentOption) (result *UpsertDocumentResult, err error) {
+func (i *implementerDocument) Upsert(ctx context.Context, documents []Document, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error) {
 	req := new(document.UpsertReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
@@ -50,10 +67,10 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []Document, 
 		}
 		req.Documents = append(req.Documents, d)
 	}
-	if len(options) != 0 && options[0] != nil {
-		option := options[0]
-		if option.BuildIndex != nil {
-			req.BuildIndex = option.BuildIndex
+	if len(params) != 0 && params[0] != nil {
+		param := params[0]
+		if param.BuildIndex != nil {
+			req.BuildIndex = param.BuildIndex
 		}
 	}
 
@@ -67,9 +84,23 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents []Document, 
 	return
 }
 
+type QueryDocumentParams struct {
+	Filter         *Filter
+	RetrieveVector bool
+	OutputFields   []string
+	Offset         int64
+	Limit          int64
+}
+
+type QueryDocumentResult struct {
+	Documents     []Document
+	AffectedCount int
+	Total         uint64
+}
+
 // Query query the document by document ids.
 // The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
-func (i *implementerDocument) Query(ctx context.Context, documentIds []string, options ...*QueryDocumentOption) (*QueryDocumentResult, error) {
+func (i *implementerDocument) Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
 	req := new(document.QueryReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
@@ -77,13 +108,13 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, o
 		DocumentIds: documentIds,
 	}
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
-	if len(options) != 0 && options[0] != nil {
-		option := options[0]
-		req.Query.Filter = option.Filter.Cond()
-		req.Query.RetrieveVector = option.RetrieveVector
-		req.Query.OutputFields = option.OutputFields
-		req.Query.Offset = option.Offset
-		req.Query.Limit = option.Limit
+	if len(params) != 0 && params[0] != nil {
+		param := params[0]
+		req.Query.Filter = param.Filter.Cond()
+		req.Query.RetrieveVector = param.RetrieveVector
+		req.Query.OutputFields = param.OutputFields
+		req.Query.Offset = param.Offset
+		req.Query.Limit = param.Limit
 	}
 
 	res := new(document.QueryRes)
@@ -111,23 +142,41 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, o
 	return result, nil
 }
 
+type SearchDocumentParams struct {
+	Filter         *Filter
+	Params         *SearchDocParams
+	RetrieveVector bool
+	OutputFields   []string
+	Limit          int64
+}
+
+type SearchDocParams struct {
+	Nprobe uint32  `json:"nprobe,omitempty"` // 搜索时查找的聚类数量，使用索引默认值即可
+	Ef     uint32  `json:"ef,omitempty"`     // HNSW
+	Radius float32 `json:"radius,omitempty"` // 距离阈值,范围搜索时有效
+}
+
+type SearchDocumentResult struct {
+	Documents [][]Document
+}
+
 // Search search document topK by vector. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, options ...*SearchDocumentOption) (*SearchDocumentResult, error) {
-	return i.search(ctx, nil, vectors, nil, options...)
+func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
+	return i.search(ctx, nil, vectors, nil, params...)
 }
 
 // Search search document topK by document ids. The optional parameters filter will add the filter condition to search.
 // The optional parameters hnswParam only be set with the HNSW vector index type.
-func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, options ...*SearchDocumentOption) (*SearchDocumentResult, error) {
-	return i.search(ctx, documentIds, nil, nil, options...)
+func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
+	return i.search(ctx, documentIds, nil, nil, params...)
 }
 
-func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, options ...*SearchDocumentOption) (*SearchDocumentResult, error) {
-	return i.search(ctx, nil, nil, text, options...)
+func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
+	return i.search(ctx, nil, nil, text, params...)
 }
 
-func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, options ...*SearchDocumentOption) (*SearchDocumentResult, error) {
+func (i *implementerDocument) search(ctx context.Context, documentIds []string, vectors [][]float32, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	req := new(document.SearchReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
@@ -139,18 +188,18 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 		req.Search.EmbeddingItems = v
 	}
 
-	if len(options) != 0 && options[0] != nil {
-		option := options[0]
-		req.Search.Filter = option.Filter.Cond()
-		req.Search.RetrieveVector = option.RetrieveVector
-		req.Search.OutputFields = option.OutputFields
-		req.Search.Limit = option.Limit
+	if len(params) != 0 && params[0] != nil {
+		param := params[0]
+		req.Search.Filter = param.Filter.Cond()
+		req.Search.RetrieveVector = param.RetrieveVector
+		req.Search.OutputFields = param.OutputFields
+		req.Search.Limit = param.Limit
 
-		if option.Params != nil {
+		if param.Params != nil {
 			req.Search.Params = new(document.SearchParams)
-			req.Search.Params.Nprobe = option.Params.Nprobe
-			req.Search.Params.Ef = option.Params.Ef
-			req.Search.Params.Radius = option.Params.Radius
+			req.Search.Params.Nprobe = param.Params.Nprobe
+			req.Search.Params.Ef = param.Params.Ef
+			req.Search.Params.Radius = param.Params.Radius
 		}
 	}
 
@@ -181,17 +230,23 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 	return result, nil
 }
 
+type DeleteDocumentParams struct {
+	DocumentIds []string
+	Filter      *Filter
+}
+
+type DeleteDocumentResult struct {
+	AffectedCount int
+}
+
 // Delete delete document by document ids
-func (i *implementerDocument) Delete(ctx context.Context, options ...*DeleteDocumentOption) (result *DeleteDocumentResult, err error) {
+func (i *implementerDocument) Delete(ctx context.Context, param DeleteDocumentParams) (result *DeleteDocumentResult, err error) {
 	req := new(document.DeleteReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
-	if len(options) != 0 && options[0] != nil {
-		option := options[0]
-		req.Query = &document.QueryCond{
-			DocumentIds: option.DocumentIds,
-			Filter:      option.Filter.Cond(),
-		}
+	req.Query = &document.QueryCond{
+		DocumentIds: param.DocumentIds,
+		Filter:      param.Filter.Cond(),
 	}
 
 	res := new(document.DeleteRes)
@@ -204,21 +259,29 @@ func (i *implementerDocument) Delete(ctx context.Context, options ...*DeleteDocu
 	return
 }
 
-func (i *implementerDocument) Update(ctx context.Context, options ...*UpdateDocumentOption) (*UpdateDocumentResult, error) {
+type UpdateDocumentParams struct {
+	QueryIds     []string
+	QueryFilter  *Filter
+	UpdateVector []float32
+	UpdateFields map[string]Field
+}
+
+type UpdateDocumentResult struct {
+	AffectedCount int
+}
+
+func (i *implementerDocument) Update(ctx context.Context, param UpdateDocumentParams) (*UpdateDocumentResult, error) {
 	req := new(document.UpdateReq)
 	req.Database = i.database.DatabaseName
 	req.Collection = i.collection.CollectionName
 	req.Query = new(document.QueryCond)
 
-	if len(options) != 0 && options[0] != nil {
-		option := options[0]
-		req.Query.DocumentIds = option.QueryIds
-		req.Query.Filter = option.QueryFilter.Cond()
-		req.Update.Vector = option.UpdateVector
-		req.Update.Fields = make(map[string]interface{})
-		for k, v := range option.UpdateFields {
-			req.Update.Fields[k] = v.Val
-		}
+	req.Query.DocumentIds = param.QueryIds
+	req.Query.Filter = param.QueryFilter.Cond()
+	req.Update.Vector = param.UpdateVector
+	req.Update.Fields = make(map[string]interface{})
+	for k, v := range param.UpdateFields {
+		req.Update.Fields[k] = v.Val
 	}
 
 	res := new(document.UpdateRes)
@@ -231,33 +294,10 @@ func (i *implementerDocument) Update(ctx context.Context, options ...*UpdateDocu
 	return result, nil
 }
 
-func getFileTypeFromFileName(fileName string) FileType {
-	extension := filepath.Ext(fileName)
-	extension = strings.ToLower(extension)
-	// 不带后缀的文件，默认为markdown文件
-	if extension == "" {
-		return MarkdownFileType
-	} else if extension == ".md" || extension == ".markdown" {
-		return MarkdownFileType
-	} else {
-		return UnSupportFileType
-	}
-}
-
-func isMarkdownFile(localFilePath string) bool {
-	extension := filepath.Ext(localFilePath)
-	extension = strings.ToLower(extension)
-	return extension == ".md" || extension == ".markdown"
-}
-
-func checkFileSize(localFilePath string, maxContentLength int64) (bool, error) {
-	fileInfo, err := os.Stat(localFilePath)
-	if err != nil {
-		return false, err
-	}
-
-	if fileInfo.Size() <= maxContentLength {
-		return true, nil
-	}
-	return false, nil
+type Document struct {
+	Id     string
+	Vector []float32
+	// omitempty when upsert
+	Score  float32 `json:"_,omitempty"`
+	Fields map[string]Field
 }

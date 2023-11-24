@@ -21,10 +21,10 @@ package ai_alias
 import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
 
 type SetReq struct {
-	api.Meta   `path:"/ai/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
-	Database   string `json:"database,omitempty"`
-	Collection string `json:"collection,omitempty"`
-	Alias      string `json:"alias,omitempty"`
+	api.Meta       `path:"/ai/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`
+	Database       string `json:"database,omitempty"`
+	CollectionView string `json:"collectionView,omitempty"`
+	Alias          string `json:"alias,omitempty"`
 }
 
 type SetRes struct {
@@ -41,30 +41,4 @@ type DeleteReq struct {
 type DeleteRes struct {
 	api.CommonRes
 	AffectedCount int `json:"affectedCount,omitempty"`
-}
-
-type DescribeReq struct {
-	api.Meta `path:"/ai/alias/describe" tags:"Alias" method:"Post" summary:"根据别名查找对应的集合信息"`
-	Database string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
-	Alias    string `protobuf:"bytes,2,opt,name=alias,proto3" json:"alias,omitempty"`
-}
-
-type DescribeRes struct {
-	api.CommonRes
-	Aliases []*AliasItem `json:"aliases,omitempty"`
-}
-
-type AliasItem struct {
-	Alias      string `json:"alias,omitempty"`
-	Collection string `json:"collection,omitempty"`
-}
-
-type ListReq struct {
-	api.Meta `path:"/ai/alias/list" tags:"Alias" method:"Post" summary:"列举指定db下的所有别名信息"`
-	Database string `json:"database"`
-}
-
-type ListRes struct {
-	api.CommonRes
-	Aliases []*AliasItem `json:"aliases,omitempty"`
 }

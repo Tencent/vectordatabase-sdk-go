@@ -193,7 +193,7 @@ func TestUpsert(t *testing.T) {
 				"tag":      {Val: []string{"曹操", "诸葛亮", "刘备"}},
 			},
 		},
-	}, &tcvectordb.UpsertDocumentOption{BuildIndex: &buildIndex})
+	}, &tcvectordb.UpsertDocumentParams{BuildIndex: &buildIndex})
 
 	printErr(err)
 	log.Printf("upsert result: %+v", result)
@@ -201,14 +201,14 @@ func TestUpsert(t *testing.T) {
 
 func TestQuery(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
-	option := &tcvectordb.QueryDocumentOption{
-		Filter: tcvectordb.NewFilter(tcvectordb.Include("tag", []string{"曹操", "刘备"})),
+	option := &tcvectordb.QueryDocumentParams{
+		// Filter: tcvectordb.NewFilter(tcvectordb.Include("tag", []string{"曹操", "刘备"})),
 		// OutputFields:   []string{"id", "bookName"},
 		// RetrieveVector: true,
-		// Limit: 100,
+		Limit: 100,
 	}
-	documentId := []string{"0001", "0002", "0003", "0004", "0005"}
-	result, err := col.Query(ctx, documentId, option)
+	// documentId := []string{"0001", "0002", "0003", "0004", "0005"}
+	result, err := col.Query(ctx, nil, option)
 	printErr(err)
 	log.Printf("total doc: %d", result.Total)
 	for _, doc := range result.Documents {
@@ -222,7 +222,7 @@ func TestSearch(t *testing.T) {
 	searchRes, err := col.Search(ctx, [][]float32{
 		{0.3123, 0.43, 0.213},
 		{0.233, 0.12, 0.97},
-	}, &tcvectordb.SearchDocumentOption{
+	}, &tcvectordb.SearchDocumentParams{
 		Params:         &tcvectordb.SearchDocParams{Ef: 100},
 		RetrieveVector: false,
 		Limit:          10,
@@ -242,7 +242,7 @@ func TestSearchById(t *testing.T) {
 
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	documentId := []string{"0003"}
-	searchRes, err := col.SearchById(ctx, documentId, &tcvectordb.SearchDocumentOption{
+	searchRes, err := col.SearchById(ctx, documentId, &tcvectordb.SearchDocumentParams{
 		Filter:         filter,
 		Params:         &tcvectordb.SearchDocParams{Ef: 100},
 		RetrieveVector: false,
@@ -261,7 +261,7 @@ func TestSearchById(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	result, err := col.Update(ctx, &tcvectordb.UpdateDocumentOption{
+	result, err := col.Update(ctx, tcvectordb.UpdateDocumentParams{
 		QueryIds:    []string{"0001", "0003"},
 		QueryFilter: tcvectordb.NewFilter(`bookName="三国演义"`),
 		UpdateFields: map[string]tcvectordb.Field{
@@ -280,7 +280,7 @@ func TestUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
-	res, err := col.Delete(ctx, &tcvectordb.DeleteDocumentOption{
+	res, err := col.Delete(ctx, tcvectordb.DeleteDocumentParams{
 		DocumentIds: []string{"0001", "0003"},
 		Filter:      tcvectordb.NewFilter(`bookName="西游记"`),
 	})
@@ -291,7 +291,7 @@ func TestDelete(t *testing.T) {
 func TestBuildIndex(t *testing.T) {
 	coll := cli.Database(database).Collection(collectionName)
 	// 索引重建，重建期间不支持写入
-	_, err := coll.RebuildIndex(ctx, &tcvectordb.RebuildIndexOption{Throttle: 1})
+	_, err := coll.RebuildIndex(ctx, &tcvectordb.RebuildIndexParams{Throttle: 1})
 	printErr(err)
 }
 

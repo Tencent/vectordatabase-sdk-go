@@ -26,18 +26,28 @@ import (
 
 var _ AIAliasInterface = &implementerAIAlias{}
 
-type implementerAIAlias struct {
+type AIAliasInterface interface {
 	SdkClient
-	database AIDatabase
+	SetAlias(ctx context.Context, collectionView, aliasName string) (result *SetAIAliasResult, err error)
+	DeleteAlias(ctx context.Context, aliasName string) (result *DeleteAIAliasResult, err error)
 }
 
-func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionName, aliasName string, option ...*SetAIAliasOption) (*SetAIAliasResult, error) {
+type implementerAIAlias struct {
+	SdkClient
+	database *AIDatabase
+}
+
+type SetAIAliasResult struct {
+	AffectedCount int
+}
+
+func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionView, aliasName string) (*SetAIAliasResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
 	req := new(ai_alias.SetReq)
 	req.Database = i.database.DatabaseName
-	req.Collection = collectionName
+	req.CollectionView = collectionView
 	req.Alias = aliasName
 	res := new(ai_alias.SetRes)
 
@@ -50,7 +60,11 @@ func (i *implementerAIAlias) SetAlias(ctx context.Context, collectionName, alias
 	return result, nil
 }
 
-func (i *implementerAIAlias) DeleteAlias(ctx context.Context, aliasName string, option ...*DeleteAIAliasOption) (*DeleteAIAliasResult, error) {
+type DeleteAIAliasResult struct {
+	AffectedCount int
+}
+
+func (i *implementerAIAlias) DeleteAlias(ctx context.Context, aliasName string) (*DeleteAIAliasResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
