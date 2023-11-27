@@ -68,6 +68,7 @@ type QueryAIDocumentSetParams struct {
 	Filter          *Filter  `json:"filter"`
 	Limit           int64    `json:"limit"`
 	Offset          int64    `json:"offset"`
+	OutputFields    []string `json:"outputFields,omitempty"`
 }
 
 type QueryAIDocumentSetResult struct {
@@ -87,9 +88,10 @@ func (i *implementerAIDocumentSets) Query(ctx context.Context, param QueryAIDocu
 	req.Database = i.database.DatabaseName
 	req.CollectionView = i.collectionView.CollectionViewName
 	req.Query = &ai_document_set.QueryCond{
-		Filter: param.Filter.Cond(),
-		Limit:  param.Limit,
-		Offset: param.Offset,
+		Filter:       param.Filter.Cond(),
+		Limit:        param.Limit,
+		Offset:       param.Offset,
+		OutputFields: param.OutputFields,
 	}
 
 	result := new(QueryAIDocumentSetResult)

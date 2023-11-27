@@ -29,9 +29,10 @@ type QueryReq struct {
 }
 
 type QueryCond struct {
-	Filter string `json:"filter,omitempty"`
-	Limit  int64  `json:"limit,omitempty"`
-	Offset int64  `json:"offset,omitempty"`
+	Filter       string   `json:"filter,omitempty"`
+	Limit        int64    `json:"limit,omitempty"`
+	Offset       int64    `json:"offset,omitempty"`
+	OutputFields []string `json:"outputFields,omitempty"`
 }
 
 // QueryRes query document response

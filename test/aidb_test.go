@@ -19,6 +19,8 @@
 package test
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"testing"
 
@@ -171,15 +173,21 @@ func TestAIQuery(t *testing.T) {
 	col := cli.AIDatabase(aiDatabase).CollectionView(collectionViewName)
 	param := tcvectordb.QueryAIDocumentSetParams{
 		DocumentSetName: []string{"tcvdb.md"},
-		// Filter: tcvectordb.NewFilter(`documentSetName="tcvdb.md"`),
-		Limit:  3,
-		Offset: 0,
+		Filter:          tcvectordb.NewFilter(`documentSetName="tcvdb.md"`),
+		Limit:           3,
+		Offset:          0,
+		// 使用OutputFields一定会输出documentSetId、documentSetName便于后续操作
+		// OutputFields: []string{"indexedStatus", "textPrefix"},
 	}
 	result, err := col.Query(ctx, param)
 	printErr(err)
 	t.Logf("total doc: %d", result.Count)
 	for _, doc := range result.Documents {
-		t.Logf("document: %+v", doc)
+		b, err := json.Marshal(doc)
+		if err != nil {
+			return
+		}
+		fmt.Println(fmt.Sprintf("res %v", string(b)))
 	}
 }
 
