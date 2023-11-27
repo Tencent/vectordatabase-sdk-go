@@ -10,19 +10,21 @@ import (
 type QueryDocumentSet struct {
 	DocumentSetId   string                 `json:"documentSetId"`
 	DocumentSetName string                 `json:"documentSetName"`
-	Text            string                 `json:"text"`
-	TextPrefix      string                 `json:"textPrefix"`
-	DocumentSetInfo DocumentSetInfo        `json:"documentSetInfo"`
+	Text            *string                `json:"text,omitempty"`
+	TextPrefix      *string                `json:"textPrefix,omitempty"`
+	DocumentSetInfo *DocumentSetInfo       `json:"documentSetInfo,omitempty"`
 	ScalarFields    map[string]interface{} `json:"-"`
 }
 
 type DocumentSetInfo struct {
-	TextLength      uint64 `json:"textLength"`
-	ByteLength      uint64 `json:"byteLength"`
-	IndexedProgress uint64 `json:"indexedProgress"`
-	IndexedStatus   string `json:"indexedStatus"` // Ready | New | Loading | Failure
-	CreateTime      string `json:"createTime"`
-	LastUpdateTime  string `json:"lastUpdateTime"`
+	TextLength      *uint64 `json:"textLength,omitempty"`
+	ByteLength      *uint64 `json:"byteLength,omitempty"`
+	IndexedProgress *uint64 `json:"indexedProgress,omitempty"`
+	IndexedStatus   *string `json:"indexedStatus,omitempty"` // Ready | New | Loading | Failure
+	CreateTime      *string `json:"createTime,omitempty"`
+	LastUpdateTime  *string `json:"lastUpdateTime,omitempty"`
+	IndexedErrorMsg *string `json:"indexedErrorMsg,omitempty"`
+	Keywords        *string `json:"keywords,omitempty"`
 }
 
 func (d QueryDocumentSet) MarshalJSON() ([]byte, error) {
