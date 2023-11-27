@@ -21,6 +21,8 @@ package tcvectordb
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -339,7 +341,7 @@ type LoadAndSplitTextParams struct {
 	DocumentSetName string
 	Reader          io.Reader
 	LocalFilePath   string
-	MetaData        map[string]Field
+	MetaData        map[string]interface{}
 }
 
 type LoadAndSplitTextResult struct {
@@ -380,16 +382,21 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 
 	header := make(http.Header)
 	metaData := param.MetaData
-	if metaData == nil {
-		metaData = make(map[string]Field)
-	}
-	metaData["-id"] = Field{Val: res.DocumentSetId}
 
-	for k, v := range metaData {
-		if v.Type() == "" {
-			continue
-		}
-		header.Add("x-cos-meta-"+string(v.Type())+"-"+k, url.QueryEscape(v.String()))
+	marshalData, err := json.Marshal(metaData)
+	if err != nil {
+		return nil, fmt.Errorf("put param MetaData into cos header failed, err: %v", err.Error())
+	}
+
+	header.Add("x-cos-meta-data", url.QueryEscape(base64.StdEncoding.EncodeToString(marshalData)))
+	header.Add("x-cos-meta-id", res.DocumentSetId)
+
+	headerData, err := json.Marshal(header)
+	if err != nil {
+		return nil, fmt.Errorf("marshal cos header failed, err: %v", err.Error())
+	}
+	if len(headerData) > 2048 {
+		return nil, fmt.Errorf("cos header for param MetaData is too large, it can not be more than 2k")
 	}
 
 	opt := &cos.ObjectPutOptions{

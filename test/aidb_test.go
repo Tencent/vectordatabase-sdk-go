@@ -52,7 +52,7 @@ func TestAICreateCollectionView(t *testing.T) {
 	index := tcvectordb.Indexes{
 		FilterIndex: []tcvectordb.FilterIndex{
 			{
-				FieldName: "author",
+				FieldName: "author_name",
 				FieldType: tcvectordb.String,
 				IndexType: tcvectordb.FILTER,
 			},
@@ -136,9 +136,10 @@ func TestLoadAndSplitText(t *testing.T) {
 	defer cli.Close()
 	col := cli.AIDatabase(aiDatabase).CollectionView(collectionViewName)
 
-	metaData := map[string]tcvectordb.Field{
-		"author":  {Val: "sam"},
-		"fileKey": {Val: 1024}}
+	metaData := map[string]interface{}{
+		// 元数据只支持string、uint64类型的值
+		"author_name": "sam",
+		"fileKey":     1024}
 
 	// fd, err := os.Open("../example/tcvdb.md")
 	// if err != nil {
@@ -215,7 +216,7 @@ func TestAIUpdate(t *testing.T) {
 	fileName := "tcvdb.md"
 	col := cli.AIDatabase(aiDatabase).CollectionView(collectionViewName)
 	result, err := col.Update(ctx, map[string]interface{}{
-		"author": "jack",
+		"author_name": "jack",
 	}, tcvectordb.UpdateAIDocumentSetParams{
 		DocumentSetName: []string{fileName},
 	})
