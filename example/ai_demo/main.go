@@ -15,7 +15,9 @@ type AIDemo struct {
 }
 
 func NewAIDemo(url, username, key string) (*AIDemo, error) {
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{ReadConsistency: tcvectordb.EventualConsistency})
+	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+		Timeout:         10 * time.Second,
+		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +94,7 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 
 	log.Println("------------------------- CreateCollectionView -------------------------")
 	index := tcvectordb.Indexes{}
-	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "teststr", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "test_str", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
 
 	db.WithTimeout(time.Second * 30)
 
@@ -134,10 +136,10 @@ func (d *AIDemo) LoadAndSplitText(ctx context.Context, database, collection, fil
 	coll := d.client.AIDatabase(database).CollectionView(collection)
 	res, err := coll.LoadAndSplitText(ctx, tcvectordb.LoadAndSplitTextParams{
 		LocalFilePath: filePath,
-		MetaData: map[string]tcvectordb.Field{
-			"teststr": {Val: "v1"},
-			"filekey": {Val: 1024},
-			"author":  {Val: "sam"},
+		MetaData: map[string]interface{}{
+			"test_str": "v1",
+			"fileKey":  1024,
+			"author":   "sam",
 		},
 	})
 	if err != nil {
@@ -173,7 +175,7 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 	res, err := coll.Search(ctx, tcvectordb.SearchAIDocumentSetsParams{
 		Content:     "什么是向量数据库",
 		ExpandChunk: []int{1, 0},
-		Filter:      tcvectordb.NewFilter(`teststr="v1"`),
+		Filter:      tcvectordb.NewFilter(`test_str="v1"`),
 		Limit:       2,
 		RerankOption: &ai_document_set.RerankOption{
 			Enable:                &enableRerank,
@@ -189,9 +191,9 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 
 	log.Println("---------------------------- Update ----------------------------")
 	updateRes, err := coll.Update(ctx, map[string]interface{}{
-		"teststr": "v2",
+		"test_str": "v2",
 	}, tcvectordb.UpdateAIDocumentSetParams{
-		Filter: tcvectordb.NewFilter(`teststr="v1"`),
+		Filter: tcvectordb.NewFilter(`test_str="v1"`),
 	})
 	if err != nil {
 		return err
@@ -200,7 +202,7 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 
 	log.Println("---------------------------- Query ----------------------------")
 	queryRes, err := coll.Query(ctx, tcvectordb.QueryAIDocumentSetParams{
-		Filter: tcvectordb.NewFilter(`teststr="v2"`),
+		Filter: tcvectordb.NewFilter(`test_str="v2"`),
 		Limit:  1,
 	})
 	if err != nil {
