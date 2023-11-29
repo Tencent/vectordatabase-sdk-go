@@ -145,7 +145,7 @@ func (i *implementerDatabase) ListDatabase(ctx context.Context) (result *ListDat
 
 	result = new(ListDatabaseResult)
 	for _, v := range res.Databases {
-		if res.Info[v].DbType == AIDOCDbType {
+		if res.Info[v].DbType == AIDOCDbType || res.Info[v].DbType == DbTypeAI {
 			db := i.AIDatabase(v)
 			db.Info.CreateTime = res.Info[v].CreateTime
 			result.AIDatabases = append(result.AIDatabases, *db)
@@ -164,7 +164,7 @@ func (i *implementerDatabase) Database(name string) *Database {
 	database := new(Database)
 	database.DatabaseName = name
 	database.Info = DatabaseItem{
-		DbType: BASEDbType,
+		DbType: DbTypeBase,
 	}
 
 	collImpl := new(implementerCollection)
@@ -190,7 +190,7 @@ func (i *implementerDatabase) AIDatabase(name string) *AIDatabase {
 	database := new(AIDatabase)
 	database.DatabaseName = name
 	database.Info = DatabaseItem{
-		DbType: AIDOCDbType,
+		DbType: DbTypeAI,
 	}
 
 	collImpl := new(implementerCollectionView)
