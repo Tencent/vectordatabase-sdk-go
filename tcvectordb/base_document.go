@@ -157,6 +157,7 @@ type SearchDocParams struct {
 }
 
 type SearchDocumentResult struct {
+	Warning   string
 	Documents [][]Document
 }
 
@@ -226,6 +227,7 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 		documents = append(documents, vecDoc)
 	}
 	result := new(SearchDocumentResult)
+	result.Warning = res.Warning
 	result.Documents = documents
 	return result, nil
 }
