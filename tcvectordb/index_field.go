@@ -57,7 +57,7 @@ type IndexParams interface {
 
 var _ IndexParams = &HNSWParam{}
 var _ IndexParams = &IVFFLATParams{}
-var _ IndexParams = &IVFSQ8Params{}
+var _ IndexParams = &IVFSQParams{}
 var _ IndexParams = &IVFPQParams{}
 
 type HNSWParam struct {
@@ -85,15 +85,15 @@ func (p *IVFFLATParams) Name() string {
 	return string(IVF_FLAT)
 }
 
-type IVFSQ8Params struct {
+type IVFSQParams struct {
 	NList uint32
 }
 
-func (p *IVFSQ8Params) MarshalJson() ([]byte, error) {
+func (p *IVFSQParams) MarshalJson() ([]byte, error) {
 	return json.Marshal(p)
 }
 
-func (p *IVFSQ8Params) Name() string {
+func (p *IVFSQParams) Name() string {
 	return string(IVF_SQ8)
 }
 

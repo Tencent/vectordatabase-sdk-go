@@ -286,7 +286,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			case IVF_PQ:
 				vector.Params = &IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
 			case IVF_SQ8:
-				vector.Params = &IVFSQ8Params{NList: index.Params.Nlist}
+				vector.Params = &IVFSQParams{NList: index.Params.Nlist}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
 
@@ -311,20 +311,21 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 // optionParams param index parameters
 func optionParams(column *api.IndexColumn, v VectorIndex) {
 	column.Params = new(api.IndexParams)
-	if v.IndexType == HNSW {
+	switch v.IndexType {
+	case HNSW:
 		if param, ok := v.Params.(*HNSWParam); ok && param != nil {
 			column.Params.M = param.M
 			column.Params.EfConstruction = param.EfConstruction
 		}
-	} else if v.IndexType == IVF_FLAT {
+	case IVF_FLAT:
 		if param, ok := v.Params.(*IVFFLATParams); ok && param != nil {
 			column.Params.Nlist = param.NList
 		}
-	} else if v.IndexType == IVF_SQ8 {
-		if param, ok := v.Params.(*IVFSQ8Params); ok && param != nil {
+	case IVF_SQ4, IVF_SQ8, IVF_SQ16:
+		if param, ok := v.Params.(*IVFSQParams); ok && param != nil {
 			column.Params.Nlist = param.NList
 		}
-	} else if v.IndexType == IVF_PQ {
+	case IVF_PQ:
 		if param, ok := v.Params.(*IVFPQParams); ok && param != nil {
 			column.Params.M = param.M
 			column.Params.Nlist = param.NList
