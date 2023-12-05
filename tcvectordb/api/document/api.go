@@ -19,6 +19,7 @@
 package document
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"strings"
@@ -87,7 +88,9 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, &temp.Fields)
+	ds := json.NewDecoder(bytes.NewReader(data))
+	ds.UseNumber()
+	err = ds.Decode(&temp.Fields)
 	if err != nil {
 		return err
 	}

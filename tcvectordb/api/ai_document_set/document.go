@@ -1,6 +1,7 @@
 package ai_document_set
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"strings"
@@ -63,7 +64,9 @@ func (d *QueryDocumentSet) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, &temp.ScalarFields)
+	ds := json.NewDecoder(bytes.NewReader(data))
+	ds.UseNumber()
+	err = ds.Decode(&temp.ScalarFields)
 	if err != nil {
 		return err
 	}
@@ -137,7 +140,9 @@ func (s *SearchDocumentSet) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, &temp.ScalarFields)
+	ds := json.NewDecoder(bytes.NewReader(data))
+	ds.UseNumber()
+	err = ds.Decode(&temp.ScalarFields)
 	if err != nil {
 		return err
 	}
