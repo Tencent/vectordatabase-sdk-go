@@ -52,10 +52,15 @@ type AIDocumentSetsInterface interface {
 }
 
 type AIDocumentSet struct {
-	AIDocumentSetInterface
-	ai_document_set.QueryDocumentSet
-	DatabaseName       string
-	CollectionViewName string
+	AIDocumentSetInterface `json:"-"`
+	DatabaseName           string                           `json:"databaseName"`
+	CollectionViewName     string                           `json:"collectionViewName"`
+	DocumentSetId          string                           `json:"documentSetId"`
+	DocumentSetName        string                           `json:"documentSetName"`
+	Text                   string                           `json:"text"`       // assign when use get api
+	TextPrefix             string                           `json:"textPrefix"` // assign when use query api
+	DocumentSetInfo        *ai_document_set.DocumentSetInfo `json:"documentSetInfo"`
+	ScalarFields           map[string]Field
 }
 
 type implementerAIDocumentSets struct {
@@ -162,7 +167,7 @@ type SearchAIDocumentSetsParams struct {
 }
 
 type SearchAIDocumentSetResult struct {
-	Documents []ai_document_set.SearchDocument `json:"documents"`
+	Documents []AISearchDocumentSet `json:"documents"`
 }
 
 // Search search ai_document_set topK by vector. The optional parameters filter will add the filter condition to search.
@@ -204,7 +209,9 @@ func (i *implementerAIDocumentSets) Search(ctx context.Context, param SearchAIDo
 		return nil, err
 	}
 	result := new(SearchAIDocumentSetResult)
-	result.Documents = res.Documents
+	for _, doc := range res.Documents {
+		result.Documents = append(result.Documents, *i.toSearchDocumentSet(doc))
+	}
 	return result, nil
 }
 
@@ -455,9 +462,21 @@ func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSp
 
 func (i *implementerAIDocumentSets) toDocumentSet(item ai_document_set.QueryDocumentSet) *AIDocumentSet {
 	documentSet := new(AIDocumentSet)
-	documentSet.QueryDocumentSet = item
 	documentSet.DatabaseName = i.database.DatabaseName
 	documentSet.CollectionViewName = i.collectionView.CollectionViewName
+	documentSet.DocumentSetId = item.DocumentSetId
+	documentSet.DocumentSetName = item.DocumentSetName
+	if item.Text != nil {
+		documentSet.Text = *item.Text
+	}
+	if item.TextPrefix != nil {
+		documentSet.TextPrefix = *item.TextPrefix
+	}
+	documentSet.DocumentSetInfo = item.DocumentSetInfo
+	documentSet.ScalarFields = make(map[string]Field)
+	for k, v := range item.ScalarFields {
+		documentSet.ScalarFields[k] = Field{Val: v}
+	}
 
 	docSetImpl := new(implementerAIDocumentSet)
 	docSetImpl.SdkClient = i.SdkClient
@@ -466,5 +485,30 @@ func (i *implementerAIDocumentSets) toDocumentSet(item ai_document_set.QueryDocu
 	docSetImpl.documentSet = documentSet
 
 	documentSet.AIDocumentSetInterface = docSetImpl
+	return documentSet
+}
+
+type AISearchDocumentSet struct {
+	DatabaseName       string
+	CollectionViewName string
+	DocumentSetId      string                     `json:"documentSetId"`
+	DocumentSetName    string                     `json:"documentSetName"`
+	Score              float64                    `json:"score"`
+	SearchData         ai_document_set.SearchData `json:"data"`
+	ScalarFields       map[string]Field
+}
+
+func (i *implementerAIDocumentSets) toSearchDocumentSet(item ai_document_set.SearchDocument) *AISearchDocumentSet {
+	documentSet := new(AISearchDocumentSet)
+	documentSet.DatabaseName = i.database.DatabaseName
+	documentSet.CollectionViewName = i.collectionView.CollectionViewName
+	documentSet.DocumentSetId = item.DocumentSet.DocumentSetId
+	documentSet.DocumentSetName = item.DocumentSet.DocumentSetName
+	documentSet.Score = item.Score
+	documentSet.SearchData = item.Data
+	documentSet.ScalarFields = make(map[string]Field)
+	for k, v := range item.DocumentSet.ScalarFields {
+		documentSet.ScalarFields[k] = Field{Val: v}
+	}
 	return documentSet
 }

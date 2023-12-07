@@ -19,6 +19,7 @@
 package tcvectordb
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -58,6 +59,8 @@ func (f Field) Uint64Array() []uint64 {
 			res[i] = v.Index(i).Uint()
 		case reflect.Int, reflect.Int64:
 			res[i] = uint64(v.Index(i).Int())
+		case reflect.Interface:
+			res[i] = Field{Val: v.Index(i).Elem().Interface()}.Uint64()
 		}
 	}
 	return res
@@ -74,6 +77,9 @@ func (f Field) Uint64() uint64 {
 		return n
 	case float32, float64:
 		return uint64(reflect.ValueOf(v).Float())
+	case json.Number:
+		n, _ := v.Int64()
+		return uint64(n)
 	}
 	return 0
 }
@@ -89,6 +95,9 @@ func (f Field) Float() float64 {
 		return n
 	case float32, float64:
 		return reflect.ValueOf(v).Float()
+	case json.Number:
+		n, _ := v.Float64()
+		return n
 	}
 	return 0
 }

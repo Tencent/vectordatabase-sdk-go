@@ -297,9 +297,9 @@ func (i *implementerDocument) Update(ctx context.Context, param UpdateDocumentPa
 }
 
 type Document struct {
-	Id     string
-	Vector []float32
+	Id     string    `json:"id"`
+	Vector []float32 `json:"vector"`
 	// omitempty when upsert
-	Score  float32 `json:"_,omitempty"`
+	Score  float32 `json:"score"`
 	Fields map[string]Field
 }

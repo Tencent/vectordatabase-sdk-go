@@ -337,18 +337,18 @@ func optionParams(column *api.IndexColumn, v VectorIndex) {
 type Collection struct {
 	DocumentInterface `json:"-"`
 	IndexInterface    `json:"-"`
-	DatabaseName      string
-	CollectionName    string
-	DocumentCount     int64
-	Alias             []string
-	ShardNum          uint32
-	ReplicasNum       uint32
-	Indexes           Indexes
-	IndexStatus       IndexStatus
-	Embedding         Embedding
-	Description       string
-	Size              uint64
-	CreateTime        time.Time
+	DatabaseName      string      `json:"databaseName"`
+	CollectionName    string      `json:"collectionName"`
+	DocumentCount     int64       `json:"documentCount"`
+	Alias             []string    `json:"alias"`
+	ShardNum          uint32      `json:"shardNum"`
+	ReplicasNum       uint32      `json:"replicasNum"`
+	Indexes           Indexes     `json:"indexes"`
+	IndexStatus       IndexStatus `json:"indexStatus"`
+	Embedding         Embedding   `json:"embedding"`
+	Description       string      `json:"description"`
+	Size              uint64      `json:"size"`
+	CreateTime        time.Time   `json:"createTime"`
 }
 
 func (c *Collection) Debug(v bool) {
