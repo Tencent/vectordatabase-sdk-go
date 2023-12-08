@@ -21,7 +21,7 @@ package tcvectordb
 import (
 	"context"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_alias"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_alias"
 )
 
 var _ AIAliasInterface = &implementerAIAlias{}

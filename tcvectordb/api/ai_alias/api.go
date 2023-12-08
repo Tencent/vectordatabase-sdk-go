@@ -18,7 +18,7 @@
 
 package ai_alias
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
+import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 
 type SetReq struct {
 	api.Meta       `path:"/ai/alias/set" tags:"Alias" method:"Post" summary:"指定集合别名，新增/修改"`

@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 )
 
 var (

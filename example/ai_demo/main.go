@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
-	collection_view "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/collection_view"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
+	collection_view "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/collection_view"
 )
 
 type AIDemo struct {

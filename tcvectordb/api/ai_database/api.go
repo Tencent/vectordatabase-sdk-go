@@ -1,6 +1,6 @@
 package ai_database
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
+import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 
 type CreateReq struct {
 	api.Meta `path:"/ai/database/create" tags:"Database" method:"Post" summary:"创建ai database，如果database已经存在返回成功"`

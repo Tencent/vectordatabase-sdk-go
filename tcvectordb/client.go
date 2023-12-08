@@ -30,8 +30,8 @@ import (
 	"strings"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
 	"github.com/pkg/errors"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 )
 
 // SdkClient the http client interface
