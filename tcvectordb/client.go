@@ -52,6 +52,8 @@ type ClientOption struct {
 	IdleConnTimeout time.Duration
 	// ReadConsistency: default: EventualConsistency
 	ReadConsistency ReadConsistency
+	// Transport: default: http.Transport
+	Transport http.RoundTripper
 }
 type Client struct {
 	DatabaseInterface
@@ -103,12 +105,16 @@ func newClient(url, username, key string, option ClientOption) (*Client, error) 
 	cli.option = optionMerge(option)
 
 	cli.cli = new(http.Client)
-	cli.cli.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-		MaxIdleConnsPerHost: cli.option.MaxIdldConnPerHost,
-		IdleConnTimeout:     cli.option.IdleConnTimeout,
+	if option.Transport != nil {
+		cli.cli.Transport = option.Transport
+	} else {
+		cli.cli.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+			MaxIdleConnsPerHost: cli.option.MaxIdldConnPerHost,
+			IdleConnTimeout:     cli.option.IdleConnTimeout,
+		}
 	}
 	cli.cli.Timeout = cli.option.Timeout
 
