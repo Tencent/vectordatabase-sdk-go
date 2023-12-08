@@ -18,7 +18,7 @@
 
 package index
 
-import "git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
+import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 
 type RebuildReq struct {
 	api.Meta          `path:"/index/rebuild" tags:"Index" method:"Post" summary:"重建整个collection的所有索引"`

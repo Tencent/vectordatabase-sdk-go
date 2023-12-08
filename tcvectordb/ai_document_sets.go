@@ -30,8 +30,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 	"github.com/pkg/errors"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 

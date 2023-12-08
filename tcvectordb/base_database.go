@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/ai_database"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/database"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_database"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/database"
 )
 
 var _ DatabaseInterface = &implementerDatabase{}

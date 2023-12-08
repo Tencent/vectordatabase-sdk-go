@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api"
-	"git.woa.com/cloud_nosql/vectordb/vectordatabase-sdk-go/tcvectordb/api/collection"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/collection"
 )
 
 var _ CollectionInterface = &implementerCollection{}
