@@ -57,12 +57,12 @@ type ListReq struct {
 
 // ListRes get database list response
 type ListRes struct {
-	Code          int32                    `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Msg           string                   `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
-	Redirect      string                   `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
-	Databases     []string                 `protobuf:"bytes,4,rep,name=databases,proto3" json:"databases,omitempty"`
-	AffectedCount int32                    `protobuf:"varint,5,opt,name=affectedCount,proto3" json:"affectedCount,omitempty"`
-	Info          map[string]*DatabaseInfo `json:"info,omitempty"`
+	Code          int32                   `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Msg           string                  `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	Redirect      string                  `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
+	Databases     []string                `protobuf:"bytes,4,rep,name=databases,proto3" json:"databases,omitempty"`
+	AffectedCount int32                   `protobuf:"varint,5,opt,name=affectedCount,proto3" json:"affectedCount,omitempty"`
+	Info          map[string]DatabaseInfo `json:"info,omitempty"`
 }
 
 type DatabaseInfo struct {
