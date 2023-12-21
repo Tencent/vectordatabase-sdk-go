@@ -269,6 +269,9 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	coll.CreateTime, _ = time.Parse("2006-01-02 15:04:05", collectionItem.CreateTime)
 
 	for _, index := range collectionItem.Indexes {
+		if index == nil {
+			continue
+		}
 		switch index.FieldType {
 		case string(Vector):
 			vector := VectorIndex{}
@@ -278,15 +281,18 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			vector.Dimension = index.Dimension
 			vector.MetricType = MetricType(index.MetricType)
 			vector.IndexedCount = index.IndexedCount
-			switch vector.IndexType {
-			case HNSW:
-				vector.Params = &HNSWParam{M: index.Params.M, EfConstruction: index.Params.EfConstruction}
-			case IVF_FLAT:
-				vector.Params = &IVFFLATParams{NList: index.Params.Nlist}
-			case IVF_PQ:
-				vector.Params = &IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
-			case IVF_SQ8:
-				vector.Params = &IVFSQParams{NList: index.Params.Nlist}
+
+			if index.Params != nil {
+				switch vector.IndexType {
+				case HNSW:
+					vector.Params = &HNSWParam{M: index.Params.M, EfConstruction: index.Params.EfConstruction}
+				case IVF_FLAT:
+					vector.Params = &IVFFLATParams{NList: index.Params.Nlist}
+				case IVF_PQ:
+					vector.Params = &IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
+				case IVF_SQ8:
+					vector.Params = &IVFSQParams{NList: index.Params.Nlist}
+				}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
 
