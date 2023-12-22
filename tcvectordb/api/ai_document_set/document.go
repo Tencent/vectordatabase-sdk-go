@@ -9,12 +9,13 @@ import (
 
 // Document document struct for document api
 type QueryDocumentSet struct {
-	DocumentSetId   string                 `json:"documentSetId"`
-	DocumentSetName string                 `json:"documentSetName"`
-	Text            *string                `json:"text,omitempty"`
-	TextPrefix      *string                `json:"textPrefix,omitempty"`
-	DocumentSetInfo *DocumentSetInfo       `json:"documentSetInfo,omitempty"`
-	ScalarFields    map[string]interface{} `json:"-"`
+	DocumentSetId      string                      `json:"documentSetId"`
+	DocumentSetName    string                      `json:"documentSetName"`
+	Text               *string                     `json:"text,omitempty"`
+	TextPrefix         *string                     `json:"textPrefix,omitempty"`
+	DocumentSetInfo    *DocumentSetInfo            `json:"documentSetInfo,omitempty"`
+	ScalarFields       map[string]interface{}      `json:"-"`
+	SplitterPreprocess *DocumentSplitterPreprocess `json:"splitterPreprocess,omitempty"`
 }
 
 type DocumentSetInfo struct {
@@ -26,6 +27,12 @@ type DocumentSetInfo struct {
 	LastUpdateTime  *string `json:"lastUpdateTime,omitempty"`
 	IndexedErrorMsg *string `json:"indexedErrorMsg,omitempty"`
 	Keywords        *string `json:"keywords,omitempty"`
+}
+
+type DocumentSplitterPreprocess struct {
+	AppendTitleToChunk    *bool   `json:"appendTitleToChunk,omitempty"`
+	AppendKeywordsToChunk *bool   `json:"appendKeywordsToChunk,omitempty"`
+	ChunkSplitter         *string `json:"chunkSplitter,omitempty"`
 }
 
 func (d QueryDocumentSet) MarshalJSON() ([]byte, error) {

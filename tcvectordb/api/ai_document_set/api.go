@@ -173,3 +173,27 @@ type GetRes struct {
 	Count        uint64           `json:"count"`
 	DocumentSets QueryDocumentSet `json:"documentSet"`
 }
+
+type GetChunksReq struct {
+	api.Meta        `path:"/ai/documentSet/getChunks" tags:"Document" method:"Post""`
+	Database        string `json:"database"`
+	CollectionView  string `json:"collectionView"`
+	DocumentSetName string `json:"documentSetName"`
+	DocumentSetId   string `json:"documentSetId"`
+	Limit           *int64 `json:"limit"`
+	Offset          int64  `json:"offset"`
+}
+
+type GetChunksRes struct {
+	api.CommonRes
+	DocumentSetId   string  `json:"documentSetId"`
+	DocumentSetName string  `json:"documentSetName"`
+	Count           uint64  `json:"count"`
+	Chunks          []Chunk `json:"chunks"`
+}
+
+type Chunk struct {
+	Text     string `json:"text"`
+	StartPos uint64 `json:"startPos"`
+	EndPos   uint64 `json:"endPos"`
+}

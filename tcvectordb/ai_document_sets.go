@@ -42,6 +42,7 @@ type AIDocumentSetsInterface interface {
 	Query(ctx context.Context, params QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error)
 	GetDocumentSetByName(ctx context.Context, documentSetName string) (*GetAIDocumentSetResult, error)
 	GetDocumentSetById(ctx context.Context, documentSetId string) (*GetAIDocumentSetResult, error)
+	GetChunks(ctx context.Context, param GetAIDocumentSetChunksParams) (*GetAIDocumentSetChunksResult, error)
 	Search(ctx context.Context, param SearchAIDocumentSetsParams) (*SearchAIDocumentSetResult, error)
 	DeleteByIds(ctx context.Context, documentSetIds ...string) (result *DeleteAIDocumentSetResult, err error)
 	DeleteByNames(ctx context.Context, documentSetNames ...string) (result *DeleteAIDocumentSetResult, err error)
@@ -61,6 +62,7 @@ type AIDocumentSet struct {
 	TextPrefix             string                           `json:"textPrefix"` // assign when use query api
 	DocumentSetInfo        *ai_document_set.DocumentSetInfo `json:"documentSetInfo"`
 	ScalarFields           map[string]Field
+	SplitterPreprocess     *ai_document_set.DocumentSplitterPreprocess `json:"splitterPreprocess,omitempty"`
 }
 
 type implementerAIDocumentSets struct {
@@ -152,6 +154,47 @@ func (i *implementerAIDocumentSets) get(ctx context.Context, param GetAIDocument
 	}
 	result.Count = res.Count
 	result.AIDocumentSet = *i.toDocumentSet(res.DocumentSets)
+	return result, nil
+}
+
+type GetAIDocumentSetChunksParams struct {
+	DocumentSetId   string `json:"documentSetId"`
+	DocumentSetName string `json:"documentSetName"`
+	Limit           *int64 `json:"limit"`
+	Offset          int64  `json:"offset"`
+}
+
+type GetAIDocumentSetChunksResult struct {
+	DocumentSetId   string                  `json:"documentSetId"`
+	DocumentSetName string                  `json:"documentSetName"`
+	Count           uint64                  `json:"count"`
+	Chunks          []ai_document_set.Chunk `json:"chunks"`
+}
+
+func (i *implementerAIDocumentSets) GetChunks(ctx context.Context, param GetAIDocumentSetChunksParams) (*GetAIDocumentSetChunksResult, error) {
+	if !i.database.IsAIDatabase() {
+		return nil, BaseDbTypeError
+	}
+	req := new(ai_document_set.GetChunksReq)
+	res := new(ai_document_set.GetChunksRes)
+
+	req.Database = i.database.DatabaseName
+	req.CollectionView = i.collectionView.CollectionViewName
+	req.DocumentSetId = param.DocumentSetId
+	req.DocumentSetName = param.DocumentSetName
+	req.Limit = param.Limit
+	req.Offset = param.Offset
+
+	result := new(GetAIDocumentSetChunksResult)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+	result.Count = res.Count
+	result.DocumentSetId = res.DocumentSetId
+	result.DocumentSetName = res.DocumentSetName
+	result.Count = res.Count
+	result.Chunks = append(result.Chunks, res.Chunks...)
 	return result, nil
 }
 
@@ -347,10 +390,11 @@ func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param G
 }
 
 type LoadAndSplitTextParams struct {
-	DocumentSetName string
-	Reader          io.Reader
-	LocalFilePath   string
-	MetaData        map[string]interface{}
+	DocumentSetName    string
+	Reader             io.Reader
+	LocalFilePath      string
+	MetaData           map[string]interface{}
+	SplitterPreprocess ai_document_set.DocumentSplitterPreprocess
 }
 
 type LoadAndSplitTextResult struct {
@@ -390,15 +434,19 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 	})
 
 	header := make(http.Header)
-	metaData := param.MetaData
 
-	marshalData, err := json.Marshal(metaData)
+	marshalData, err := json.Marshal(param.MetaData)
 	if err != nil {
 		return nil, fmt.Errorf("put param MetaData into cos header failed, err: %v", err.Error())
+	}
+	configMarshalData, err := json.Marshal(param.SplitterPreprocess)
+	if err != nil {
+		return nil, fmt.Errorf("put param SplitterPreprocess into cos header failed, err: %v", err.Error())
 	}
 
 	header.Add("x-cos-meta-data", url.QueryEscape(base64.StdEncoding.EncodeToString(marshalData)))
 	header.Add("x-cos-meta-id", res.DocumentSetId)
+	header.Add("x-cos-meta-config", url.QueryEscape(base64.StdEncoding.EncodeToString(configMarshalData)))
 
 	headerData, err := json.Marshal(header)
 	if err != nil {
@@ -485,6 +533,7 @@ func (i *implementerAIDocumentSets) toDocumentSet(item ai_document_set.QueryDocu
 	docSetImpl.documentSet = documentSet
 
 	documentSet.AIDocumentSetInterface = docSetImpl
+	documentSet.SplitterPreprocess = item.SplitterPreprocess
 	return documentSet
 }
 
