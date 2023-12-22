@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/collection_view"
 )
 
@@ -147,11 +148,20 @@ func TestLoadAndSplitText(t *testing.T) {
 	// 	return
 	// }
 	// defer fd.Close()
+	appendTitleToChunk := false
+	appendKeywordsToChunk := true
+	chunkSplitter := "\n\n"
+
 	result, err := col.LoadAndSplitText(ctx, tcvectordb.LoadAndSplitTextParams{
 		// DocumentSetName: "tcvdb.md",
 		// Reader:          fd,
 		LocalFilePath: "../example/tcvdb.md",
 		MetaData:      metaData,
+		SplitterPreprocess: ai_document_set.DocumentSplitterPreprocess{
+			ChunkSplitter:         &chunkSplitter,
+			AppendTitleToChunk:    &appendTitleToChunk,
+			AppendKeywordsToChunk: &appendKeywordsToChunk,
+		},
 	})
 	printErr(err)
 	t.Logf("%+v", result)
@@ -162,12 +172,33 @@ func TestAIGetDocumentSet(t *testing.T) {
 	t.Logf("==============================GetDocumentSetByName==============================")
 	res, err := col.GetDocumentSetByName(ctx, "tcvdb.md")
 	printErr(err)
-	t.Logf("document: %+v", res)
+	t.Logf("document: %+v", ToJson(res))
 
 	t.Logf("==============================GetDocumentSetById==============================")
 	res, err = col.GetDocumentSetById(ctx, res.DocumentSetId)
 	printErr(err)
-	t.Logf("document: %+v", res)
+	t.Logf("document: %+v", ToJson(res))
+}
+
+func TestAIGetDocumentSetChunks(t *testing.T) {
+	col := cli.AIDatabase(aiDatabase).CollectionView(collectionViewName)
+	t.Logf("==============================GetChunks==============================")
+	result, err := col.GetChunks(ctx, tcvectordb.GetAIDocumentSetChunksParams{
+		DocumentSetName: "tcvdb.md",
+	})
+	printErr(err)
+	log.Printf("GetChunks, count: %v", result.Count)
+	for _, chunk := range result.Chunks {
+		log.Printf("chunk: %+v", chunk)
+	}
+}
+
+func ToJson(any interface{}) string {
+	bytes, err := json.Marshal(any)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
 }
 
 func TestAIQuery(t *testing.T) {

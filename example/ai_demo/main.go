@@ -134,12 +134,22 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 func (d *AIDemo) LoadAndSplitText(ctx context.Context, database, collection, filePath string) (*tcvectordb.LoadAndSplitTextResult, error) {
 	log.Println("---------------------------- UploadFile ---------------------------")
 	coll := d.client.AIDatabase(database).CollectionView(collection)
+
+	appendTitleToChunk := true
+	appendKeywordsToChunk := false
+	chunkSplitter := "\n\n"
+
 	res, err := coll.LoadAndSplitText(ctx, tcvectordb.LoadAndSplitTextParams{
 		LocalFilePath: filePath,
 		MetaData: map[string]interface{}{
 			"test_str": "v1",
 			"fileKey":  1024,
 			"author":   "sam",
+		},
+		SplitterPreprocess: ai_document_set.DocumentSplitterPreprocess{
+			ChunkSplitter:         &chunkSplitter,
+			AppendTitleToChunk:    &appendTitleToChunk,
+			AppendKeywordsToChunk: &appendKeywordsToChunk,
 		},
 	})
 	if err != nil {
@@ -161,6 +171,22 @@ func (d *AIDemo) GetFile(ctx context.Context, database, collection, fileName str
 	log.Printf("QueryResult: count: %v", result.Count)
 	for _, doc := range result.Documents {
 		log.Printf("QueryDocument: %+v", doc)
+	}
+	return nil
+}
+
+func (d *AIDemo) GetChunks(ctx context.Context, database, collection, fileName string) error {
+	coll := d.client.AIDatabase(database).CollectionView(collection)
+	log.Println("---------------------------- GetChunks by Name ----------------------------")
+	result, err := coll.GetChunks(ctx, tcvectordb.GetAIDocumentSetChunksParams{
+		DocumentSetName: fileName,
+	})
+	if err != nil {
+		return err
+	}
+	log.Printf("GetChunks, count: %v", result.Count)
+	for _, chunk := range result.Chunks {
+		log.Printf("chunk: %+v", chunk)
 	}
 	return nil
 }
@@ -263,6 +289,8 @@ func main() {
 	printErr(err)
 	time.Sleep(time.Second * 30) // 等待后台解析文件完成
 	err = testVdb.GetFile(ctx, database, collectionView, loadFileRes.DocumentSetName)
+	printErr(err)
+	err = testVdb.GetChunks(ctx, database, collectionView, loadFileRes.DocumentSetName)
 	printErr(err)
 	err = testVdb.QueryAndSearch(ctx, database, collectionView)
 	printErr(err)
