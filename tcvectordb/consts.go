@@ -105,7 +105,8 @@ const (
 type FileType string
 
 const (
-	MarkdownFileType  FileType = "markdown"
+	MarkdownFileType  FileType = ".markdown"
+	MdFileType        FileType = ".md"
 	UnSupportFileType FileType = "unSupport"
 )
 

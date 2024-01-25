@@ -29,6 +29,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"log"
 
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
@@ -479,6 +482,15 @@ func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSp
 		}
 		param.DocumentSetName = filepath.Base(param.LocalFilePath)
 	}
+
+	if param.SplitterPreprocess.ChunkSplitter != nil && *param.SplitterPreprocess.ChunkSplitter != "" {
+		fileType := strings.ToLower(filepath.Ext(param.DocumentSetName))
+		if !(fileType == "" || fileType == string(MarkdownFileType) || fileType == string(MdFileType)) {
+			log.Printf("[Waring] %s", "param SplitterPreprocess.ChunkSplitter will be ommitted, "+
+				"because only markdown filetype supports defining ChunkSplitter")
+		}
+	}
+
 	if param.LocalFilePath != "" {
 		fd, err := os.Open(param.LocalFilePath)
 		if err != nil {

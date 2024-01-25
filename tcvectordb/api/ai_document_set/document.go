@@ -98,11 +98,13 @@ type SearchDocument struct {
 }
 
 type SearchData struct {
-	Text     string   `json:"text"`
-	StartPos int      `json:"startPos"`
-	EndPos   int      `json:"endPos"`
-	Pre      []string `json:"pre"`
-	Next     []string `json:"next"`
+	Text                     string   `json:"text"`
+	StartPos                 int      `json:"startPos"`
+	EndPos                   int      `json:"endPos"`
+	Pre                      []string `json:"pre"`
+	Next                     []string `json:"next"`
+	ParagraphTitle           string   `json:"paragraphTitle"`
+	AllParentParagraphTitles []string `json:"allParentParagraphTitles"`
 }
 
 type SearchDocumentSet struct {
