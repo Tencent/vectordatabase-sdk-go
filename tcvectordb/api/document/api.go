@@ -130,7 +130,7 @@ type SearchCond struct {
 	Params         *SearchParams `json:"params,omitempty"`
 	RetrieveVector bool          `json:"retrieveVector,omitempty"` // 是否返回原始向量，注意设置为true时会降低性能
 	Limit          int64         `json:"limit,omitempty"`          // 结果数量
-	OutputFields   []string      `json:"outputfields,omitempty"`   // 输出字段
+	OutputFields   []string      `json:"outputFields,omitempty"`   // 输出字段
 	Retrieves      []string      `json:"retrieves,omitempty"`      // 使用字符串检索
 	Vectors        [][]float32   `json:"vectors,omitempty"`
 	Filter         string        `json:"filter,omitempty"`
