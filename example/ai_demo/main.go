@@ -285,6 +285,7 @@ func main() {
 	printErr(err)
 	err = testVdb.CreateCollectionView(ctx, database, collectionView)
 	printErr(err)
+	// 当前支持的文件格式markdown(.md或.markdown)、pdf(.pdf)、ppt(.pptx)、word(.docx)
 	loadFileRes, err := testVdb.LoadAndSplitText(ctx, database, collectionView, "../tcvdb.md")
 	printErr(err)
 	time.Sleep(time.Second * 30) // 等待后台解析文件完成
