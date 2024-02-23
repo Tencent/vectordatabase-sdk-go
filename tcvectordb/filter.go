@@ -65,7 +65,7 @@ func (f *Filter) AndNot(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
 	if f.cond == "" {
-		f.cond = cond
+		f.cond = fmt.Sprintf("not %s", cond)
 	} else {
 		f.cond = fmt.Sprintf("%s and not %s", f.cond, cond)
 	}
@@ -77,7 +77,7 @@ func (f *Filter) OrNot(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
 	if f.cond == "" {
-		f.cond = cond
+		f.cond = fmt.Sprintf("not %s", cond)
 	} else {
 		f.cond = fmt.Sprintf("%s or not %s", f.cond, cond)
 	}
