@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -97,12 +98,25 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY})
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "expire_at", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
+
+	otherParams := &tcvectordb.CreateCollectionParams{
+		FilterIndexConfig: &tcvectordb.FilterIndexConfig{
+			FilterAll:                true,                  // true：全索引，标量字段默认创建索引；default：false
+			FieldsWithoutFilterIndex: []string{"publisher"}, // filterAll=true时，可在此指定不创建索引的字段；filterAll=false时不支持配置；default：NULL
+			MaxStrLen:                64,                    // 单条document中字段的字符数超过该长度后，不创建索引；default：32
+		},
+		TtlConfig: &tcvectordb.TtlConfig{
+			Enable:    true,        // 是否开启TTL，true-开启，false-关闭
+			TimeField: "expire_at", // 指定存储时间戳的字段名，必须是uint64的filter索引
+		},
+	}
 
 	// 第二步：创建 Collection
 	// 创建collection耗时较长，需要调整客户端的timeout
 	// 这里以三可用区实例作为参考，具体实例不同的规格所支持的shard和replicas区间不同，需要参考官方文档
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollection(ctx, collection, 3, 0, "test collection", index)
+	_, err = db.CreateCollection(ctx, collection, 3, 0, "test collection", index, otherParams)
 	if err != nil {
 		return err
 	}
@@ -114,7 +128,7 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 		return err
 	}
 	for _, col := range collListRes.Collections {
-		log.Printf("ListCollection: %+v", col)
+		log.Printf("ListCollection: %+v", ToJson(col))
 	}
 
 	log.Println("----------------------------- SetAlias -----------------------------")
@@ -130,7 +144,7 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 	if err != nil {
 		return err
 	}
-	log.Printf("DescribeCollection: %+v", colRes)
+	log.Printf("DescribeCollection: %+v", ToJson(colRes))
 
 	log.Println("---------------------------- DeleteAlias ---------------------------")
 	// 删除 Collection 的 alias
@@ -276,6 +290,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 			Params:         &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 			RetrieveVector: false,                                // 是否需要返回向量字段，False：不返回，True：返回
 			Limit:          10,                                   // 指定 Top K 的 K 值
+			Radius:         0.6,                                  // 指定检索半径，score>=radius才会返回
 		})
 	if err != nil {
 		return err
@@ -356,6 +371,14 @@ func printErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ToJson(any interface{}) string {
+	bytes, err := json.Marshal(any)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
 }
 
 func main() {

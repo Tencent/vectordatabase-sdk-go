@@ -105,11 +105,24 @@ func TestCreateCollection(t *testing.T) {
 			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
 			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
 			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
+			{FieldName: "expire_at", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
 		},
 	}
 
 	db.WithTimeout(time.Second * 30)
-	coll, err := db.CreateCollection(ctx, collectionName, 1, 0, "test collection", index)
+	param := &tcvectordb.CreateCollectionParams{
+		FilterIndexConfig: &tcvectordb.FilterIndexConfig{
+			FilterAll:                true,
+			FieldsWithoutFilterIndex: []string{"age"},
+			MaxStrLen:                12,
+		},
+		TtlConfig: &tcvectordb.TtlConfig{
+			Enable:    true,
+			TimeField: "expire_at",
+		},
+	}
+
+	coll, err := db.CreateCollection(ctx, collectionName, 1, 1, "test collection", index, param)
 	printErr(err)
 	log.Printf("CreateCollection success: %v: %v", coll.DatabaseName, coll.CollectionName)
 }
@@ -130,7 +143,7 @@ func TestDescribeCollection(t *testing.T) {
 	db := cli.Database(database)
 	res, err := db.DescribeCollection(ctx, collectionName)
 	printErr(err)
-	log.Printf("DescribeCollection result: %+v", res)
+	log.Printf("DescribeCollection result: %+v", ToJson(res))
 }
 
 func TestUpsert(t *testing.T) {
@@ -226,6 +239,7 @@ func TestSearch(t *testing.T) {
 		Params:         &tcvectordb.SearchDocParams{Ef: 100},
 		RetrieveVector: false,
 		Limit:          10,
+		Radius:         0.6,
 	})
 	printErr(err)
 	log.Printf("search by vector-----------------")

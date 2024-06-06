@@ -22,18 +22,31 @@ import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 
 // CreateReq create collection request
 type CreateReq struct {
-	api.Meta    `path:"/collection/create" tags:"Collection" method:"Post" summary:"创建collection"`
-	Database    string             `json:"database,omitempty"`
-	Collection  string             `json:"collection,omitempty"`
-	ReplicaNum  uint32             `json:"replicaNum,omitempty"`
-	ShardNum    uint32             `json:"shardNum,omitempty"`
-	Size        uint64             `json:"size,omitempty"`
-	CreateTime  string             `json:"createTime,omitempty"`
-	Description string             `json:"description,omitempty"`
-	Indexes     []*api.IndexColumn `json:"indexes,omitempty"`
-	IndexStatus *IndexStatus       `json:"indexStatus,omitempty"`
-	AliasList   []string           `json:"alias_list,omitempty"`
-	Embedding   Embedding          `json:"embedding"`
+	api.Meta          `path:"/collection/create" tags:"Collection" method:"Post" summary:"创建collection"`
+	Database          string             `json:"database,omitempty"`
+	Collection        string             `json:"collection,omitempty"`
+	ReplicaNum        uint32             `json:"replicaNum,omitempty"`
+	ShardNum          uint32             `json:"shardNum,omitempty"`
+	Size              uint64             `json:"size,omitempty"`
+	CreateTime        string             `json:"createTime,omitempty"`
+	Description       string             `json:"description,omitempty"`
+	Indexes           []*api.IndexColumn `json:"indexes,omitempty"`
+	IndexStatus       *IndexStatus       `json:"indexStatus,omitempty"`
+	AliasList         []string           `json:"alias_list,omitempty"`
+	Embedding         Embedding          `json:"embedding"`
+	FilterIndexConfig *FilterIndexConfig `json:"filterIndexConfig,omitempty"`
+	TtlConfig         *TtlConfig         `json:"ttlConfig,omitempty"`
+}
+
+type FilterIndexConfig struct {
+	FilterAll                bool     `json:"filterAll"`
+	FieldsWithoutFilterIndex []string `json:"fieldsWithoutFilterIndex,omitempty"`
+	MaxStrLen                int32    `json:"maxStrLen,omitempty"`
+}
+
+type TtlConfig struct {
+	Enable    bool   `json:"enable"`
+	TimeField string `json:"timeField,omitempty"`
 }
 
 type Embedding struct {
@@ -93,18 +106,20 @@ type ListRes struct {
 }
 
 type DescribeCollectionItem struct {
-	Database      string             `json:"database,omitempty"`
-	Collection    string             `json:"collection,omitempty"`
-	ReplicaNum    uint32             `json:"replicaNum,omitempty"`
-	ShardNum      uint32             `json:"shardNum,omitempty"`
-	Size          uint64             `json:"size,omitempty"`
-	CreateTime    string             `json:"createTime,omitempty"`
-	Description   string             `json:"description,omitempty"`
-	Indexes       []*api.IndexColumn `json:"indexes,omitempty"`
-	IndexStatus   *IndexStatus       `json:"indexStatus,omitempty"`
-	Alias         []string           `json:"alias"`
-	DocumentCount int64              `json:"documentCount,omitempty"`
-	Embedding     *EmbeddingRes      `json:"embedding,omitempty"`
+	Database          string             `json:"database,omitempty"`
+	Collection        string             `json:"collection,omitempty"`
+	ReplicaNum        uint32             `json:"replicaNum,omitempty"`
+	ShardNum          uint32             `json:"shardNum,omitempty"`
+	Size              uint64             `json:"size,omitempty"`
+	CreateTime        string             `json:"createTime,omitempty"`
+	Description       string             `json:"description,omitempty"`
+	Indexes           []*api.IndexColumn `json:"indexes,omitempty"`
+	IndexStatus       *IndexStatus       `json:"indexStatus,omitempty"`
+	Alias             []string           `json:"alias"`
+	DocumentCount     int64              `json:"documentCount,omitempty"`
+	Embedding         *EmbeddingRes      `json:"embedding,omitempty"`
+	FilterIndexConfig *FilterIndexConfig `json:"filterIndexConfig,omitempty"`
+	TtlConfig         *TtlConfig         `json:"ttlConfig,omitempty"`
 }
 
 type TruncateReq struct {

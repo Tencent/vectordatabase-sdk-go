@@ -129,6 +129,7 @@ type SearchCond struct {
 	DocumentIds    []string      `json:"documentIds,omitempty"` // 使用向量id检索
 	Params         *SearchParams `json:"params,omitempty"`
 	RetrieveVector bool          `json:"retrieveVector,omitempty"` // 是否返回原始向量，注意设置为true时会降低性能
+	Radius         float64       `json:"radius,omitempty"`         // 指定检索半径，score>=radius才会返回
 	Limit          int64         `json:"limit,omitempty"`          // 结果数量
 	OutputFields   []string      `json:"outputFields,omitempty"`   // 输出字段
 	Retrieves      []string      `json:"retrieves,omitempty"`      // 使用字符串检索

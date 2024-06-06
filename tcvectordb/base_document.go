@@ -148,6 +148,7 @@ type SearchDocumentParams struct {
 	RetrieveVector bool
 	OutputFields   []string
 	Limit          int64
+	Radius         float64
 }
 
 type SearchDocParams struct {
@@ -193,6 +194,7 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 		param := params[0]
 		req.Search.Filter = param.Filter.Cond()
 		req.Search.RetrieveVector = param.RetrieveVector
+		req.Search.Radius = param.Radius
 		req.Search.OutputFields = param.OutputFields
 		req.Search.Limit = param.Limit
 
@@ -200,7 +202,6 @@ func (i *implementerDocument) search(ctx context.Context, documentIds []string, 
 			req.Search.Params = new(document.SearchParams)
 			req.Search.Params.Nprobe = param.Params.Nprobe
 			req.Search.Params.Ef = param.Params.Ef
-			req.Search.Params.Radius = param.Params.Radius
 		}
 	}
 
