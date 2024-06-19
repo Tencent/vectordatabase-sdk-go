@@ -39,9 +39,9 @@ type CreateReq struct {
 }
 
 type FilterIndexConfig struct {
-	FilterAll                bool     `json:"filterAll"`
-	FieldsWithoutFilterIndex []string `json:"fieldsWithoutFilterIndex,omitempty"`
-	MaxStrLen                int32    `json:"maxStrLen,omitempty"`
+	FilterAll          bool     `json:"filterAll"`
+	FieldsWithoutIndex []string `json:"fieldsWithoutIndex,omitempty"`
+	MaxStrLen          int32    `json:"maxStrLen,omitempty"`
 }
 
 type TtlConfig struct {

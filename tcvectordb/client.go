@@ -46,8 +46,8 @@ type SdkClient interface {
 type ClientOption struct {
 	// Timeout: default 5s
 	Timeout time.Duration
-	// MaxIdldConnPerHost: default 2
-	MaxIdldConnPerHost int
+	// MaxIdleConnPerHost: default 2
+	MaxIdleConnPerHost int
 	// IdleConnTimeout: default 0 means no limit
 	IdleConnTimeout time.Duration
 	// ReadConsistency: default: EventualConsistency
@@ -75,7 +75,7 @@ type CommmonResponse struct {
 
 var defaultOption = ClientOption{
 	Timeout:            time.Second * 5,
-	MaxIdldConnPerHost: 2,
+	MaxIdleConnPerHost: 2,
 	IdleConnTimeout:    time.Minute,
 	ReadConsistency:    api.EventualConsistency,
 }
@@ -112,7 +112,7 @@ func newClient(url, username, key string, option ClientOption) (*Client, error) 
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 			},
-			MaxIdleConnsPerHost: cli.option.MaxIdldConnPerHost,
+			MaxIdleConnsPerHost: cli.option.MaxIdleConnPerHost,
 			IdleConnTimeout:     cli.option.IdleConnTimeout,
 		}
 	}
@@ -218,8 +218,8 @@ func optionMerge(option ClientOption) ClientOption {
 	if option.IdleConnTimeout == 0 {
 		option.IdleConnTimeout = defaultOption.IdleConnTimeout
 	}
-	if option.MaxIdldConnPerHost == 0 {
-		option.MaxIdldConnPerHost = defaultOption.MaxIdldConnPerHost
+	if option.MaxIdleConnPerHost == 0 {
+		option.MaxIdleConnPerHost = defaultOption.MaxIdleConnPerHost
 	}
 	if option.ReadConsistency == "" {
 		option.ReadConsistency = defaultOption.ReadConsistency

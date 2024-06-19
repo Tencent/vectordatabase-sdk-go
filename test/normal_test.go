@@ -112,9 +112,9 @@ func TestCreateCollection(t *testing.T) {
 	db.WithTimeout(time.Second * 30)
 	param := &tcvectordb.CreateCollectionParams{
 		FilterIndexConfig: &tcvectordb.FilterIndexConfig{
-			FilterAll:                true,
-			FieldsWithoutFilterIndex: []string{"age"},
-			MaxStrLen:                12,
+			FilterAll:          true,
+			FieldsWithoutIndex: []string{"age"},
+			MaxStrLen:          12,
 		},
 		TtlConfig: &tcvectordb.TtlConfig{
 			Enable:    true,
