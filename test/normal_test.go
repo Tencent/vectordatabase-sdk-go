@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	cli                 *tcvectordb.Client
+	cli                 *tcvectordb.TrpcHttpClient
 	ctx                 = context.Background()
 	database            = "go-sdk-test-db"
 	collectionName      = "go-sdk-test-coll"
@@ -40,7 +40,7 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("", "root", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewTrpcHttpClient("http://21.0.177.205:8100", "root", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
@@ -112,9 +112,9 @@ func TestCreateCollection(t *testing.T) {
 	db.WithTimeout(time.Second * 30)
 	param := &tcvectordb.CreateCollectionParams{
 		FilterIndexConfig: &tcvectordb.FilterIndexConfig{
-			FilterAll:                true,
-			FieldsWithoutFilterIndex: []string{"age"},
-			MaxStrLen:                12,
+			FilterAll:          true,
+			FieldsWithoutIndex: []string{"age"},
+			MaxStrLen:          12,
 		},
 		TtlConfig: &tcvectordb.TtlConfig{
 			Enable:    true,
@@ -143,7 +143,7 @@ func TestDescribeCollection(t *testing.T) {
 	db := cli.Database(database)
 	res, err := db.DescribeCollection(ctx, collectionName)
 	printErr(err)
-	log.Printf("DescribeCollection result: %+v", ToJson(res))
+	log.Printf("DescribeCollection result: %+v", tcvectordb.ToJson(res))
 }
 
 func TestUpsert(t *testing.T) {

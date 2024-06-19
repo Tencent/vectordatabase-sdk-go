@@ -106,7 +106,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		if param.FilterIndexConfig != nil {
 			req.FilterIndexConfig = new(collection.FilterIndexConfig)
 			req.FilterIndexConfig.FilterAll = param.FilterIndexConfig.FilterAll
-			req.FilterIndexConfig.FieldsWithoutFilterIndex = param.FilterIndexConfig.FieldsWithoutFilterIndex
+			req.FilterIndexConfig.FieldsWithoutIndex = param.FilterIndexConfig.FieldsWithoutIndex
 			req.FilterIndexConfig.MaxStrLen = param.FilterIndexConfig.MaxStrLen
 		}
 		if param.TtlConfig != nil {
@@ -275,7 +275,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	if collectionItem.FilterIndexConfig != nil {
 		coll.FilterIndexConfig = new(FilterIndexConfig)
 		coll.FilterIndexConfig.FilterAll = collectionItem.FilterIndexConfig.FilterAll
-		coll.FilterIndexConfig.FieldsWithoutFilterIndex = collectionItem.FilterIndexConfig.FieldsWithoutFilterIndex
+		coll.FilterIndexConfig.FieldsWithoutIndex = collectionItem.FilterIndexConfig.FieldsWithoutIndex
 		coll.FilterIndexConfig.MaxStrLen = collectionItem.FilterIndexConfig.MaxStrLen
 	}
 	if collectionItem.TtlConfig != nil {
@@ -404,9 +404,9 @@ type IndexStatus struct {
 }
 
 type FilterIndexConfig struct {
-	FilterAll                bool     `json:"filterAll"`
-	FieldsWithoutFilterIndex []string `json:"fieldsWithoutFilterIndex,omitempty"`
-	MaxStrLen                int32    `json:"maxStrLen,omitempty"`
+	FilterAll          bool     `json:"filterAll"`
+	FieldsWithoutIndex []string `json:"fieldsWithoutIndex,omitempty"`
+	MaxStrLen          int32    `json:"maxStrLen,omitempty"`
 }
 
 type TtlConfig struct {

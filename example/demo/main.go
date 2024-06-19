@@ -18,6 +18,10 @@ func NewDemo(url, username, key string) (*Demo, error) {
 	if err != nil {
 		return nil, err
 	}
+	// cli, err := tcvectordb.NewTrpcHttpClient(url, username, key, &tcvectordb.ClientOption{ReadConsistency: tcvectordb.EventualConsistency})
+	// if err != nil {
+	// 	panic(err)
+	// }
 	// disable/enable http request log print
 	// cli.Debug(false)
 	return &Demo{client: cli}, nil
@@ -102,9 +106,9 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 
 	otherParams := &tcvectordb.CreateCollectionParams{
 		FilterIndexConfig: &tcvectordb.FilterIndexConfig{
-			FilterAll:                true,                  // true：全索引，标量字段默认创建索引；default：false
-			FieldsWithoutFilterIndex: []string{"publisher"}, // filterAll=true时，可在此指定不创建索引的字段；filterAll=false时不支持配置；default：NULL
-			MaxStrLen:                64,                    // 单条document中字段的字符数超过该长度后，不创建索引；default：32
+			FilterAll:          true,                  // true：全索引，标量字段默认创建索引；default：false
+			FieldsWithoutIndex: []string{"publisher"}, // filterAll=true时，可在此指定不创建索引的字段；filterAll=false时不支持配置；default：NULL
+			MaxStrLen:          64,                    // 单条document中字段的字符数超过该长度后，不创建索引；default：32
 		},
 		TtlConfig: &tcvectordb.TtlConfig{
 			Enable:    true,        // 是否开启TTL，true-开启，false-关闭
