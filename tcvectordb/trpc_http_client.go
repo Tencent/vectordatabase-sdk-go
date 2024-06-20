@@ -19,17 +19,18 @@
 package tcvectordb
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
 	"trpc.group/trpc-go/trpc-go/client"
 	"trpc.group/trpc-go/trpc-go/codec"
 	thttp "trpc.group/trpc-go/trpc-go/http"
+	"trpc.group/trpc-go/trpc-go/pool/connpool"
 
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
@@ -67,12 +68,28 @@ func newTrpcHttpClient(url, username, key string, option ClientOption) (*TrpcHtt
 	cli.key = key
 	cli.debug = false
 
+	target := "ip://" + url[7:]
+
 	cli.option = optionMerge(option)
 
-	cli.cli = thttp.NewClientProxy(url[7:],
+	var pool = connpool.NewConnectionPool(
+		connpool.WithIdleTimeout(cli.option.IdleConnTimeout),
+		connpool.WithMaxIdle(cli.option.MaxIdleConnPerHost),
+	)
+
+	transport := thttp.NewClientTransport(false)
+	clientTransport := transport.(*thttp.ClientTransport)
+	clientTransport.Client = http.Client{
+		Transport: cli.option.Transport,
+	}
+
+	cli.cli = thttp.NewClientProxy("trpc.tencent.vdb.service",
+		client.WithTarget(target),
 		client.WithProtocol("http"),
 		client.WithSerializationType(codec.SerializationTypeJSON),
 		client.WithTimeout(cli.option.Timeout),
+		client.WithPool(pool),
+		client.WithTransport(transport),
 	)
 
 	databaseImpl := new(implementerDatabase)
@@ -88,16 +105,8 @@ func (c *TrpcHttpClient) Request(ctx context.Context, req, res interface{}) erro
 		path   = api.Path(req)
 	)
 
-	reqBody := bytes.NewBuffer(nil)
-	encoder := json.NewEncoder(reqBody)
-	encoder.SetEscapeHTML(false)
-	err := encoder.Encode(req)
-	if err != nil {
-		return fmt.Errorf("%w, %#v", err, req)
-	}
-
 	if c.debug {
-		log.Printf("[DEBUG] REQUEST, Method: %s, Path: %s, Body: %s", method, path, strings.TrimSpace(reqBody.String()))
+		log.Printf("[DEBUG] REQUEST, Method: %s, Path: %s, Body: %s", method, path, ToJson(req))
 	}
 
 	auth := fmt.Sprintf("Bearer account=%s&api_key=%s", c.username, c.key)
@@ -110,6 +119,7 @@ func (c *TrpcHttpClient) Request(ctx context.Context, req, res interface{}) erro
 	reqHeader.AddHeader("Content-Type", "application/json")
 	reqHeader.AddHeader("Sdk-Version", SDKVersion)
 
+	var err error
 	if reqHeader.Method == "POST" {
 		err = c.cli.Post(ctx, path, req, res, client.WithReqHead(reqHeader))
 	} else if reqHeader.Method == "GET" {
@@ -117,6 +127,10 @@ func (c *TrpcHttpClient) Request(ctx context.Context, req, res interface{}) erro
 	}
 	if err != nil {
 		return err
+	}
+
+	if c.debug {
+		log.Printf("[DEBUG] RESPONSE: %s", ToJson(res))
 	}
 
 	return nil
@@ -136,4 +150,12 @@ func (c *TrpcHttpClient) Close() {
 
 func (c *TrpcHttpClient) Options() ClientOption {
 	return c.option
+}
+
+func ToJson(any interface{}) string {
+	bytes, err := json.Marshal(any)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
 }

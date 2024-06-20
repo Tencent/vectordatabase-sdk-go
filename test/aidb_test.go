@@ -172,12 +172,12 @@ func TestAIGetDocumentSet(t *testing.T) {
 	t.Logf("==============================GetDocumentSetByName==============================")
 	res, err := col.GetDocumentSetByName(ctx, "tcvdb.md")
 	printErr(err)
-	t.Logf("document: %+v", ToJson(res))
+	t.Logf("document: %+v", tcvectordb.ToJson(res))
 
 	t.Logf("==============================GetDocumentSetById==============================")
 	res, err = col.GetDocumentSetById(ctx, res.DocumentSetId)
 	printErr(err)
-	t.Logf("document: %+v", ToJson(res))
+	t.Logf("document: %+v", tcvectordb.ToJson(res))
 }
 
 func TestAIGetDocumentSetChunks(t *testing.T) {
@@ -191,14 +191,6 @@ func TestAIGetDocumentSetChunks(t *testing.T) {
 	for _, chunk := range result.Chunks {
 		log.Printf("chunk: %+v", chunk)
 	}
-}
-
-func ToJson(any interface{}) string {
-	bytes, err := json.Marshal(any)
-	if err != nil {
-		return ""
-	}
-	return string(bytes)
 }
 
 func TestAIQuery(t *testing.T) {
@@ -219,7 +211,7 @@ func TestAIQuery(t *testing.T) {
 		if err != nil {
 			return
 		}
-		fmt.Println(fmt.Sprintf("res %v", string(b)))
+		fmt.Printf("res %v\n", string(b))
 	}
 }
 

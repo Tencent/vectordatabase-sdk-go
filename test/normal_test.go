@@ -143,7 +143,7 @@ func TestDescribeCollection(t *testing.T) {
 	db := cli.Database(database)
 	res, err := db.DescribeCollection(ctx, collectionName)
 	printErr(err)
-	log.Printf("DescribeCollection result: %+v", ToJson(res))
+	log.Printf("DescribeCollection result: %+v", tcvectordb.ToJson(res))
 }
 
 func TestUpsert(t *testing.T) {
