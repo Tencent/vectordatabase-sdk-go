@@ -133,11 +133,17 @@ func (c *TrpcHttpClient) Request(ctx context.Context, req, res interface{}) erro
 		log.Printf("[DEBUG] RESPONSE: %s", ToJson(res))
 	}
 
-	return c.handleResponse()
+	return c.handleResponse(res)
 }
 
-func (c *TrpcHttpClient) handleResponse() error {
+func (c *TrpcHttpClient) handleResponse(res interface{}) error {
+	var v api.CommonResInterface
+	var ok bool
+	if v, ok = res.(api.CommonResInterface); ok && v.GetCode() != 0 {
+		return errors.Errorf("code: %d, message: %s", v.GetCode(), v.GetMsg())
+	}
 	return nil
+
 }
 
 func (c *TrpcHttpClient) WithTimeout(d time.Duration) {
