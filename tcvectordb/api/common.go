@@ -24,9 +24,21 @@ import (
 
 type Meta struct{}
 
+type CommonResInterface interface {
+	GetCode() int32
+	GetMsg() string
+}
 type CommonRes struct {
 	Code int32  `json:"code,omitempty"`
 	Msg  string `json:"msg,omitempty"`
+}
+
+func (cr *CommonRes) GetCode() int32 {
+	return cr.Code
+}
+
+func (cr *CommonRes) GetMsg() string {
+	return cr.Msg
 }
 
 const (
