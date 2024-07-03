@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	cli                 *tcvectordb.Client
+	cli                 *tcvectordb.RpcClient
 	ctx                 = context.Background()
 	database            = "go-sdk-test-db"
 	collectionName      = "go-sdk-test-coll"
@@ -40,7 +40,7 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("", "", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewRpcClient("", "", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +104,7 @@ func TestCreateCollection(t *testing.T) {
 			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
 			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
 			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
-			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
+			{FieldName: "tag", FieldType: tcvectordb.Array, ElemType: tcvectordb.String, IndexType: tcvectordb.FILTER},
 		},
 	}
 
