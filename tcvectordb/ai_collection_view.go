@@ -63,9 +63,11 @@ type implementerCollectionView struct {
 
 type CreateCollectionViewParams struct {
 	Description        string
-	Indexes            Indexes                             `json:"indexes"`
-	Embedding          *collection_view.DocumentEmbedding  `json:"embedding"`
-	SplitterPreprocess *collection_view.SplitterPreprocess `json:"splitterPreprocess"`
+	Indexes            Indexes
+	Embedding          *collection_view.DocumentEmbedding
+	SplitterPreprocess *collection_view.SplitterPreprocess
+	ExpectedFileNum    uint64
+	AverageFileSize    uint64
 }
 
 type CreateAICollectionViewResult struct {
@@ -103,6 +105,8 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 		req.SplitterPreprocess.AppendTitleToChunk = param.SplitterPreprocess.AppendTitleToChunk
 		req.SplitterPreprocess.AppendKeywordsToChunk = param.SplitterPreprocess.AppendKeywordsToChunk
 	}
+	req.AverageFileSize = param.AverageFileSize
+	req.ExpectedFileNum = param.ExpectedFileNum
 
 	res := new(collection_view.CreateRes)
 	err := i.Request(ctx, req, &res)
