@@ -75,6 +75,8 @@ func TestAICreateCollectionView(t *testing.T) {
 			AppendTitleToChunk:    &appendTitleToChunk,
 			AppendKeywordsToChunk: &appendKeywordsToChunk,
 		},
+		ExpectedFileNum: 204800,
+		AverageFileSize: 10240,
 	})
 	printErr(err)
 	log.Printf("CreateCollectionView success: %v: %v", coll.DatabaseName, coll.CollectionViewName)
