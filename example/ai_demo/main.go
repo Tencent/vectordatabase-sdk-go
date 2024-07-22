@@ -15,8 +15,9 @@ type AIDemo struct {
 }
 
 func NewAIDemo(url, username, key string) (*AIDemo, error) {
+	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
+	// 	ReadConsistency: tcvectordb.EventualConsistency})
 	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
-		Timeout:         10 * time.Second,
 		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
@@ -277,7 +278,7 @@ func main() {
 	collectionViewAlias := "go-sdk-demo-ai-alias"
 
 	ctx := context.Background()
-	testVdb, err := NewAIDemo("vdb http url or ip and post", "vdb username", "key get from web console")
+	testVdb, err := NewAIDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
 	err = testVdb.Clear(ctx, database)
 	printErr(err)

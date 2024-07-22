@@ -43,7 +43,7 @@ func (f *Filter) And(cond string) *Filter {
 	if f.cond == "" {
 		f.cond = cond
 	} else {
-		f.cond = fmt.Sprintf("%s and %s", f.cond, cond)
+		f.cond = fmt.Sprintf("%s and (%s)", f.cond, cond)
 	}
 	return f
 }
@@ -55,7 +55,7 @@ func (f *Filter) Or(cond string) *Filter {
 	if f.cond == "" {
 		f.cond = cond
 	} else {
-		f.cond = fmt.Sprintf("%s or %s", f.cond, cond)
+		f.cond = fmt.Sprintf("%s or (%s)", f.cond, cond)
 	}
 	return f
 }
@@ -65,9 +65,9 @@ func (f *Filter) AndNot(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
 	if f.cond == "" {
-		f.cond = fmt.Sprintf("not %s", cond)
+		f.cond = fmt.Sprintf("not (%s)", cond)
 	} else {
-		f.cond = fmt.Sprintf("%s and not %s", f.cond, cond)
+		f.cond = fmt.Sprintf("%s and not (%s)", f.cond, cond)
 	}
 	return f
 }
@@ -77,9 +77,9 @@ func (f *Filter) OrNot(cond string) *Filter {
 	f.Lock()
 	defer f.Unlock()
 	if f.cond == "" {
-		f.cond = fmt.Sprintf("not %s", cond)
+		f.cond = fmt.Sprintf("not (%s)", cond)
 	} else {
-		f.cond = fmt.Sprintf("%s or not %s", f.cond, cond)
+		f.cond = fmt.Sprintf("%s or not (%s)", f.cond, cond)
 	}
 	return f
 }
@@ -107,6 +107,33 @@ func In(key string, list interface{}) string {
 	}
 	if b.Len() != 0 {
 		return fmt.Sprintf("%s in (%s)", key, b.String()[1:])
+	}
+	return ""
+}
+
+// In `not in` condition function,
+// use with other condition. eg: And(NotIn("key1", []string{"value1", "value2"}))
+func NotIn(key string, list interface{}) string {
+	if reflect.TypeOf(list).Kind() != reflect.Slice &&
+		reflect.TypeOf(list).Kind() != reflect.Array {
+		return ""
+	}
+	values := reflect.ValueOf(list)
+	if values.Len() == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i := 0; i < values.Len(); i++ {
+		b.WriteString(",")
+		v := values.Index(i)
+		if v.Kind() == reflect.String {
+			b.WriteString(fmt.Sprintf(`"%v"`, v.Interface()))
+		} else {
+			b.WriteString(fmt.Sprintf(`%v`, v.Interface()))
+		}
+	}
+	if b.Len() != 0 {
+		return fmt.Sprintf("%s not in (%s)", key, b.String()[1:])
 	}
 	return ""
 }

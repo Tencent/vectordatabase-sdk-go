@@ -13,7 +13,10 @@ type Demo struct {
 }
 
 func NewDemo(url, username, key string) (*Demo, error) {
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{ReadConsistency: tcvectordb.EventualConsistency})
+	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
+	// 	ReadConsistency: tcvectordb.EventualConsistency})
+	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +367,7 @@ func main() {
 	collectionAlias := "go-sdk-demo-alias"
 
 	ctx := context.Background()
-	testVdb, err := NewDemo("vdb http url or ip and post", "vdb username", "key get from web console")
+	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	// testVdb := NewDemo("http://127.0.0.1:80", "root","vdb-key")
 	printErr(err)
 	err = testVdb.Clear(ctx, database)

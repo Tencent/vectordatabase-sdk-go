@@ -16,7 +16,7 @@ go get -u github.com/tencent/vectordatabase-sdk-go/tcvectordb
 ```go
 import "github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 
-cli, err := tcvectordb.NewClient("vdb http url or ip and post", "root", "key get from web console", &tcvectordb.ClientOption{
+cli, err := tcvectordb.NewRpcClient("vdb http url or ip and post", "root", "key get from web console", &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency,
 		MaxIdldConnPerHost: 10,
 		IdleConnTimeout:    time.Second * 10,
