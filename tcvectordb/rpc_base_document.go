@@ -2,6 +2,7 @@ package tcvectordb
 
 import (
 	"context"
+
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
 
@@ -32,8 +33,13 @@ func (r *rpcImplementerDocument) Upsert(ctx context.Context, documents []Documen
 		param := params[0]
 		if param.BuildIndex != nil {
 			req.BuildIndex = *param.BuildIndex
+		} else {
+			req.BuildIndex = true
 		}
+	} else {
+		req.BuildIndex = true
 	}
+
 	res, err := r.rpcClient.Upsert(ctx, req)
 	if err != nil {
 		return nil, err
