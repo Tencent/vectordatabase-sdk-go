@@ -41,6 +41,7 @@ func init() {
 	// 初始化客户端
 	var err error
 	cli, err = tcvectordb.NewRpcClient("", "root", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	cli.Debug(true)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +105,7 @@ func TestCreateCollection(t *testing.T) {
 			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
 			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
 			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
-			{FieldName: "tag", FieldType: tcvectordb.Array, ElemType: tcvectordb.String, IndexType: tcvectordb.FILTER},
+			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
 		},
 	}
 

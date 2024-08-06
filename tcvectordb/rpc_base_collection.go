@@ -45,7 +45,7 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 			IndexType: string(v.IndexType),
 		}
 		if v.FieldType == Array {
-			column.FieldElementType = string(v.ElemType)
+			column.FieldElementType = string(String)
 		}
 		req.Indexes[v.FieldName] = column
 	}
