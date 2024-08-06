@@ -45,7 +45,7 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 			IndexType: string(v.IndexType),
 		}
 		if v.FieldType == Array {
-			column.FieldElementType = string(v.ElemType)
+			column.FieldElementType = string(String)
 		}
 		req.Indexes[v.FieldName] = column
 	}
@@ -217,12 +217,20 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 					vector.Params = &IVFFLATParams{NList: index.Params.Nlist}
 				case IVF_PQ:
 					vector.Params = &IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
-				case IVF_SQ8:
+				case IVF_SQ4, IVF_SQ8, IVF_SQ16:
 					vector.Params = &IVFSQParams{NList: index.Params.Nlist}
 				}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
 
+		case string(Array):
+			filter := FilterIndex{}
+			filter.FieldName = index.FieldName
+			filter.FieldType = FieldType(index.FieldType)
+			filter.IndexType = IndexType(index.IndexType)
+			filter.ElemType = FieldType(index.FieldElementType)
+
+			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 		default:
 			filter := FilterIndex{}
 			filter.FieldName = index.FieldName
@@ -239,6 +247,13 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 		collection: coll,
 	}
 	coll.DocumentInterface = docImpl
+	indexImpl := &rpcImplementerIndex{
+		r.SdkClient,
+		r.rpcClient,
+		r.database,
+		coll,
+	}
+	coll.IndexInterface = indexImpl
 	return coll
 }
 
