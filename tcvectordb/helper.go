@@ -32,7 +32,7 @@ func ConvertField2Grpc(field *Field) (result *olama.Field) {
 	return
 }
 
-func ConvertGrpc2Filed(field *olama.Field) (result *Field) {
+func ConvertGrpc2Field(field *olama.Field) (result *Field) {
 	result = &Field{}
 	switch v := field.GetOneofVal().(type) {
 	case *olama.Field_ValStr:
