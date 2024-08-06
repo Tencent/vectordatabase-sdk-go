@@ -24,7 +24,7 @@ func (r *rpcImplementerDocument) Upsert(ctx context.Context, documents []Documen
 			Fields: make(map[string]*olama.Field),
 		}
 		for k, v := range doc.Fields {
-			d.Fields[k] = ConvertField(&v)
+			d.Fields[k] = ConvertField2Grpc(&v)
 		}
 		req.Documents = append(req.Documents, d)
 	}
@@ -71,7 +71,7 @@ func (r *rpcImplementerDocument) Query(ctx context.Context, documentIds []string
 		d.Fields = make(map[string]Field)
 
 		for n, v := range doc.Fields {
-			d.Fields[n] = Field{Val: v}
+			d.Fields[n] = *ConvertGrpc2Filed(v)
 		}
 		documents = append(documents, d)
 	}
@@ -123,7 +123,7 @@ func (r *rpcImplementerDocument) Update(ctx context.Context, param UpdateDocumen
 		},
 	}
 	for k, v := range param.UpdateFields {
-		req.Update.Fields[k] = ConvertField(&v)
+		req.Update.Fields[k] = ConvertField2Grpc(&v)
 	}
 	res, err := r.rpcClient.Update(ctx, req)
 	if err != nil {
@@ -177,7 +177,7 @@ func (r *rpcImplementerDocument) search(ctx context.Context, documentIds []strin
 				Fields: make(map[string]Field),
 			}
 			for n, v := range doc.Fields {
-				d.Fields[n] = Field{Val: v}
+				d.Fields[n] = *ConvertGrpc2Filed(v)
 			}
 			vecDoc = append(vecDoc, d)
 		}

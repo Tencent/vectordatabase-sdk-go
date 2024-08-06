@@ -40,7 +40,7 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewRpcClient("", "", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	cli, err = tcvectordb.NewRpcClient("", "root", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
 	if err != nil {
 		panic(err)
 	}
@@ -293,6 +293,38 @@ func TestBuildIndex(t *testing.T) {
 	// 索引重建，重建期间不支持写入
 	_, err := coll.RebuildIndex(ctx, &tcvectordb.RebuildIndexParams{Throttle: 1})
 	printErr(err)
+}
+
+func TestReupsertCollection(t *testing.T) {
+	col := cli.Database(database).Collection(collectionName)
+	testLen := int64(10)
+	option := &tcvectordb.QueryDocumentParams{
+		RetrieveVector: true,
+		Limit:          testLen,
+	}
+	firstQuery, err := col.Query(ctx, nil, option)
+	printErr(err)
+	if firstQuery.Total == 0 {
+		return
+	}
+	ids := make([]string, firstQuery.Total)
+	for i := uint64(0); i < firstQuery.Total; i++ {
+		ids[i] = firstQuery.Documents[i].Id
+	}
+	_, err = col.Delete(ctx, tcvectordb.DeleteDocumentParams{DocumentIds: ids})
+	printErr(err)
+	secondQuery, err := col.Query(ctx, ids, option)
+	printErr(err)
+	if secondQuery.Total != 0 {
+		t.Fatalf("Delete by id failed")
+	}
+	_, err = col.Upsert(ctx, firstQuery.Documents)
+	printErr(err)
+	thirdQuery, err := col.Query(ctx, ids, option)
+	printErr(err)
+	if thirdQuery.Total == 0 {
+		t.Fatalf("reupsert failed")
+	}
 }
 
 func TestTruncateCollection(t *testing.T) {

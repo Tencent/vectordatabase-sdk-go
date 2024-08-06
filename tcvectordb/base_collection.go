@@ -290,18 +290,25 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 					vector.Params = &IVFFLATParams{NList: index.Params.Nlist}
 				case IVF_PQ:
 					vector.Params = &IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
-				case IVF_SQ8:
+				case IVF_SQ4, IVF_SQ8, IVF_SQ16:
 					vector.Params = &IVFSQParams{NList: index.Params.Nlist}
 				}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
+
+		case string(Array):
+			filter := FilterIndex{}
+			filter.FieldName = index.FieldName
+			filter.FieldType = FieldType(index.FieldType)
+			filter.IndexType = IndexType(index.IndexType)
+			filter.ElemType = FieldType(index.FieldElementType)
+			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 
 		default:
 			filter := FilterIndex{}
 			filter.FieldName = index.FieldName
 			filter.FieldType = FieldType(index.FieldType)
 			filter.IndexType = IndexType(index.IndexType)
-
 			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 		}
 	}
@@ -311,6 +318,11 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	docImpl.database = i.database
 	docImpl.collection = coll
 	coll.DocumentInterface = docImpl
+	indexImpl := new(implementerIndex)
+	indexImpl.SdkClient = i.SdkClient
+	indexImpl.database = i.database
+	indexImpl.collection = coll
+	coll.IndexInterface = indexImpl
 	return coll
 }
 
