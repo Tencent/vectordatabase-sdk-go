@@ -2,6 +2,7 @@ package tcvectordb
 
 import (
 	"context"
+
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
 
@@ -32,8 +33,13 @@ func (r *rpcImplementerDocument) Upsert(ctx context.Context, documents []Documen
 		param := params[0]
 		if param.BuildIndex != nil {
 			req.BuildIndex = *param.BuildIndex
+		} else {
+			req.BuildIndex = true
 		}
+	} else {
+		req.BuildIndex = true
 	}
+
 	res, err := r.rpcClient.Upsert(ctx, req)
 	if err != nil {
 		return nil, err
@@ -71,7 +77,7 @@ func (r *rpcImplementerDocument) Query(ctx context.Context, documentIds []string
 		d.Fields = make(map[string]Field)
 
 		for n, v := range doc.Fields {
-			d.Fields[n] = *ConvertGrpc2Filed(v)
+			d.Fields[n] = *ConvertGrpc2Field(v)
 		}
 		documents = append(documents, d)
 	}
@@ -177,7 +183,7 @@ func (r *rpcImplementerDocument) search(ctx context.Context, documentIds []strin
 				Fields: make(map[string]Field),
 			}
 			for n, v := range doc.Fields {
-				d.Fields[n] = *ConvertGrpc2Filed(v)
+				d.Fields[n] = *ConvertGrpc2Field(v)
 			}
 			vecDoc = append(vecDoc, d)
 		}
