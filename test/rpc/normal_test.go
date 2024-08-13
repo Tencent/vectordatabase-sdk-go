@@ -73,6 +73,39 @@ func TestListDatabase(t *testing.T) {
 	}
 }
 
+func TestL(t *testing.T) {
+	db := cli.Database(database)
+
+	index := tcvectordb.Indexes{
+		VectorIndex: []tcvectordb.VectorIndex{
+			{
+				FilterIndex: tcvectordb.FilterIndex{
+					FieldName: "vector",
+					FieldType: tcvectordb.Vector,
+					IndexType: tcvectordb.HNSW,
+				},
+				Dimension:  3,
+				MetricType: tcvectordb.COSINE,
+				Params: &tcvectordb.HNSWParam{
+					M:              16,
+					EfConstruction: 200,
+				},
+			},
+		},
+		FilterIndex: []tcvectordb.FilterIndex{
+			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
+			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
+			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
+			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
+		},
+	}
+
+	db.WithTimeout(time.Second * 30)
+	coll, err := db.CreateCollection(ctx, collectionName, 1, 0, "test collection", index)
+	printErr(err)
+	log.Printf("CreateCollection success: %v: %v", coll.DatabaseName, coll.CollectionName)
+}
+
 func TestDropCollection(t *testing.T) {
 	db := cli.Database(database)
 
@@ -193,6 +226,35 @@ func TestUpsert(t *testing.T) {
 				"segment":  {Val: "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。"},
 				"tag":      {Val: []string{"曹操", "诸葛亮", "刘备"}},
 			},
+		},
+	}, &tcvectordb.UpsertDocumentParams{BuildIndex: &buildIndex})
+
+	printErr(err)
+	log.Printf("upsert result: %+v", result)
+}
+
+func TestUpsertJson(t *testing.T) {
+	col := cli.Database(database).Collection(collectionName)
+
+	buildIndex := true
+	result, err := col.Upsert(ctx, []map[string]interface{}{
+		{
+			"id":       "11",
+			"vector":   []float32{0.2123, 0.25, 0.213},
+			"bookName": "三国演义",
+			"author":   "罗贯中",
+			"page":     25,
+			"segment":  "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。",
+			"tag":      []string{"曹操", "诸葛亮", "刘备"},
+		},
+		{
+			"id":       "12",
+			"vector":   []float32{0.2123, 0.24, 0.213},
+			"bookName": "三国演义",
+			"author":   "罗贯中",
+			"page":     24,
+			"segment":  "布大惊，与陈宫商议。宫曰：“闻刘玄德新领徐州，可往投之。”布从其言，竟投徐州来。有人报知玄德。",
+			"tag":      []string{"曹操", "诸葛亮", "刘备"},
 		},
 	}, &tcvectordb.UpsertDocumentParams{BuildIndex: &buildIndex})
 

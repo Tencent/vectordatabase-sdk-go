@@ -41,6 +41,7 @@ func init() {
 	// 初始化客户端
 	var err error
 	cli, err = tcvectordb.NewClient("", "root", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
+	cli.Debug(true)
 	if err != nil {
 		panic(err)
 	}
@@ -192,6 +193,35 @@ func TestUpsert(t *testing.T) {
 				"segment":  {Val: "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。"},
 				"tag":      {Val: []string{"曹操", "诸葛亮", "刘备"}},
 			},
+		},
+	}, &tcvectordb.UpsertDocumentParams{BuildIndex: &buildIndex})
+
+	printErr(err)
+	log.Printf("upsert result: %+v", result)
+}
+
+func TestUpsertJson(t *testing.T) {
+	col := cli.Database(database).Collection(collectionName)
+
+	buildIndex := true
+	result, err := col.Upsert(ctx, []map[string]interface{}{
+		{
+			"id":       "11",
+			"vector":   []float32{0.2123, 0.25, 0.213},
+			"bookName": "三国演义",
+			"author":   "罗贯中",
+			"page":     25,
+			"segment":  "玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。",
+			"tag":      []string{"曹操", "诸葛亮", "刘备"},
+		},
+		{
+			"id":       "12",
+			"vector":   []float32{0.2123, 0.24, 0.213},
+			"bookName": "三国演义",
+			"author":   "罗贯中",
+			"page":     24,
+			"segment":  "布大惊，与陈宫商议。宫曰：“闻刘玄德新领徐州，可往投之。”布从其言，竟投徐州来。有人报知玄德。",
+			"tag":      []string{"曹操", "诸葛亮", "刘备"},
 		},
 	}, &tcvectordb.UpsertDocumentParams{BuildIndex: &buildIndex})
 

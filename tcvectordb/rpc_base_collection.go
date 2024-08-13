@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var _ CollectionInterface = &rpcImplementerCollection{}
+
 type rpcImplementerCollection struct {
 	SdkClient
 	rpcClient olama.SearchEngineClient
@@ -154,8 +156,13 @@ func (r *rpcImplementerCollection) Collection(name string) *Collection {
 		DatabaseName:   r.database.DatabaseName,
 		CollectionName: name,
 	}
+	flatImpl := &rpcImplementerFlatDocument{
+		SdkClient: r.SdkClient,
+		rpcClient: r.rpcClient,
+	}
 	docImpl := &rpcImplementerDocument{
 		SdkClient:  r.SdkClient,
+		flat:       flatImpl,
 		rpcClient:  r.rpcClient,
 		database:   r.database,
 		collection: coll,
@@ -240,8 +247,13 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 		}
 	}
+	flatImpl := &rpcImplementerFlatDocument{
+		SdkClient: r.SdkClient,
+		rpcClient: r.rpcClient,
+	}
 	docImpl := &rpcImplementerDocument{
 		SdkClient:  r.SdkClient,
+		flat:       flatImpl,
 		rpcClient:  r.rpcClient,
 		database:   r.database,
 		collection: coll,

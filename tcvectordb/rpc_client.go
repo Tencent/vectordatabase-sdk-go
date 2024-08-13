@@ -15,6 +15,7 @@ import (
 
 type RpcClient struct {
 	DatabaseInterface
+	FlatInterface
 
 	httpImplementer SdkClient
 	rpcClient       olama.SearchEngineClient
@@ -74,7 +75,12 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 		httpc.DatabaseInterface,
 		cli.rpcClient,
 	}
+	flatImpl := &rpcImplementerFlatDocument{
+		SdkClient: cli,
+		rpcClient: cli.rpcClient,
+	}
 	cli.DatabaseInterface = databaseImpl
+	cli.FlatInterface = flatImpl
 
 	return cli, nil
 }
