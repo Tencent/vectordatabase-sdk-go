@@ -73,39 +73,6 @@ func TestListDatabase(t *testing.T) {
 	}
 }
 
-func TestL(t *testing.T) {
-	db := cli.Database(database)
-
-	index := tcvectordb.Indexes{
-		VectorIndex: []tcvectordb.VectorIndex{
-			{
-				FilterIndex: tcvectordb.FilterIndex{
-					FieldName: "vector",
-					FieldType: tcvectordb.Vector,
-					IndexType: tcvectordb.HNSW,
-				},
-				Dimension:  3,
-				MetricType: tcvectordb.COSINE,
-				Params: &tcvectordb.HNSWParam{
-					M:              16,
-					EfConstruction: 200,
-				},
-			},
-		},
-		FilterIndex: []tcvectordb.FilterIndex{
-			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
-			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
-			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
-			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
-		},
-	}
-
-	db.WithTimeout(time.Second * 30)
-	coll, err := db.CreateCollection(ctx, collectionName, 1, 0, "test collection", index)
-	printErr(err)
-	log.Printf("CreateCollection success: %v: %v", coll.DatabaseName, coll.CollectionName)
-}
-
 func TestDropCollection(t *testing.T) {
 	db := cli.Database(database)
 

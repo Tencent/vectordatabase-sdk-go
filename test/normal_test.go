@@ -242,7 +242,7 @@ func TestQuery(t *testing.T) {
 	printErr(err)
 	log.Printf("total doc: %d", result.Total)
 	for _, doc := range result.Documents {
-		log.Printf("document: %+v", doc)
+		log.Printf("document: %+v", ToJson(doc))
 	}
 }
 

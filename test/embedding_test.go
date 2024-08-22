@@ -56,7 +56,7 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	}
 
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 1, "desription doc", index, param)
+	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 0, "desription doc", index, param)
 	printErr(err)
 
 	col, err := db.DescribeCollection(ctx, embeddingCollection)

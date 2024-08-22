@@ -110,7 +110,7 @@ func (f Field) Type() FieldType {
 		return Uint64
 	case string:
 		return String
-	case []string, []uint64, []int64, []int, []uint:
+	case []string, []uint64, []int64, []int, []uint, []interface{}:
 		return Array
 	case json.Number:
 		return Uint64
