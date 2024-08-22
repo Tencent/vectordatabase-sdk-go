@@ -5,6 +5,8 @@ import (
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
 
+var _ AliasInterface = &rpcImplementerAlias{}
+
 type rpcImplementerAlias struct {
 	SdkClient
 	rpcClient olama.SearchEngineClient

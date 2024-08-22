@@ -138,9 +138,7 @@ func TestQueryEmbedding(t *testing.T) {
 }
 
 func TestSearchEmbedding(t *testing.T) {
-	col := cli.Database(database).Collection(embeddingCollection)
-
-	searchRes, err := col.SearchByText(ctx, map[string][]string{"segment": {"吕布"}}, &tcvectordb.SearchDocumentParams{
+	searchRes, err := cli.SearchByText(ctx, database, embeddingCollection, map[string][]string{"segment": {"吕布"}}, &tcvectordb.SearchDocumentParams{
 		Params:         &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 		RetrieveVector: false,                                // 是否需要返回向量字段，False：不返回，True：返回
 		Limit:          2,                                    // 指定 Top K 的 K 值

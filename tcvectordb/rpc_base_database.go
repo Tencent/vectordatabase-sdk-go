@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+var _ DatabaseInterface = &rpcImplementerDatabase{}
+
 type rpcImplementerDatabase struct {
 	SdkClient
 	httpImplementer DatabaseInterface
