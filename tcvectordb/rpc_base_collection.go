@@ -3,9 +3,10 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 	"strings"
 	"time"
+
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
 
 var _ CollectionInterface = &rpcImplementerCollection{}
@@ -40,6 +41,17 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 		optionRpcParams(column, v)
 		req.Indexes[v.FieldName] = column
 	}
+
+	for _, v := range indexes.SparseVectorIndex {
+		column := &olama.IndexColumn{
+			FieldName:  v.FieldName,
+			FieldType:  string(v.FieldType),
+			IndexType:  string(v.IndexType),
+			MetricType: string(v.MetricType),
+		}
+		req.Indexes[v.FieldName] = column
+	}
+
 	for _, v := range indexes.FilterIndex {
 		column := &olama.IndexColumn{
 			FieldName: v.FieldName,
@@ -229,6 +241,14 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 				}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
+
+		case string(SparseVector):
+			vector := SparseVectorIndex{}
+			vector.FieldName = index.FieldName
+			vector.FieldType = FieldType(index.FieldType)
+			vector.IndexType = IndexType(index.IndexType)
+			vector.MetricType = MetricType(index.MetricType)
+			coll.Indexes.SparseVectorIndex = append(coll.Indexes.SparseVectorIndex, vector)
 
 		case string(Array):
 			filter := FilterIndex{}

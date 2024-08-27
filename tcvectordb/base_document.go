@@ -21,7 +21,9 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
+	"reflect"
 
+	"github.com/tencent/vectordatabase-sdk-go/tcvdb_text/encoder"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 )
 
@@ -34,6 +36,7 @@ type DocumentInterface interface {
 	Upsert(ctx context.Context, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error)
 	Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (result *QueryDocumentResult, err error)
 	Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+	HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (result *SearchDocumentResult, err error)
 	SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
 	SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
 	Delete(ctx context.Context, param DeleteDocumentParams) (result *DeleteDocumentResult, err error)
@@ -44,6 +47,7 @@ type FlatInterface interface {
 	Upsert(ctx context.Context, databaseName, collectionName string, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error)
 	Query(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*QueryDocumentParams) (result *QueryDocumentResult, err error)
 	Search(ctx context.Context, databaseName, collectionName string, vectors [][]float32, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+	HybridSearch(ctx context.Context, databaseName, collectionName string, params HybridSearchDocumentParams) (result *SearchDocumentResult, err error)
 	SearchById(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
 	SearchByText(ctx context.Context, databaseName, collectionName string, text map[string][]string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
 	Delete(ctx context.Context, databaseName, collectionName string, param DeleteDocumentParams) (result *DeleteDocumentResult, err error)
@@ -125,6 +129,41 @@ func (i *implementerDocument) SearchByText(ctx context.Context, text map[string]
 	return i.flat.SearchByText(ctx, i.database.DatabaseName, i.collection.CollectionName, text, params...)
 }
 
+type HybridSearchDocumentParams struct {
+	Filter         *Filter
+	Params         *SearchDocParams
+	RetrieveVector bool
+	OutputFields   []string
+	Limit          *int
+
+	AnnParams []*AnnParam
+	Rerank    *RerankOption
+	Match     []*MatchOption
+}
+type RerankOption struct {
+	Method    string
+	FieldList []string
+	Weight    []float32
+	RrfK      int32
+}
+type MatchOption struct {
+	FieldName string
+	Data      [][]encoder.SparseVecItem
+	Limit     *int
+}
+
+type AnnParam struct {
+	FieldName   string
+	DocumentIds []string
+	Vectors     [][]float32
+	Params      *SearchDocParams
+	Limit       *int
+}
+
+func (i *implementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
+	return i.flat.HybridSearch(ctx, i.database.DatabaseName, i.collection.CollectionName, params)
+}
+
 type DeleteDocumentParams struct {
 	DocumentIds []string
 	Filter      *Filter
@@ -140,10 +179,11 @@ func (i *implementerDocument) Delete(ctx context.Context, param DeleteDocumentPa
 }
 
 type UpdateDocumentParams struct {
-	QueryIds     []string
-	QueryFilter  *Filter
-	UpdateVector []float32
-	UpdateFields interface{}
+	QueryIds        []string
+	QueryFilter     *Filter
+	UpdateVector    []float32
+	UpdateSparseVec []encoder.SparseVecItem
+	UpdateFields    interface{}
 }
 
 type UpdateDocumentResult struct {
@@ -155,8 +195,9 @@ func (i *implementerDocument) Update(ctx context.Context, param UpdateDocumentPa
 }
 
 type Document struct {
-	Id     string    `json:"id"`
-	Vector []float32 `json:"vector"`
+	Id           string                  `json:"id"`
+	Vector       []float32               `json:"vector"`
+	SparseVector []encoder.SparseVecItem `json:"sparse_vector"`
 	// omitempty when upsert
 	Score  float32 `json:"score"`
 	Fields map[string]Field
@@ -176,6 +217,12 @@ func (i *implementerFlatDocument) Upsert(ctx context.Context, db, coll string, d
 			d := &document.Document{}
 			d.Id = doc.Id
 			d.Vector = doc.Vector
+
+			d.SparseVector = make([][]interface{}, 0)
+			for _, sv := range doc.SparseVector {
+				d.SparseVector = append(d.SparseVector, []interface{}{sv.TermId, sv.Score})
+			}
+
 			d.Fields = make(map[string]interface{})
 			for k, v := range doc.Fields {
 				d.Fields[k] = v.Val
@@ -199,6 +246,21 @@ func (i *implementerFlatDocument) Upsert(ctx context.Context, db, coll string, d
 					delete(doc, "vector")
 				} else {
 					return nil, fmt.Errorf("upsert failed, because of incorrect vector field type, which must be []float32")
+				}
+			}
+			if sparseVector, ok := doc["sparse_vector"]; ok {
+				if aSparseVector, ok := sparseVector.([][]interface{}); ok {
+					d.SparseVector = make([][]interface{}, 0)
+					for _, sv := range aSparseVector {
+						svItem, err := ConvSliceInterface2SparseVecItem(sv)
+						if err != nil {
+							return nil, fmt.Errorf("upsert failed. doc's sparse_vector data is incorrect. doc id is %v. err: %v", d.Id, err.Error())
+						}
+						d.SparseVector = append(d.SparseVector, []interface{}{svItem.TermId, svItem.Score})
+					}
+					delete(doc, "sparse_vector")
+				} else {
+					return nil, fmt.Errorf("upsert failed, because of incorrect sparse_vector field type, which must be [][]interface{}")
 				}
 			}
 
@@ -258,6 +320,16 @@ func (i *implementerFlatDocument) Query(ctx context.Context, databaseName, colle
 		var d Document
 		d.Id = doc.Id
 		d.Vector = doc.Vector
+
+		d.SparseVector = make([]encoder.SparseVecItem, 0)
+		for _, sv := range doc.SparseVector {
+			svItem, err := ConvSliceInterface2SparseVecItem(sv)
+			if err != nil {
+				return nil, fmt.Errorf("query failed. doc's sparse_vector data is incorrect. doc id is %v. err: %v", d.Id, err.Error())
+			}
+			d.SparseVector = append(d.SparseVector, *svItem)
+		}
+
 		d.Fields = make(map[string]Field)
 
 		for n, v := range doc.Fields {
@@ -342,6 +414,114 @@ func (i *implementerFlatDocument) search(ctx context.Context, databaseName, coll
 	return result, nil
 }
 
+func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName, collectionName string,
+	params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
+	req := new(document.HybridSearchReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
+	req.Search = new(document.HybridSearchCond)
+	req.Search.AnnParams = make([]*document.AnnParam, 0)
+	req.Search.Match = make([]*document.MatchOption, 0)
+
+	for i, annParam := range params.AnnParams {
+		fieldName := "vector"
+		if annParam.FieldName != "" {
+			fieldName = annParam.FieldName
+		}
+		req.Search.AnnParams = append(req.Search.AnnParams, &document.AnnParam{
+			FieldName:   fieldName,
+			DocumentIds: annParam.DocumentIds,
+			Limit:       annParam.Limit,
+		})
+
+		req.Search.AnnParams[i].Data = make([]interface{}, 0)
+		for _, vector := range annParam.Vectors {
+			req.Search.AnnParams[i].Data = append(req.Search.AnnParams[i].Data, vector)
+		}
+
+		if annParam.Params != nil {
+			req.Search.AnnParams[i].Params = new(document.SearchParams)
+			req.Search.AnnParams[i].Params.Nprobe = annParam.Params.Nprobe
+			req.Search.AnnParams[i].Params.Ef = annParam.Params.Ef
+			req.Search.AnnParams[i].Params.Radius = annParam.Params.Radius
+		}
+	}
+
+	for i, matchParam := range params.Match {
+		fieldName := "sparse_vector"
+		if matchParam.FieldName != "" {
+			fieldName = matchParam.FieldName
+		}
+		req.Search.Match = append(req.Search.Match, &document.MatchOption{
+			FieldName: fieldName,
+		})
+		req.Search.Match[i].Data = make([][][]interface{}, 0)
+
+		for _, svs := range matchParam.Data {
+			sparseVector := make([][]interface{}, 0)
+			for _, svItem := range svs {
+				sparseVector = append(sparseVector, []interface{}{svItem.TermId, svItem.Score})
+			}
+			req.Search.Match[i].Data = append(req.Search.Match[i].Data, sparseVector)
+		}
+
+		if matchParam.Limit != nil {
+			req.Search.Match[i].Limit = *matchParam.Limit
+		}
+	}
+
+	if params.Rerank != nil {
+		req.Search.Rerank = new(document.RerankOption)
+		req.Search.Rerank.FieldList = params.Rerank.FieldList
+		req.Search.Rerank.Method = params.Rerank.Method
+		req.Search.Rerank.Weight = params.Rerank.Weight
+		req.Search.Rerank.RrfK = params.Rerank.RrfK
+	}
+
+	req.Search.Filter = params.Filter.Cond()
+	req.Search.RetrieveVector = params.RetrieveVector
+	req.Search.OutputFields = params.OutputFields
+	req.Search.Limit = params.Limit
+
+	res := new(document.SearchRes)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+	var documents [][]Document
+	for _, result := range res.Documents {
+		var vecDoc []Document
+		for _, doc := range result {
+			d := Document{
+				Id:     doc.Id,
+				Vector: doc.Vector,
+				Score:  doc.Score,
+				Fields: make(map[string]Field),
+			}
+
+			d.SparseVector = make([]encoder.SparseVecItem, 0)
+			for _, sv := range doc.SparseVector {
+				svItem, err := ConvSliceInterface2SparseVecItem(sv)
+				if err != nil {
+					return nil, fmt.Errorf("the search response's doc sparse_vector data is incorrect. doc id is %v. err: %v", d.Id, err.Error())
+				}
+				d.SparseVector = append(d.SparseVector, *svItem)
+			}
+
+			for n, v := range doc.Fields {
+				d.Fields[n] = Field{Val: v}
+			}
+			vecDoc = append(vecDoc, d)
+		}
+		documents = append(documents, vecDoc)
+	}
+	result := new(SearchDocumentResult)
+	result.Warning = res.Warning
+	result.Documents = documents
+	return result, nil
+}
+
 func (i *implementerFlatDocument) Delete(ctx context.Context, databaseName, collectionName string,
 	param DeleteDocumentParams) (*DeleteDocumentResult, error) {
 	req := new(document.DeleteReq)
@@ -372,7 +552,11 @@ func (i *implementerFlatDocument) Update(ctx context.Context, databaseName, coll
 	req.Query.DocumentIds = param.QueryIds
 	req.Query.Filter = param.QueryFilter.Cond()
 	req.Update.Vector = param.UpdateVector
-	req.Update.Fields = make(map[string]interface{})
+	req.Update.SparseVector = make([][]interface{}, 0)
+	for _, sv := range param.UpdateSparseVec {
+		req.Update.SparseVector = append(req.Update.SparseVector, []interface{}{sv.TermId, sv.Score})
+	}
+	req.Update.Fields = make(map[string]interface{}, 0)
 
 	if updatefields, ok := param.UpdateFields.(map[string]Field); ok {
 		for k, v := range updatefields {
@@ -388,10 +572,18 @@ func (i *implementerFlatDocument) Update(ctx context.Context, databaseName, coll
 					"which must be []float32")
 			}
 		}
+		if vector, ok := updatefields["sparse_vector"]; ok {
+			if aSparseVector, okV := vector.([][]interface{}); okV {
+				req.Update.SparseVector = aSparseVector
+				delete(updatefields, "sparse_vector")
+			} else {
+				return nil, fmt.Errorf("update failed, because of incorrect sparse_vector field type, which must be [][]interface{}")
+			}
+		}
 		for k, v := range updatefields {
 			req.Update.Fields[k] = v
 		}
-	} else {
+	} else if param.UpdateFields != nil {
 		return nil, fmt.Errorf("update failed, because of incorrect UpdateDocumentParams.UpdateFields field type, " +
 			"which must be map[string]Field or map[string]interface{}")
 	}
@@ -404,4 +596,33 @@ func (i *implementerFlatDocument) Update(ctx context.Context, databaseName, coll
 	}
 	result.AffectedCount = res.AffectedCount
 	return result, nil
+}
+
+func ConvSliceInterface2SparseVecItem(sv []interface{}) (*encoder.SparseVecItem, error) {
+
+	svItem := new(encoder.SparseVecItem)
+	if len(sv) != 2 {
+		return nil, fmt.Errorf("incorrect sparse_vector data %v, which the length of token sparse_vector must is 2, but current is %v",
+			sv, len(sv))
+	}
+
+	switch v := sv[0].(type) {
+	case int, int8, int16, int32, int64:
+		svItem.TermId = int64(reflect.ValueOf(v).Int())
+	case uint, uint8, uint16, uint32, uint64:
+		svItem.TermId = int64(reflect.ValueOf(v).Uint())
+	case float32, float64:
+		svItem.TermId = int64(reflect.ValueOf(v).Float())
+	default:
+		return nil, fmt.Errorf("incorrect sparse_vector data %v, which first item datatype must be int64", sv)
+	}
+
+	switch v := sv[1].(type) {
+	case float32, float64:
+		svItem.Score = float32(reflect.ValueOf(v).Float())
+	default:
+		return nil, fmt.Errorf("incorrect sparse_vector data %v, which second item datatype must be float32/float64", sv)
+	}
+
+	return svItem, nil
 }

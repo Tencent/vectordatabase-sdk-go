@@ -29,12 +29,13 @@ import (
 )
 
 var (
-	cli                 *tcvectordb.RpcClient
-	ctx                 = context.Background()
-	database            = "go-sdk-test-db"
-	collectionName      = "go-sdk-test-coll"
-	collectionAlias     = "go-sdk-test-alias"
-	embeddingCollection = "go-sdk-test-emcoll"
+	cli                    *tcvectordb.RpcClient
+	ctx                    = context.Background()
+	database               = "go-sdk-test-db"
+	collectionName         = "go-sdk-test-coll"
+	collectionAlias        = "go-sdk-test-alias"
+	embeddingCollection    = "go-sdk-test-emcoll"
+	embedCollWithSparseVec = "go-sdk-test-emcoll-sparse-vec"
 )
 
 func init() {

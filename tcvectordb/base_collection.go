@@ -84,6 +84,17 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 
 		req.Indexes = append(req.Indexes, &column)
 	}
+
+	for _, v := range indexes.SparseVectorIndex {
+		var column api.IndexColumn
+		column.FieldName = v.FieldName
+		column.FieldType = string(v.FieldType)
+		column.IndexType = string(v.IndexType)
+		column.MetricType = string(v.MetricType)
+
+		req.Indexes = append(req.Indexes, &column)
+	}
+
 	for _, v := range indexes.FilterIndex {
 		var column api.IndexColumn
 		column.FieldName = v.FieldName
@@ -299,6 +310,14 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 				}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
+
+		case string(SparseVector):
+			vector := SparseVectorIndex{}
+			vector.FieldName = index.FieldName
+			vector.FieldType = FieldType(index.FieldType)
+			vector.IndexType = IndexType(index.IndexType)
+			vector.MetricType = MetricType(index.MetricType)
+			coll.Indexes.SparseVectorIndex = append(coll.Indexes.SparseVectorIndex, vector)
 
 		case string(Array):
 			filter := FilterIndex{}

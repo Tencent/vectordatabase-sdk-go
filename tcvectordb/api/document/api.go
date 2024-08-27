@@ -45,11 +45,12 @@ type UpsertRes struct {
 
 // Document document struct for document api
 type Document struct {
-	Id      string                 `json:"id,omitempty"`
-	Vector  []float32              `json:"vector,omitempty"`
-	Score   float32                `json:"score,omitempty"`
-	DocInfo []byte                 `json:"doc_info,omitempty"`
-	Fields  map[string]interface{} `json:"-"`
+	Id           string                 `json:"id,omitempty"`
+	Vector       []float32              `json:"vector,omitempty"`
+	SparseVector [][]interface{}        `json:"sparse_vector,omitempty"`
+	Score        float32                `json:"score,omitempty"`
+	DocInfo      []byte                 `json:"doc_info,omitempty"`
+	Fields       map[string]interface{} `json:"-"`
 }
 
 func (d Document) MarshalJSON() ([]byte, error) {
@@ -122,6 +123,46 @@ type SearchRes struct {
 	api.CommonRes
 	Warning   string        `json:"warning,omitempty"`
 	Documents [][]*Document `json:"documents,omitempty"`
+}
+
+type HybridSearchReq struct {
+	api.Meta        `path:"/document/hybridSearch" tags:"Document" method:"Post" summary:"向量查询接口，支持混合检索"`
+	Database        string            `json:"database,omitempty"`
+	Collection      string            `json:"collection,omitempty"`      // 索引名称
+	ReadConsistency string            `json:"readConsistency,omitempty"` // 读取一致性
+	Search          *HybridSearchCond `json:"search,omitempty"`
+}
+
+type HybridSearchCond struct {
+	RetrieveVector bool     `json:"retrieveVector,omitempty"` // 是否返回原始向量，注意设置为true时会降低性能
+	Limit          *int     `json:"limit,omitempty"`          // 结果数量
+	OutputFields   []string `json:"outputFields,omitempty"`   // 输出字段
+
+	Filter string `json:"filter,omitempty"`
+
+	AnnParams []*AnnParam    `json:"ann,omitempty"`
+	Rerank    *RerankOption  `json:"rerank,omitempty"`
+	Match     []*MatchOption `json:"match,omitempty"`
+}
+
+type RerankOption struct {
+	Method    string    `json:"method,omitempty"`
+	FieldList []string  `json:"fieldList,omitempty"`
+	Weight    []float32 `json:"weight,omitempty"`
+	RrfK      int32     `protobuf:"varint,3,opt,name=rrf_k,json=rrfK,proto3" json:"rrf_k,omitempty"` // for RRF: K参数
+}
+type MatchOption struct {
+	FieldName string            `protobuf:"bytes,1,opt,name=fieldName,proto3" json:"fieldName,omitempty"`
+	Data      [][][]interface{} `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	Limit     int               `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+}
+
+type AnnParam struct {
+	FieldName   string        `json:"fieldName,omitempty"`
+	DocumentIds []string      `json:"documentIds,omitempty"`
+	Data        []interface{} `json:"data,omitempty"`
+	Params      *SearchParams `json:"params,omitempty"`
+	Limit       *int          `json:"limit,omitempty"`
 }
 
 // SearchCond search filter condition

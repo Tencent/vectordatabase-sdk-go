@@ -33,8 +33,9 @@ const (
 	IVF_SQ16 IndexType = "IVF_SQ16"
 
 	// scalar index type
-	PRIMARY IndexType = "primaryKey"
-	FILTER  IndexType = "filter"
+	PRIMARY         IndexType = "primaryKey"
+	FILTER          IndexType = "filter"
+	SPARSE_INVERTED IndexType = "inverted"
 )
 
 type MetricType string
@@ -48,10 +49,11 @@ const (
 type FieldType string
 
 const (
-	Uint64 FieldType = "uint64"
-	String FieldType = "string"
-	Array  FieldType = "array"
-	Vector FieldType = "vector"
+	Uint64       FieldType = "uint64"
+	String       FieldType = "string"
+	Array        FieldType = "array"
+	Vector       FieldType = "vector"
+	SparseVector FieldType = "sparseVector"
 )
 
 type EmbeddingModel string
