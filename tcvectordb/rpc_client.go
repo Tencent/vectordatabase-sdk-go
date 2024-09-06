@@ -3,14 +3,15 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"log"
-	"strings"
-	"time"
 )
 
 type RpcClient struct {
@@ -37,6 +38,12 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 	if strings.HasPrefix(url, "http://") {
 		httpTarget = url
 		rpcTarget = strings.TrimPrefix(url, "http://")
+		portIndex := strings.Index(rpcTarget, ":")
+		if portIndex == -1 {
+			rpcTarget += ":80"
+		}
+	} else if strings.HasPrefix(url, "https://") {
+		return nil, errors.Errorf("invalid url param with %v for not supporting https://", url)
 	} else {
 		httpTarget = "http://" + url
 		rpcTarget = url
