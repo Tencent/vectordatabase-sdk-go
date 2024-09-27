@@ -49,6 +49,7 @@ type implementerCollection struct {
 
 type CreateCollectionParams struct {
 	Embedding *Embedding
+	TtlConfig *TtlConfig
 }
 
 type CreateCollectionResult struct {
@@ -111,6 +112,11 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 			req.Embedding.Field = param.Embedding.Field
 			req.Embedding.VectorField = param.Embedding.VectorField
 			req.Embedding.Model = string(param.Embedding.Model)
+		}
+		if param.TtlConfig != nil {
+			req.TtlConfig = new(collection.TtlConfig)
+			req.TtlConfig.Enable = param.TtlConfig.Enable
+			req.TtlConfig.TimeField = param.TtlConfig.TimeField
 		}
 	}
 
@@ -274,6 +280,11 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 		coll.Embedding.Model = EmbeddingModel(collectionItem.Embedding.Model)
 		coll.Embedding.Enabled = collectionItem.Embedding.Status == "enabled"
 	}
+	if collectionItem.TtlConfig != nil {
+		coll.TtlConfig = new(TtlConfig)
+		coll.TtlConfig.Enable = collectionItem.TtlConfig.Enable
+		coll.TtlConfig.TimeField = collectionItem.TtlConfig.TimeField
+	}
 
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = IndexStatus{
@@ -393,6 +404,7 @@ type Collection struct {
 	Description       string      `json:"description"`
 	Size              uint64      `json:"size"`
 	CreateTime        time.Time   `json:"createTime"`
+	TtlConfig         *TtlConfig  `json:"ttlConfig,omitempty"`
 }
 
 func (c *Collection) Debug(v bool) {
@@ -413,4 +425,9 @@ type Embedding struct {
 type IndexStatus struct {
 	Status    string
 	StartTime time.Time
+}
+
+type TtlConfig struct {
+	Enable    bool   `json:"enable"`
+	TimeField string `json:"timeField,omitempty"`
 }

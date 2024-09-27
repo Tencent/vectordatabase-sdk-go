@@ -19,7 +19,6 @@
 package test
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"testing"
@@ -27,26 +26,6 @@ import (
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 )
-
-var (
-	cli                    *tcvectordb.Client
-	ctx                    = context.Background()
-	database               = "go-sdk-test-db"
-	collectionName         = "go-sdk-test-coll"
-	collectionAlias        = "go-sdk-test-alias"
-	embeddingCollection    = "go-sdk-test-emcoll"
-	embedCollWithSparseVec = "go-sdk-test-emcoll-sparse-vec"
-)
-
-func init() {
-	// 初始化客户端
-	var err error
-	cli, err = tcvectordb.NewClient("", "root", "", &tcvectordb.ClientOption{Timeout: 10 * time.Second})
-	cli.Debug(true)
-	if err != nil {
-		panic(err)
-	}
-}
 
 func TestDropDatabase(t *testing.T) {
 	result, err := cli.DropDatabase(ctx, database)
@@ -107,11 +86,19 @@ func TestCreateCollection(t *testing.T) {
 			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
 			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
 			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
+			{FieldName: "expire_at", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
 		},
 	}
 
 	db.WithTimeout(time.Second * 30)
-	coll, err := db.CreateCollection(ctx, collectionName, 1, 0, "test collection", index)
+	param := &tcvectordb.CreateCollectionParams{
+		TtlConfig: &tcvectordb.TtlConfig{
+			Enable:    true,
+			TimeField: "expire_at",
+		},
+	}
+
+	coll, err := db.CreateCollection(ctx, collectionName, 3, 1, "test collection", index, param)
 	printErr(err)
 	log.Printf("CreateCollection success: %v: %v", coll.DatabaseName, coll.CollectionName)
 }
