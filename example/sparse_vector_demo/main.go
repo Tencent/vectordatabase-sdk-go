@@ -191,8 +191,9 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 
 	documentList := make([]tcvectordb.Document, 0)
 	for i := 0; i < 5; i++ {
+		id := "000" + strconv.Itoa(i)
 		documentList = append(documentList, tcvectordb.Document{
-			Id:           "000" + strconv.Itoa(i),
+			Id:           id,
 			Vector:       vectors[i],
 			SparseVector: sparse_vectors[i],
 		})
@@ -243,7 +244,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	sparseVecs, err := bm25.EncodeQueries([]string{"腾讯云向量数据库"})
+	sparseVec, err := bm25.EncodeQuery("腾讯云向量数据库")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -251,14 +252,14 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	annLimit := 2
 	annSearch := &tcvectordb.AnnParam{
 		FieldName: "vector",
-		Vectors:   [][]float32{vectors[0]},
+		Data:      vectors[0],
 		Limit:     &annLimit,
 	}
 
 	keywordSearchLimit := 3
 	keywordSearch := &tcvectordb.MatchOption{
 		FieldName: "sparse_vector",
-		Data:      sparseVecs,
+		Data:      sparseVec,
 		Limit:     &keywordSearchLimit,
 	}
 
@@ -269,7 +270,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 		Rerank: &tcvectordb.RerankOption{
 			Method:    "weighted",
 			FieldList: []string{"vector", "sparse_vector"},
-			Weight:    []float32{0.6, 0.4},
+			Weight:    []float32{0.1, 0.9},
 		},
 		Limit:        &limit,
 		OutputFields: []string{"id", "sparse_vector"},

@@ -243,9 +243,13 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 		}
 
 		vectorArray := make([]*olama.VectorArray, 0, len(req.Search.Vectors))
-		for _, vector := range annParam.Vectors {
-			vectorArray = append(vectorArray, &olama.VectorArray{Vector: vector})
+		if vec, ok := annParam.Data.([]float32); ok {
+			vectorArray = append(vectorArray, &olama.VectorArray{Vector: vec})
+		} else {
+			return nil, fmt.Errorf("hybridSearch failed, because of AnnParam.Vectors field type, " +
+				"which must be []float32")
 		}
+
 		req.Search.Ann[i].Data = vectorArray
 
 		if annParam.Params != nil {
@@ -254,6 +258,7 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 			req.Search.Ann[i].Params.Ef = annParam.Params.Ef
 			req.Search.Ann[i].Params.Radius = annParam.Params.Radius
 		}
+		break
 	}
 
 	for i, matchParam := range params.Match {
@@ -269,7 +274,8 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 		}
 
 		sparseVectorArray := make([]*olama.SparseVectorArray, 0)
-		for _, svs := range matchParam.Data {
+
+		if svs, ok := matchParam.Data.([]encoder.SparseVecItem); ok {
 			data := make([]*olama.SparseVecItem, 0)
 			for _, sv := range svs {
 				data = append(data, &olama.SparseVecItem{
@@ -280,8 +286,12 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 			sparseVectorArray = append(sparseVectorArray, &olama.SparseVectorArray{
 				SpVector: data,
 			})
+			req.Search.Sparse[i].Data = sparseVectorArray
+		} else {
+			return nil, fmt.Errorf("hybridSearch failed, because of Match.Data field type, " +
+				"which must be []encoder.SparseVecItem")
 		}
-		req.Search.Sparse[i].Data = sparseVectorArray
+		break
 	}
 
 	if params.Rerank != nil {
