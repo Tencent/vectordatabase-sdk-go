@@ -123,3 +123,8 @@ var (
 	BaseDbTypeError = errors.New("This database type is base, use base database sdk")
 	AIDbTypeError   = errors.New("This database type is ai, use ai database sdk")
 )
+
+const (
+	ERR_UNDEFINED_DATABASE   = 15301
+	ERR_UNDEFINED_COLLECTION = 15302
+)

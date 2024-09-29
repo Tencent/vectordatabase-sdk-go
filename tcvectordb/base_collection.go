@@ -21,6 +21,7 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,6 +34,9 @@ var _ CollectionInterface = &implementerCollection{}
 // CollectionInterface collection api
 type CollectionInterface interface {
 	SdkClient
+	ExistsCollection(ctx context.Context, name string) (bool, error)
+	CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
+		indexes Indexes, params ...*CreateCollectionParams) (*Collection, error)
 	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
 		indexes Indexes, params ...*CreateCollectionParams) (*Collection, error)
 	ListCollection(ctx context.Context) (result *ListCollectionResult, err error)
@@ -54,6 +58,35 @@ type CreateCollectionParams struct {
 
 type CreateCollectionResult struct {
 	Collection
+}
+
+func (i *implementerCollection) ExistsCollection(ctx context.Context, name string) (bool, error) {
+	res, err := i.DescribeCollection(ctx, name)
+	if err != nil {
+		if strings.Contains(err.Error(), strconv.Itoa(ERR_UNDEFINED_COLLECTION)) {
+			return false, nil
+		}
+		return false, fmt.Errorf("get collection %s failed, err: %v", name, err.Error())
+	}
+	if res == nil {
+		return false, fmt.Errorf("get collection %s failed", name)
+	}
+	return true, nil
+}
+
+func (i *implementerCollection) CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
+	indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
+	res, err := i.DescribeCollection(ctx, name)
+	if err != nil {
+		if strings.Contains(err.Error(), strconv.Itoa(ERR_UNDEFINED_COLLECTION)) {
+			return i.CreateCollection(ctx, name, shardNum, replicasNum, description, indexes, params...)
+		}
+		return nil, fmt.Errorf("get collection %s failed, err: %v", name, err.Error())
+	}
+	if res == nil {
+		return nil, fmt.Errorf("get collection %s failed", name)
+	}
+	return &res.Collection, nil
 }
 
 // CreateCollection create a collection. It returns collection struct if err is nil.

@@ -3,6 +3,7 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,35 @@ type rpcImplementerCollection struct {
 	SdkClient
 	rpcClient olama.SearchEngineClient
 	database  *Database
+}
+
+func (r *rpcImplementerCollection) ExistsCollection(ctx context.Context, name string) (bool, error) {
+	res, err := r.DescribeCollection(ctx, name)
+	if err != nil {
+		if strings.Contains(err.Error(), strconv.Itoa(ERR_UNDEFINED_COLLECTION)) {
+			return false, nil
+		}
+		return false, fmt.Errorf("get collection %s failed, err: %v", name, err.Error())
+	}
+	if res == nil {
+		return false, fmt.Errorf("get collection %s failed", name)
+	}
+	return true, nil
+}
+
+func (r *rpcImplementerCollection) CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
+	indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
+	res, err := r.DescribeCollection(ctx, name)
+	if err != nil {
+		if strings.Contains(err.Error(), strconv.Itoa(ERR_UNDEFINED_COLLECTION)) {
+			return r.CreateCollection(ctx, name, shardNum, replicasNum, description, indexes, params...)
+		}
+		return nil, fmt.Errorf("get collection %s failed, err: %v", name, err.Error())
+	}
+	if res == nil {
+		return nil, fmt.Errorf("get collection %s failed", name)
+	}
+	return &res.Collection, nil
 }
 
 func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
@@ -70,6 +100,12 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 				Field:       param.Embedding.Field,
 				VectorField: param.Embedding.VectorField,
 				ModelName:   string(param.Embedding.Model),
+			}
+		}
+		if param.TtlConfig != nil {
+			req.TtlConfig = &olama.TTLConfig{
+				Enable:    param.TtlConfig.Enable,
+				TimeField: param.TtlConfig.TimeField,
 			}
 		}
 	}
@@ -206,6 +242,11 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 		coll.Embedding.VectorField = collectionItem.EmbeddingParams.VectorField
 		coll.Embedding.Model = EmbeddingModel(collectionItem.EmbeddingParams.ModelName)
 		coll.Embedding.Enabled = false
+	}
+	if collectionItem.TtlConfig != nil {
+		coll.TtlConfig = new(TtlConfig)
+		coll.TtlConfig.Enable = collectionItem.TtlConfig.Enable
+		coll.TtlConfig.TimeField = collectionItem.TtlConfig.TimeField
 	}
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = IndexStatus{

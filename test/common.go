@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	cli                    *tcvectordb.Client
+	cli *tcvectordb.Client
+	//cli                    *tcvectordb.RpcClient
 	ctx                    = context.Background()
 	database               = "go-sdk-test-db"
 	collectionName         = "go-sdk-test-coll"
@@ -25,4 +26,5 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 }

@@ -39,6 +39,18 @@ func TestCreateDatabase(t *testing.T) {
 	log.Printf("create database success, %s", db.DatabaseName)
 }
 
+func TestExistsDatabase(t *testing.T) {
+	dbExists, err := cli.ExistsDatabase(ctx, database)
+	printErr(err)
+	log.Printf("database %v exists: %v", database, dbExists)
+}
+
+func TestCreateDatabaseIfNotExist(t *testing.T) {
+	db, err := cli.CreateDatabaseIfNotExists(ctx, database)
+	printErr(err)
+	log.Printf("create database if not exists success, %s", db.DatabaseName)
+}
+
 func TestListDatabase(t *testing.T) {
 	dbList, err := cli.ListDatabase(ctx)
 	printErr(err)
@@ -103,6 +115,54 @@ func TestCreateCollection(t *testing.T) {
 	log.Printf("CreateCollection success: %v: %v", coll.DatabaseName, coll.CollectionName)
 }
 
+func TestExistsCollection(t *testing.T) {
+	db := cli.Database(database)
+	collExists, err := db.ExistsCollection(ctx, collectionName)
+	printErr(err)
+	log.Printf("collection %v exists: %v", collectionName, collExists)
+}
+
+func TestCreateCollectionIfNotExists(t *testing.T) {
+	db := cli.Database(database)
+
+	index := tcvectordb.Indexes{
+		VectorIndex: []tcvectordb.VectorIndex{
+			{
+				FilterIndex: tcvectordb.FilterIndex{
+					FieldName: "vector",
+					FieldType: tcvectordb.Vector,
+					IndexType: tcvectordb.HNSW,
+				},
+				Dimension:  3,
+				MetricType: tcvectordb.COSINE,
+				Params: &tcvectordb.HNSWParam{
+					M:              16,
+					EfConstruction: 200,
+				},
+			},
+		},
+		FilterIndex: []tcvectordb.FilterIndex{
+			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
+			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
+			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
+			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
+			{FieldName: "expire_at", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
+		},
+	}
+
+	db.WithTimeout(time.Second * 30)
+	param := &tcvectordb.CreateCollectionParams{
+		TtlConfig: &tcvectordb.TtlConfig{
+			Enable:    true,
+			TimeField: "expire_at",
+		},
+	}
+
+	coll, err := db.CreateCollectionIfNotExists(ctx, collectionName, 3, 1, "test collection", index, param)
+	printErr(err)
+	log.Printf("create collection if not exists success: %v: %v", coll.DatabaseName, coll.CollectionName)
+}
+
 func TestListCollection(t *testing.T) {
 	db := cli.Database(database)
 	// 列出所有 Collection
@@ -119,7 +179,7 @@ func TestDescribeCollection(t *testing.T) {
 	db := cli.Database(database)
 	res, err := db.DescribeCollection(ctx, collectionName)
 	printErr(err)
-	log.Printf("DescribeCollection result: %+v", res)
+	log.Printf("DescribeCollection result: %+v", ToJson(res))
 }
 
 func TestUpsert(t *testing.T) {
