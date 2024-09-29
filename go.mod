@@ -4,7 +4,9 @@ go 1.12
 
 require (
 	github.com/pkg/errors v0.9.1
+	github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.54
+	github.com/yanyiwu/gojieba v1.4.2
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 )

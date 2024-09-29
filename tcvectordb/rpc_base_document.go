@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/tencent/vectordatabase-sdk-go/tcvdb_text/encoder"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
 
@@ -38,6 +39,10 @@ func (r *rpcImplementerDocument) SearchByText(ctx context.Context, text map[stri
 	return r.flat.SearchByText(ctx, r.database.DatabaseName, r.collection.CollectionName, text, params...)
 }
 
+func (r *rpcImplementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
+	return r.flat.HybridSearch(ctx, r.database.DatabaseName, r.collection.CollectionName, params)
+}
+
 func (r *rpcImplementerDocument) Delete(ctx context.Context, param DeleteDocumentParams) (*DeleteDocumentResult, error) {
 	return r.flat.Delete(ctx, r.database.DatabaseName, r.collection.CollectionName, param)
 }
@@ -65,6 +70,15 @@ func (r *rpcImplementerFlatDocument) Upsert(ctx context.Context, databaseName, c
 				Vector: doc.Vector,
 				Fields: make(map[string]*olama.Field),
 			}
+
+			d.SparseVector = make([]*olama.SparseVecItem, 0)
+			for _, sv := range doc.SparseVector {
+				d.SparseVector = append(d.SparseVector, &olama.SparseVecItem{
+					TermId: sv.TermId,
+					Score:  sv.Score,
+				})
+			}
+
 			for k, v := range doc.Fields {
 				d.Fields[k] = ConvertField2Grpc(&v)
 			}
@@ -94,6 +108,25 @@ func (r *rpcImplementerFlatDocument) Upsert(ctx context.Context, databaseName, c
 				Vector: aVector,
 				Fields: make(map[string]*olama.Field),
 			}
+
+			if sparseVector, ok := doc["sparse_vector"]; ok {
+				if aSparseVector, ok := sparseVector.([][]interface{}); ok {
+					d.SparseVector = make([]*olama.SparseVecItem, 0)
+					for _, sv := range aSparseVector {
+						svItem, err := ConvSliceInterface2SparseVecItem(sv)
+						if err != nil {
+							return nil, fmt.Errorf("upsert failed. doc's sparse_vector data is incorrect. doc id is %v. err: %v", d.Id, err.Error())
+						}
+						d.SparseVector = append(d.SparseVector, &olama.SparseVecItem{
+							TermId: svItem.TermId,
+							Score:  svItem.Score})
+					}
+					delete(doc, "sparse_vector")
+				} else {
+					return nil, fmt.Errorf("upsert failed, because of incorrect sparse_vector field type, which must be [][]interface{}")
+				}
+			}
+
 			for k, v := range doc {
 				d.Fields[k] = ConvertField2Grpc(&Field{Val: v})
 			}
@@ -149,6 +182,13 @@ func (r *rpcImplementerFlatDocument) Query(ctx context.Context, databaseName, co
 		var d Document
 		d.Id = doc.Id
 		d.Vector = doc.Vector
+		d.SparseVector = make([]encoder.SparseVecItem, 0)
+		for _, sv := range doc.SparseVector {
+			d.SparseVector = append(d.SparseVector, encoder.SparseVecItem{
+				TermId: sv.TermId,
+				Score:  sv.Score,
+			})
+		}
 		d.Fields = make(map[string]Field)
 
 		for n, v := range doc.Fields {
@@ -175,6 +215,128 @@ func (r *rpcImplementerFlatDocument) SearchById(ctx context.Context, databaseNam
 func (r *rpcImplementerFlatDocument) SearchByText(ctx context.Context, databaseName, collectionName string,
 	text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.search(ctx, databaseName, collectionName, nil, nil, text, params...)
+}
+
+func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseName, collectionName string,
+	params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
+	req := &olama.SearchRequest{
+		Database:        databaseName,
+		Collection:      collectionName,
+		ReadConsistency: string(r.SdkClient.Options().ReadConsistency),
+		Search:          &olama.SearchCond{},
+	}
+
+	req.Search.Ann = make([]*olama.AnnData, 0)
+	req.Search.Sparse = make([]*olama.SparseData, 0)
+
+	for i, annParam := range params.AnnParams {
+		fieldName := "vector"
+		if annParam.FieldName != "" {
+			fieldName = annParam.FieldName
+		}
+		req.Search.Ann = append(req.Search.Ann, &olama.AnnData{
+			FieldName:   fieldName,
+			DocumentIds: annParam.DocumentIds,
+		})
+		if annParam.Limit != nil {
+			req.Search.Ann[i].Limit = uint32(*annParam.Limit)
+		}
+
+		vectorArray := make([]*olama.VectorArray, 0, len(req.Search.Vectors))
+		for _, vector := range annParam.Vectors {
+			vectorArray = append(vectorArray, &olama.VectorArray{Vector: vector})
+		}
+		req.Search.Ann[i].Data = vectorArray
+
+		if annParam.Params != nil {
+			req.Search.Ann[i].Params = new(olama.SearchParams)
+			req.Search.Ann[i].Params.Nprobe = annParam.Params.Nprobe
+			req.Search.Ann[i].Params.Ef = annParam.Params.Ef
+			req.Search.Ann[i].Params.Radius = annParam.Params.Radius
+		}
+	}
+
+	for i, matchParam := range params.Match {
+		fieldName := "sparse_vector"
+		if matchParam.FieldName != "" {
+			fieldName = matchParam.FieldName
+		}
+		req.Search.Sparse = append(req.Search.Sparse, &olama.SparseData{
+			FieldName: fieldName,
+		})
+		if matchParam.Limit != nil {
+			req.Search.Ann[i].Limit = uint32(*matchParam.Limit)
+		}
+
+		sparseVectorArray := make([]*olama.SparseVectorArray, 0)
+		for _, svs := range matchParam.Data {
+			data := make([]*olama.SparseVecItem, 0)
+			for _, sv := range svs {
+				data = append(data, &olama.SparseVecItem{
+					TermId: sv.TermId,
+					Score:  sv.Score,
+				})
+			}
+			sparseVectorArray = append(sparseVectorArray, &olama.SparseVectorArray{
+				SpVector: data,
+			})
+		}
+		req.Search.Sparse[i].Data = sparseVectorArray
+	}
+
+	if params.Rerank != nil {
+		req.Search.RerankParams = new(olama.RerankParams)
+		if len(params.Rerank.FieldList) != len(params.Rerank.Weight) {
+			return nil, fmt.Errorf("the length of fieldlist should be equal with the length of weights")
+		}
+		req.Search.RerankParams.Method = params.Rerank.Method
+		req.Search.RerankParams.Weights = make(map[string]float32, 0)
+		for i, fieldName := range params.Rerank.FieldList {
+			req.Search.RerankParams.Weights[fieldName] = params.Rerank.Weight[i]
+		}
+		req.Search.RerankParams.RrfK = params.Rerank.RrfK
+	}
+
+	req.Search.Filter = params.Filter.Cond()
+	req.Search.RetrieveVector = params.RetrieveVector
+	req.Search.Outputfields = params.OutputFields
+	req.Search.Limit = uint32(*params.Limit)
+
+	res, err := r.rpcClient.HybridSearch(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	var documents [][]Document
+	for _, result := range res.Results {
+		var vecDoc []Document
+		for _, doc := range result.Documents {
+			d := Document{
+				Id:     doc.Id,
+				Vector: doc.Vector,
+				Score:  doc.Score,
+				Fields: make(map[string]Field),
+			}
+
+			d.SparseVector = make([]encoder.SparseVecItem, 0)
+			for _, sv := range doc.SparseVector {
+				d.SparseVector = append(d.SparseVector, encoder.SparseVecItem{
+					TermId: sv.TermId,
+					Score:  sv.Score,
+				})
+			}
+
+			for n, v := range doc.Fields {
+				d.Fields[n] = *ConvertGrpc2Field(v)
+			}
+			vecDoc = append(vecDoc, d)
+		}
+		documents = append(documents, vecDoc)
+	}
+	result := &SearchDocumentResult{
+		Warning:   res.Warning,
+		Documents: documents,
+	}
+	return result, nil
 }
 
 func (r *rpcImplementerFlatDocument) Delete(ctx context.Context, databaseName, collectionName string,
@@ -209,6 +371,14 @@ func (r *rpcImplementerFlatDocument) Update(ctx context.Context, databaseName, c
 		},
 	}
 
+	req.Update.SparseVector = make([]*olama.SparseVecItem, 0)
+	for _, sv := range param.UpdateSparseVec {
+		req.Update.SparseVector = append(req.Update.SparseVector, &olama.SparseVecItem{
+			TermId: sv.TermId,
+			Score:  sv.Score,
+		})
+	}
+
 	if updatefields, ok := param.UpdateFields.(map[string]Field); ok {
 		for k, v := range updatefields {
 			req.Update.Fields[k] = ConvertField2Grpc(&v)
@@ -223,6 +393,25 @@ func (r *rpcImplementerFlatDocument) Update(ctx context.Context, databaseName, c
 					"which must be []float32")
 			}
 		}
+
+		if sparseVector, ok := updatefields["sparse_vector"]; ok {
+			if aSparseVector, ok := sparseVector.([][]interface{}); ok {
+				req.Update.SparseVector = make([]*olama.SparseVecItem, 0)
+				for _, sv := range aSparseVector {
+					if len(sv) != 2 {
+						continue
+					}
+					req.Update.SparseVector = append(req.Update.SparseVector, &olama.SparseVecItem{
+						TermId: int64(sv[0].(uint64)),
+						Score:  float32(sv[1].(float64)),
+					})
+				}
+				delete(updatefields, "sparse_vector")
+			} else {
+				return nil, fmt.Errorf("update failed, because of incorrect sparse_vector field type, which must be [][]interface{}")
+			}
+		}
+
 		for k, v := range updatefields {
 			req.Update.Fields[k] = ConvertField2Grpc(&Field{Val: v})
 		}

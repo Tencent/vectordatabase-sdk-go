@@ -33,8 +33,9 @@ const (
 	IVF_SQ16 IndexType = "IVF_SQ16"
 
 	// scalar index type
-	PRIMARY IndexType = "primaryKey"
-	FILTER  IndexType = "filter"
+	PRIMARY         IndexType = "primaryKey"
+	FILTER          IndexType = "filter"
+	SPARSE_INVERTED IndexType = "inverted"
 )
 
 type MetricType string
@@ -48,10 +49,11 @@ const (
 type FieldType string
 
 const (
-	Uint64 FieldType = "uint64"
-	String FieldType = "string"
-	Array  FieldType = "array"
-	Vector FieldType = "vector"
+	Uint64       FieldType = "uint64"
+	String       FieldType = "string"
+	Array        FieldType = "array"
+	Vector       FieldType = "vector"
+	SparseVector FieldType = "sparseVector"
 )
 
 type EmbeddingModel string
@@ -120,4 +122,9 @@ const (
 var (
 	BaseDbTypeError = errors.New("This database type is base, use base database sdk")
 	AIDbTypeError   = errors.New("This database type is ai, use ai database sdk")
+)
+
+const (
+	ERR_UNDEFINED_DATABASE   = 15301
+	ERR_UNDEFINED_COLLECTION = 15302
 )

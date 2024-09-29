@@ -34,12 +34,18 @@ type CreateReq struct {
 	IndexStatus *IndexStatus       `json:"indexStatus,omitempty"`
 	AliasList   []string           `json:"alias_list,omitempty"`
 	Embedding   Embedding          `json:"embedding"`
+	TtlConfig   *TtlConfig         `json:"ttlConfig,omitempty"`
 }
 
 type Embedding struct {
 	Field       string `json:"field,omitempty"`
 	VectorField string `json:"vectorField,omitempty"`
 	Model       string `json:"model,omitempty"`
+}
+
+type TtlConfig struct {
+	Enable    bool   `json:"enable"`
+	TimeField string `json:"timeField,omitempty"`
 }
 
 type IndexStatus struct {
@@ -105,6 +111,7 @@ type DescribeCollectionItem struct {
 	Alias         []string           `json:"alias"`
 	DocumentCount int64              `json:"documentCount,omitempty"`
 	Embedding     *EmbeddingRes      `json:"embedding,omitempty"`
+	TtlConfig     *TtlConfig         `json:"ttlConfig,omitempty"`
 }
 
 type TruncateReq struct {

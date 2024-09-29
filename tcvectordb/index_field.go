@@ -23,8 +23,16 @@ import (
 )
 
 type Indexes struct {
-	VectorIndex []VectorIndex
-	FilterIndex []FilterIndex
+	VectorIndex       []VectorIndex
+	FilterIndex       []FilterIndex
+	SparseVectorIndex []SparseVectorIndex
+}
+
+type SparseVectorIndex struct {
+	FieldName  string
+	FieldType  FieldType
+	IndexType  IndexType
+	MetricType MetricType
 }
 
 type FilterIndex struct {

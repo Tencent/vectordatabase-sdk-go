@@ -2,9 +2,11 @@ package tcvectordb
 
 import (
 	"context"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
+	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
 
 var _ DatabaseInterface = &rpcImplementerDatabase{}
@@ -13,6 +15,34 @@ type rpcImplementerDatabase struct {
 	SdkClient
 	httpImplementer DatabaseInterface
 	rpcClient       olama.SearchEngineClient
+}
+
+func (r *rpcImplementerDatabase) ExistsDatabase(ctx context.Context, name string) (bool, error) {
+	dbList, err := r.ListDatabase(ctx)
+	if err != nil {
+		return false, fmt.Errorf("judging whether the database exists failed. err is %v", err.Error())
+	}
+	for _, db := range dbList.Databases {
+		if db.DatabaseName == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (r *rpcImplementerDatabase) CreateDatabaseIfNotExists(ctx context.Context, name string) (*CreateDatabaseResult, error) {
+	dbList, err := r.ListDatabase(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("judging whether the database exists failed. err is %v", err.Error())
+	}
+	for _, db := range dbList.Databases {
+		if db.DatabaseName == name {
+			result := new(CreateDatabaseResult)
+			result.Database = *(r.Database(name))
+			return result, err
+		}
+	}
+	return r.CreateDatabase(ctx, name)
 }
 
 func (r *rpcImplementerDatabase) CreateDatabase(ctx context.Context, name string) (*CreateDatabaseResult, error) {

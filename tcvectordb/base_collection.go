@@ -21,6 +21,7 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,6 +34,9 @@ var _ CollectionInterface = &implementerCollection{}
 // CollectionInterface collection api
 type CollectionInterface interface {
 	SdkClient
+	ExistsCollection(ctx context.Context, name string) (bool, error)
+	CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
+		indexes Indexes, params ...*CreateCollectionParams) (*Collection, error)
 	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
 		indexes Indexes, params ...*CreateCollectionParams) (*Collection, error)
 	ListCollection(ctx context.Context) (result *ListCollectionResult, err error)
@@ -49,10 +53,40 @@ type implementerCollection struct {
 
 type CreateCollectionParams struct {
 	Embedding *Embedding
+	TtlConfig *TtlConfig
 }
 
 type CreateCollectionResult struct {
 	Collection
+}
+
+func (i *implementerCollection) ExistsCollection(ctx context.Context, name string) (bool, error) {
+	res, err := i.DescribeCollection(ctx, name)
+	if err != nil {
+		if strings.Contains(err.Error(), strconv.Itoa(ERR_UNDEFINED_COLLECTION)) {
+			return false, nil
+		}
+		return false, fmt.Errorf("get collection %s failed, err: %v", name, err.Error())
+	}
+	if res == nil {
+		return false, fmt.Errorf("get collection %s failed", name)
+	}
+	return true, nil
+}
+
+func (i *implementerCollection) CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
+	indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
+	res, err := i.DescribeCollection(ctx, name)
+	if err != nil {
+		if strings.Contains(err.Error(), strconv.Itoa(ERR_UNDEFINED_COLLECTION)) {
+			return i.CreateCollection(ctx, name, shardNum, replicasNum, description, indexes, params...)
+		}
+		return nil, fmt.Errorf("get collection %s failed, err: %v", name, err.Error())
+	}
+	if res == nil {
+		return nil, fmt.Errorf("get collection %s failed", name)
+	}
+	return &res.Collection, nil
 }
 
 // CreateCollection create a collection. It returns collection struct if err is nil.
@@ -84,6 +118,17 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 
 		req.Indexes = append(req.Indexes, &column)
 	}
+
+	for _, v := range indexes.SparseVectorIndex {
+		var column api.IndexColumn
+		column.FieldName = v.FieldName
+		column.FieldType = string(v.FieldType)
+		column.IndexType = string(v.IndexType)
+		column.MetricType = string(v.MetricType)
+
+		req.Indexes = append(req.Indexes, &column)
+	}
+
 	for _, v := range indexes.FilterIndex {
 		var column api.IndexColumn
 		column.FieldName = v.FieldName
@@ -100,6 +145,11 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 			req.Embedding.Field = param.Embedding.Field
 			req.Embedding.VectorField = param.Embedding.VectorField
 			req.Embedding.Model = string(param.Embedding.Model)
+		}
+		if param.TtlConfig != nil {
+			req.TtlConfig = new(collection.TtlConfig)
+			req.TtlConfig.Enable = param.TtlConfig.Enable
+			req.TtlConfig.TimeField = param.TtlConfig.TimeField
 		}
 	}
 
@@ -263,6 +313,11 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 		coll.Embedding.Model = EmbeddingModel(collectionItem.Embedding.Model)
 		coll.Embedding.Enabled = collectionItem.Embedding.Status == "enabled"
 	}
+	if collectionItem.TtlConfig != nil {
+		coll.TtlConfig = new(TtlConfig)
+		coll.TtlConfig.Enable = collectionItem.TtlConfig.Enable
+		coll.TtlConfig.TimeField = collectionItem.TtlConfig.TimeField
+	}
 
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = IndexStatus{
@@ -299,6 +354,14 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 				}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
+
+		case string(SparseVector):
+			vector := SparseVectorIndex{}
+			vector.FieldName = index.FieldName
+			vector.FieldType = FieldType(index.FieldType)
+			vector.IndexType = IndexType(index.IndexType)
+			vector.MetricType = MetricType(index.MetricType)
+			coll.Indexes.SparseVectorIndex = append(coll.Indexes.SparseVectorIndex, vector)
 
 		case string(Array):
 			filter := FilterIndex{}
@@ -374,6 +437,7 @@ type Collection struct {
 	Description       string      `json:"description"`
 	Size              uint64      `json:"size"`
 	CreateTime        time.Time   `json:"createTime"`
+	TtlConfig         *TtlConfig  `json:"ttlConfig,omitempty"`
 }
 
 func (c *Collection) Debug(v bool) {
@@ -394,4 +458,9 @@ type Embedding struct {
 type IndexStatus struct {
 	Status    string
 	StartTime time.Time
+}
+
+type TtlConfig struct {
+	Enable    bool   `json:"enable"`
+	TimeField string `json:"timeField,omitempty"`
 }

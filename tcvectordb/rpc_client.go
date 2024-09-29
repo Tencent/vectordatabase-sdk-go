@@ -59,10 +59,10 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 	cc, err := grpc.NewClient(rpcTarget,
 		grpc.WithUnaryInterceptor(newInterceptor(cli)),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(16*1024*1024)),
-		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(16*1024*1024)),
-		grpc.WithInitialWindowSize(16*1024*1024),
-		grpc.WithInitialConnWindowSize(16*1024*1024),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100*1024*1024)),
+		grpc.WithInitialWindowSize(100*1024*1024),
+		grpc.WithInitialConnWindowSize(100*1024*1024),
 	)
 	cli.cc = cc
 	if err != nil {

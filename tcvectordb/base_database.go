@@ -20,6 +20,7 @@ package tcvectordb
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -32,6 +33,8 @@ var _ DatabaseInterface = &implementerDatabase{}
 // DatabaseInterface database api
 type DatabaseInterface interface {
 	SdkClient
+	ExistsDatabase(ctx context.Context, name string) (bool, error)
+	CreateDatabaseIfNotExists(ctx context.Context, name string) (*CreateDatabaseResult, error)
 	CreateDatabase(ctx context.Context, name string) (*CreateDatabaseResult, error)
 	DropDatabase(ctx context.Context, name string) (*DropDatabaseResult, error)
 	ListDatabase(ctx context.Context) (result *ListDatabaseResult, err error)
@@ -48,6 +51,34 @@ type implementerDatabase struct {
 type CreateDatabaseResult struct {
 	Database
 	AffectedCount int
+}
+
+func (i *implementerDatabase) ExistsDatabase(ctx context.Context, name string) (bool, error) {
+	dbList, err := i.ListDatabase(ctx)
+	if err != nil {
+		return false, fmt.Errorf("judging whether the database exists failed. err is %v", err.Error())
+	}
+	for _, db := range dbList.Databases {
+		if db.DatabaseName == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (i *implementerDatabase) CreateDatabaseIfNotExists(ctx context.Context, name string) (*CreateDatabaseResult, error) {
+	dbList, err := i.ListDatabase(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("judging whether the database exists failed. err is %v", err.Error())
+	}
+	for _, db := range dbList.Databases {
+		if db.DatabaseName == name {
+			result := new(CreateDatabaseResult)
+			result.Database = *(i.Database(name))
+			return result, err
+		}
+	}
+	return i.CreateDatabase(ctx, name)
 }
 
 // CreateDatabase create database with database name. It returns error if name exist.
