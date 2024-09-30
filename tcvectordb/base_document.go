@@ -153,11 +153,10 @@ type MatchOption struct {
 }
 
 type AnnParam struct {
-	FieldName   string
-	DocumentIds []string
-	Data        interface{}
-	Params      *SearchDocParams
-	Limit       *int
+	FieldName string
+	Data      interface{}
+	Params    *SearchDocParams
+	Limit     *int
 }
 
 func (i *implementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
@@ -430,17 +429,15 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 			fieldName = annParam.FieldName
 		}
 		req.Search.AnnParams = append(req.Search.AnnParams, &document.AnnParam{
-			FieldName:   fieldName,
-			DocumentIds: annParam.DocumentIds,
-			Limit:       annParam.Limit,
+			FieldName: fieldName,
+			Limit:     annParam.Limit,
 		})
 
 		req.Search.AnnParams[i].Data = make([]interface{}, 0)
-
 		if vec, ok := annParam.Data.([]float32); ok {
 			req.Search.AnnParams[i].Data = append(req.Search.AnnParams[i].Data, vec)
 		} else {
-			return nil, fmt.Errorf("hybridSearch failed, because of AnnParam.Vectors field type, " +
+			return nil, fmt.Errorf("hybridSearch failed, because of AnnParam.Data field type, " +
 				"which must be []float32")
 		}
 
