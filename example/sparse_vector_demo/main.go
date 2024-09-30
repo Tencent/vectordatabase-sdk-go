@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
@@ -158,17 +157,47 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 
 	log.Println("------------------------------ Upsert ------------------------------")
 
-	documentList := make([]tcvectordb.Document, 0)
-	for i := 0; i < 5; i++ {
-		id := "000" + strconv.Itoa(i)
-		documentList = append(documentList, tcvectordb.Document{
-			Id:     id,
+	documentList := []tcvectordb.Document{
+		{
+			Id:     "0001",
 			Vector: []float32{0.2123, 0.21, 0.213},
 			SparseVector: []encoder.SparseVecItem{
 				{TermId: 1172076521, Score: 0.71296215},
 				{TermId: 3434399993, Score: 0.71296215},
 			},
-		})
+		},
+		{
+			Id:     "0002",
+			Vector: []float32{0.2123, 0.22, 0.213},
+			SparseVector: []encoder.SparseVecItem{
+				{TermId: 225043997, Score: 0.71296215},
+				{TermId: 256049420, Score: 0.71296215},
+			},
+		},
+		{
+			Id:     "0003",
+			Vector: []float32{0.2123, 0.23, 0.213},
+			SparseVector: []encoder.SparseVecItem{
+				{TermId: 4162843804, Score: 0.71296215},
+				{TermId: 256049420, Score: 0.71296215},
+			},
+		},
+		{
+			Id:     "0004",
+			Vector: []float32{0.2123, 0.24, 0.213},
+			SparseVector: []encoder.SparseVecItem{
+				{TermId: 3656406568, Score: 0.71296215},
+				{TermId: 256049420, Score: 0.71296215},
+			},
+		},
+		{
+			Id:     "0005",
+			Vector: []float32{0.2123, 0.25, 0.213},
+			SparseVector: []encoder.SparseVecItem{
+				{TermId: 4162843804, Score: 0.71296215},
+				{TermId: 3656406568, Score: 0.71296215},
+			},
+		},
 	}
 
 	result, err := coll.Upsert(ctx, documentList)
