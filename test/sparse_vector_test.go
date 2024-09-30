@@ -285,20 +285,17 @@ func TestHybridSearchWithSparseVec(t *testing.T) {
 		log.Fatalf(err.Error())
 	}
 
-	vec := [][]float32{
-		make([]float32, 768),
-	}
 	annSearch := &tcvectordb.AnnParam{
-		Vectors: vec,
+		Data: make([]float32, 768),
 	}
 
-	sparseVecs, err := bm25.EncodeQueries([]string{"刘玄德"})
+	sparseVec, err := bm25.EncodeQuery("刘玄德")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
 	keywordSearch := &tcvectordb.MatchOption{
-		Data: sparseVecs,
+		Data: sparseVec,
 	}
 
 	limit := 3
@@ -308,7 +305,7 @@ func TestHybridSearchWithSparseVec(t *testing.T) {
 		Rerank: &tcvectordb.RerankOption{
 			Method:    "weighted",
 			FieldList: []string{"vector", "sparse_vector"},
-			Weight:    []float32{0, 1},
+			Weight:    []float32{0.6, 0.4},
 		},
 		Limit:        &limit,
 		OutputFields: []string{"id", "sparse_vector", "segment"},

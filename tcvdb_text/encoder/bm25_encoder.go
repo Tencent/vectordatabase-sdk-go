@@ -194,6 +194,14 @@ func (bm25 *BM25Encoder) EncodeTexts(texts []string) ([][]SparseVecItem, error) 
 	return sparseVectors, nil
 }
 
+func (bm25 *BM25Encoder) EncodeText(text string) ([]SparseVecItem, error) {
+	if bm25.AverageDocLength == 0 || bm25.DocCount == 0 || len(bm25.TokenFreq) == 0 {
+		return nil, fmt.Errorf("BM25 must be fit before encoding documents")
+	}
+
+	return bm25.encodeSingleDocument(text), nil
+}
+
 func (bm25 *BM25Encoder) encodeSingleQuery(text string) []SparseVecItem {
 	hashTokens, _ := bm25.tf(text)
 	df := make([]float64, len(hashTokens))
@@ -236,6 +244,14 @@ func (bm25 *BM25Encoder) EncodeQueries(texts []string) ([][]SparseVecItem, error
 		sparseVectors = append(sparseVectors, bm25.encodeSingleQuery(text))
 	}
 	return sparseVectors, nil
+}
+
+func (bm25 *BM25Encoder) EncodeQuery(text string) ([]SparseVecItem, error) {
+	if bm25.AverageDocLength == 0 || bm25.DocCount == 0 || len(bm25.TokenFreq) == 0 {
+		return nil, fmt.Errorf("BM25 must be fit before encoding documents")
+	}
+
+	return bm25.encodeSingleQuery(text), nil
 }
 
 func (bm25 *BM25Encoder) FitCorpus(corpus []string) error {

@@ -148,14 +148,14 @@ type RerankOption struct {
 }
 type MatchOption struct {
 	FieldName string
-	Data      [][]encoder.SparseVecItem
+	Data      interface{}
 	Limit     *int
 }
 
 type AnnParam struct {
 	FieldName   string
 	DocumentIds []string
-	Vectors     [][]float32
+	Data        interface{}
 	Params      *SearchDocParams
 	Limit       *int
 }
@@ -436,8 +436,12 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 		})
 
 		req.Search.AnnParams[i].Data = make([]interface{}, 0)
-		for _, vector := range annParam.Vectors {
-			req.Search.AnnParams[i].Data = append(req.Search.AnnParams[i].Data, vector)
+
+		if vec, ok := annParam.Data.([]float32); ok {
+			req.Search.AnnParams[i].Data = append(req.Search.AnnParams[i].Data, vec)
+		} else {
+			return nil, fmt.Errorf("hybridSearch failed, because of AnnParam.Vectors field type, " +
+				"which must be []float32")
 		}
 
 		if annParam.Params != nil {
@@ -446,6 +450,7 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 			req.Search.AnnParams[i].Params.Ef = annParam.Params.Ef
 			req.Search.AnnParams[i].Params.Radius = annParam.Params.Radius
 		}
+		break
 	}
 
 	for i, matchParam := range params.Match {
@@ -456,19 +461,23 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 		req.Search.Match = append(req.Search.Match, &document.MatchOption{
 			FieldName: fieldName,
 		})
-		req.Search.Match[i].Data = make([][][]interface{}, 0)
 
-		for _, svs := range matchParam.Data {
+		req.Search.Match[i].Data = make([][][]interface{}, 0)
+		if svs, ok := matchParam.Data.([]encoder.SparseVecItem); ok {
 			sparseVector := make([][]interface{}, 0)
 			for _, svItem := range svs {
 				sparseVector = append(sparseVector, []interface{}{svItem.TermId, svItem.Score})
 			}
 			req.Search.Match[i].Data = append(req.Search.Match[i].Data, sparseVector)
+		} else {
+			return nil, fmt.Errorf("hybridSearch failed, because of Match.Data field type, " +
+				"which must be []encoder.SparseVecItem")
 		}
 
 		if matchParam.Limit != nil {
 			req.Search.Match[i].Limit = *matchParam.Limit
 		}
+		break
 	}
 
 	if params.Rerank != nil {
