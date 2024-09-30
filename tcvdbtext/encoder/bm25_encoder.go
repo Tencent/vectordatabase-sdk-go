@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"strconv"
 
-	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdb_text"
-	"github.com/tencent/vectordatabase-sdk-go/tcvdb_text/tokenizer"
+	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdbtext"
+	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/tokenizer"
 )
 
 const (

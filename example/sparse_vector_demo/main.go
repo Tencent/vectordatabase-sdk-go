@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvdb_text/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 )
 
