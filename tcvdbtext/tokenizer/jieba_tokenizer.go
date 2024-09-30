@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"strings"
 
-	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdb_text"
-	"github.com/tencent/vectordatabase-sdk-go/tcvdb_text/hash"
+	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdbtext"
+	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/hash"
 	"github.com/yanyiwu/gojieba"
 )
 

@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvdb_text/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 )
 
@@ -141,7 +141,7 @@ type HybridSearchDocumentParams struct {
 	Match     []*MatchOption
 }
 type RerankOption struct {
-	Method    string
+	Method    RerankMethod
 	FieldList []string
 	Weight    []float32
 	RrfK      int32
@@ -483,7 +483,7 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 	if params.Rerank != nil {
 		req.Search.Rerank = new(document.RerankOption)
 		req.Search.Rerank.FieldList = params.Rerank.FieldList
-		req.Search.Rerank.Method = params.Rerank.Method
+		req.Search.Rerank.Method = string(params.Rerank.Method)
 		req.Search.Rerank.Weight = params.Rerank.Weight
 		req.Search.Rerank.RrfK = params.Rerank.RrfK
 	}

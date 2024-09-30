@@ -2,7 +2,7 @@ package hash
 
 import (
 	"github.com/spaolacci/murmur3"
-	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdb_text"
+	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdbtext"
 )
 
 type HashInterface interface {

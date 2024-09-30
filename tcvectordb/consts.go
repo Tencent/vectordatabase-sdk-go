@@ -128,3 +128,10 @@ const (
 	ERR_UNDEFINED_DATABASE   = 15301
 	ERR_UNDEFINED_COLLECTION = 15302
 )
+
+type RerankMethod string
+
+const (
+	RerankWeighted RerankMethod = "weighted"
+	RerankRrf      RerankMethod = "rrf"
+)
