@@ -235,8 +235,7 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 			fieldName = annParam.FieldName
 		}
 		req.Search.Ann = append(req.Search.Ann, &olama.AnnData{
-			FieldName:   fieldName,
-			DocumentIds: annParam.DocumentIds,
+			FieldName: fieldName,
 		})
 		if annParam.Limit != nil {
 			req.Search.Ann[i].Limit = uint32(*annParam.Limit)
