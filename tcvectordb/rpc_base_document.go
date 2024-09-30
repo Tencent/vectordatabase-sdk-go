@@ -299,7 +299,7 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 		if len(params.Rerank.FieldList) != len(params.Rerank.Weight) {
 			return nil, fmt.Errorf("the length of fieldlist should be equal with the length of weights")
 		}
-		req.Search.RerankParams.Method = params.Rerank.Method
+		req.Search.RerankParams.Method = string(params.Rerank.Method)
 		req.Search.RerankParams.Weights = make(map[string]float32, 0)
 		for i, fieldName := range params.Rerank.FieldList {
 			req.Search.RerankParams.Weights[fieldName] = params.Rerank.Weight[i]

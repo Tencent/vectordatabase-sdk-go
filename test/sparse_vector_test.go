@@ -303,7 +303,7 @@ func TestHybridSearchWithSparseVec(t *testing.T) {
 		AnnParams: []*tcvectordb.AnnParam{annSearch},
 		Match:     []*tcvectordb.MatchOption{keywordSearch},
 		Rerank: &tcvectordb.RerankOption{
-			Method:    "weighted",
+			Method:    tcvectordb.RerankWeighted,
 			FieldList: []string{"vector", "sparse_vector"},
 			Weight:    []float32{0.6, 0.4},
 		},
