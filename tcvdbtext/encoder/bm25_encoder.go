@@ -3,6 +3,7 @@ package encoder
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -73,7 +74,7 @@ func NewBM25Encoder(params *BM25EncoderParams) (SparseEncoder, error) {
 		}
 	}
 
-	if params.Bm25Language != "" {
+	if params != nil && params.Bm25Language != "" {
 		err := bm25.SetDefaultParams(params.Bm25Language)
 		if err != nil {
 			return nil, err
@@ -113,7 +114,7 @@ func (bm25 *BM25Encoder) SetParams(paramsFileLoadPath string) error {
 	if !tcvdbtext.FileExists(paramsFileLoadPath) {
 		return fmt.Errorf("the filepath %v doesn't exist", paramsFileLoadPath)
 	}
-	data, err := os.ReadFile(paramsFileLoadPath)
+	data, err := ioutil.ReadFile(paramsFileLoadPath)
 	if err != nil {
 		return fmt.Errorf("cannot read file: %v", err)
 	}
@@ -155,7 +156,7 @@ func (bm25 *BM25Encoder) DownloadParams(paramsFileDownloadPath string) error {
 		return fmt.Errorf("download bm25 params failed because marshal params failed. err: %v", err.Error())
 	}
 
-	err = os.WriteFile(paramsFileDownloadPath, jsonData, os.ModePerm)
+	err = ioutil.WriteFile(paramsFileDownloadPath, jsonData, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("download bm25 params failed because write file failed. err: %v", err.Error())
 	}

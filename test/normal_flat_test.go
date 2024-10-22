@@ -3,9 +3,63 @@ package test
 import (
 	"log"
 	"testing"
+	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 )
+
+func TestDropFlatCaseDatabase(t *testing.T) {
+	result, err := cli.DropDatabase(ctx, database)
+	printErr(err)
+	log.Printf("DropDatabase result: %+v", result)
+}
+
+func TestCreateFlatCaseDatabase(t *testing.T) {
+	db, err := cli.CreateDatabase(ctx, database)
+	printErr(err)
+	log.Printf("create database success, %s", db.DatabaseName)
+}
+
+func TestCreateFlatCaseCollection(t *testing.T) {
+	db := cli.Database(database)
+
+	index := tcvectordb.Indexes{
+		VectorIndex: []tcvectordb.VectorIndex{
+			{
+				FilterIndex: tcvectordb.FilterIndex{
+					FieldName: "vector",
+					FieldType: tcvectordb.Vector,
+					IndexType: tcvectordb.HNSW,
+				},
+				Dimension:  3,
+				MetricType: tcvectordb.COSINE,
+				Params: &tcvectordb.HNSWParam{
+					M:              16,
+					EfConstruction: 200,
+				},
+			},
+		},
+		FilterIndex: []tcvectordb.FilterIndex{
+			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
+			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
+			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
+			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},
+			{FieldName: "expire_at", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
+		},
+	}
+
+	db.WithTimeout(time.Second * 30)
+	param := &tcvectordb.CreateCollectionParams{
+		TtlConfig: &tcvectordb.TtlConfig{
+			Enable:    true,
+			TimeField: "expire_at",
+		},
+	}
+
+	coll, err := db.CreateCollection(ctx, collectionName, 3, 1, "test collection", index, param)
+	printErr(err)
+	log.Printf("CreateCollection success: %v: %v", coll.DatabaseName, coll.CollectionName)
+}
 
 func TestFlatUpsert(t *testing.T) {
 	buildIndex := true

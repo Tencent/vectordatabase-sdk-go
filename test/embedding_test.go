@@ -8,6 +8,27 @@ import (
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 )
 
+func TestDropEmbeddingDatabase(t *testing.T) {
+	result, err := cli.DropDatabase(ctx, database)
+	printErr(err)
+	log.Printf("DropDatabase result: %+v", result)
+}
+
+func TestCreateEmbeddingDatabase(t *testing.T) {
+	db, err := cli.CreateDatabase(ctx, database)
+	printErr(err)
+	log.Printf("create database success, %s", db.DatabaseName)
+}
+
+func TestDropEmbeddingCollection(t *testing.T) {
+	db := cli.Database(database)
+
+	// 删除collection，删除collection的同时，其中的数据也将被全部删除
+	result, err := db.DropCollection(ctx, embeddingCollection)
+	printErr(err)
+	log.Printf("drop embedding collection result: %+v", result)
+}
+
 func TestCreateCollectionWithEmbedding(t *testing.T) {
 	db := cli.Database(database)
 
@@ -56,7 +77,7 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 	}
 
 	db.WithTimeout(time.Second * 30)
-	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 0, "desription doc", index, param)
+	_, err := db.CreateCollection(ctx, embeddingCollection, 1, 1, "desription doc", index, param)
 	printErr(err)
 
 	col, err := db.DescribeCollection(ctx, embeddingCollection)
