@@ -9,6 +9,18 @@ import (
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 )
 
+func TestDropSparseCaseDatabase(t *testing.T) {
+	result, err := cli.DropDatabase(ctx, database)
+	printErr(err)
+	log.Printf("DropDatabase result: %+v", result)
+}
+
+func TestCreateSparseCaseDatabase(t *testing.T) {
+	db, err := cli.CreateDatabase(ctx, database)
+	printErr(err)
+	log.Printf("create database success, %s", db.DatabaseName)
+}
+
 func Test_DropEmbeddingCollectionWithSparseVec(t *testing.T) {
 	db := cli.Database(database)
 
@@ -68,6 +80,11 @@ func Test_CreateEmbeddingCollectionWithSparseVec(t *testing.T) {
 			{
 				FieldName: "page",
 				FieldType: tcvectordb.Uint64,
+				IndexType: tcvectordb.FILTER,
+			},
+			{
+				FieldName: "segment",
+				FieldType: tcvectordb.String,
 				IndexType: tcvectordb.FILTER,
 			},
 		},

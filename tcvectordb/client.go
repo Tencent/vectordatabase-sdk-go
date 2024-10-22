@@ -24,7 +24,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -175,7 +175,7 @@ func (c *Client) Debug(v bool) {
 }
 
 func (c *Client) handleResponse(ctx context.Context, res *http.Response, out interface{}) error {
-	responseBytes, err := io.ReadAll(res.Body)
+	responseBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}

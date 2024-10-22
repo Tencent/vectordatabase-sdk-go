@@ -20,6 +20,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -406,14 +407,29 @@ func TestReupsertCollection(t *testing.T) {
 }
 
 func TestTruncateCollection(t *testing.T) {
+	log.Println("wait collection indexes build successfully")
+	time.Sleep(5 * time.Second)
 	db := cli.Database(database)
 	// 清空 Collection
 	_, err := db.TruncateCollection(ctx, collectionName)
 	printErr(err)
 }
 
-func printErr(err error) {
-	if err != nil {
-		log.Fatal(err)
+func TestJson(t *testing.T) {
+	strT := "{\"databaseName\":\"go-sdk-test-db\",\"shardNum\":1846430633467240448}"
+	temp := make(map[string]interface{}, 0)
+	json.Unmarshal([]byte(strT), &temp)
+	if v, ok := temp["shardNum"].(float64); ok {
+		println(v, "float")
 	}
+	if v, ok := temp["shardNum"].(uint64); ok {
+		println(v)
+	}
+
+	if v, ok := temp["shardNum"].(json.Number); ok {
+		println(v)
+	}
+
+	temp1 := temp["shardNum"]
+	println(fmt.Sprintf("%T, %v", temp1, temp1))
 }

@@ -56,7 +56,7 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 	cli.debug = false
 	cli.option = optionMerge(*option)
 
-	cc, err := grpc.NewClient(rpcTarget,
+	cc, err := grpc.Dial(rpcTarget,
 		grpc.WithUnaryInterceptor(newInterceptor(cli)),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)),
