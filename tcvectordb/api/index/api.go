@@ -34,3 +34,15 @@ type RebuildRes struct {
 	api.CommonRes
 	TaskIds []string `json:"task_ids,omitempty"`
 }
+
+type AddReq struct {
+	api.Meta         `path:"/index/add" tags:"Index" method:"Post" summary:"新增collection的索引"`
+	Database         string             `json:"database,omitempty"`
+	Collection       string             `json:"collection,omitempty"`
+	Indexes          []*api.IndexColumn `json:"indexes,omitempty"`
+	BuildExistedData *bool              `json:"buildExistedData,omitempty"`
+}
+
+type AddRes struct {
+	api.CommonRes
+}

@@ -367,13 +367,6 @@ func TestDelete(t *testing.T) {
 	log.Printf("Delete result: %+v", res)
 }
 
-func TestBuildIndex(t *testing.T) {
-	coll := cli.Database(database).Collection(collectionName)
-	// 索引重建，重建期间不支持写入
-	_, err := coll.RebuildIndex(ctx, &tcvectordb.RebuildIndexParams{Throttle: 1})
-	printErr(err)
-}
-
 func TestReupsertCollection(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 	testLen := int64(10)

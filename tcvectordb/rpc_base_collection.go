@@ -208,6 +208,10 @@ func (r *rpcImplementerCollection) Collection(name string) *Collection {
 		SdkClient: r.SdkClient,
 		rpcClient: r.rpcClient,
 	}
+	flatIndexImpl := &rpcImplementerFlatIndex{
+		SdkClient: r.SdkClient,
+		rpcClient: r.rpcClient,
+	}
 	docImpl := &rpcImplementerDocument{
 		SdkClient:  r.SdkClient,
 		flat:       flatImpl,
@@ -218,6 +222,7 @@ func (r *rpcImplementerCollection) Collection(name string) *Collection {
 	indexImpl := &rpcImplementerIndex{
 		SdkClient:  r.SdkClient,
 		rpcClient:  r.rpcClient,
+		flat:       flatIndexImpl,
 		database:   r.database,
 		collection: coll,
 	}
@@ -312,6 +317,10 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 		SdkClient: r.SdkClient,
 		rpcClient: r.rpcClient,
 	}
+	flatIndexImpl := &rpcImplementerFlatIndex{
+		SdkClient: r.SdkClient,
+		rpcClient: r.rpcClient,
+	}
 	docImpl := &rpcImplementerDocument{
 		SdkClient:  r.SdkClient,
 		flat:       flatImpl,
@@ -323,6 +332,7 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 	indexImpl := &rpcImplementerIndex{
 		r.SdkClient,
 		r.rpcClient,
+		flatIndexImpl,
 		r.database,
 		coll,
 	}

@@ -60,6 +60,8 @@ type SearchEngineClient interface {
 	ListDatabases(ctx context.Context, in *DatabaseRequest, opts ...grpc.CallOption) (*DatabaseResponse, error)
 	// 获取版本（api升级兼容性考虑）
 	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
+	// 新增scalar的索引
+	AddIndex(ctx context.Context, in *AddIndexRequest, opts ...grpc.CallOption) (*AddIndexResponse, error)
 }
 
 type searchEngineClient struct {
@@ -126,7 +128,7 @@ func (c *searchEngineClient) TruncateCollection(ctx context.Context, in *Truncat
 
 func (c *searchEngineClient) DescribeCollection(ctx context.Context, in *DescribeCollectionRequest, opts ...grpc.CallOption) (*DescribeCollectionResponse, error) {
 	out := new(DescribeCollectionResponse)
-	err := c.cc.Invoke(ctx, "collection/describe", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/collection/describe", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -241,6 +243,15 @@ func (c *searchEngineClient) GetVersion(ctx context.Context, in *GetVersionReque
 	return out, nil
 }
 
+func (c *searchEngineClient) AddIndex(ctx context.Context, in *AddIndexRequest, opts ...grpc.CallOption) (*AddIndexResponse, error) {
+	out := new(AddIndexResponse)
+	err := c.cc.Invoke(ctx, "/index/add", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SearchEngineServer is the server API for SearchEngine service.
 // All implementations must embed UnimplementedSearchEngineServer
 // for forward compatibility
@@ -283,6 +294,8 @@ type SearchEngineServer interface {
 	ListDatabases(context.Context, *DatabaseRequest) (*DatabaseResponse, error)
 	// 获取版本（api升级兼容性考虑）
 	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
+	// 新增scalar的索引
+	AddIndex(context.Context, *AddIndexRequest) (*AddIndexResponse, error)
 	mustEmbedUnimplementedSearchEngineServer()
 }
 
@@ -346,6 +359,9 @@ func (UnimplementedSearchEngineServer) ListDatabases(context.Context, *DatabaseR
 }
 func (UnimplementedSearchEngineServer) GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVersion not implemented")
+}
+func (UnimplementedSearchEngineServer) AddIndex(context.Context, *AddIndexRequest) (*AddIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddIndex not implemented")
 }
 func (UnimplementedSearchEngineServer) mustEmbedUnimplementedSearchEngineServer() {}
 
@@ -702,6 +718,24 @@ func _SearchEngine_GetVersion_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SearchEngine_AddIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).AddIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/addIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).AddIndex(ctx, req.(*AddIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SearchEngine_ServiceDesc is the grpc.ServiceDesc for SearchEngine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -784,6 +818,10 @@ var SearchEngine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "get_version",
 			Handler:    _SearchEngine_GetVersion_Handler,
+		},
+		{
+			MethodName: "addIndex",
+			Handler:    _SearchEngine_AddIndex_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

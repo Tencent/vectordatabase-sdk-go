@@ -58,6 +58,7 @@ type ClientOption struct {
 type Client struct {
 	DatabaseInterface
 	FlatInterface
+	FlatIndexInterface
 
 	cli      *http.Client
 	url      string
@@ -123,9 +124,12 @@ func newClient(url, username, key string, option ClientOption) (*Client, error) 
 	databaseImpl.SdkClient = cli
 	flatImpl := new(implementerFlatDocument)
 	flatImpl.SdkClient = cli
+	flatIndexImpl := new(implementerFlatIndex)
+	flatIndexImpl.SdkClient = cli
 
 	cli.DatabaseInterface = databaseImpl
 	cli.FlatInterface = flatImpl
+	cli.FlatIndexInterface = flatIndexImpl
 	return cli, nil
 }
 
