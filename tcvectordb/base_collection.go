@@ -280,6 +280,9 @@ func (i *implementerCollection) Collection(name string) *Collection {
 	flatImpl := new(implementerFlatDocument)
 	flatImpl.SdkClient = i.SdkClient
 
+	flatIndexImpl := new(implementerFlatIndex)
+	flatIndexImpl.SdkClient = i.SdkClient
+
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.database = i.database
@@ -290,6 +293,7 @@ func (i *implementerCollection) Collection(name string) *Collection {
 	indexImpl.SdkClient = i.SdkClient
 	indexImpl.database = i.database
 	indexImpl.collection = coll
+	indexImpl.flat = flatIndexImpl
 
 	coll.DocumentInterface = docImpl
 	coll.IndexInterface = indexImpl
@@ -382,16 +386,22 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 
 	flatImpl := new(implementerFlatDocument)
 	flatImpl.SdkClient = i.SdkClient
+
+	flatIdexImpl := new(implementerFlatIndex)
+	flatIdexImpl.SdkClient = i.SdkClient
+
 	docImpl := new(implementerDocument)
 	docImpl.SdkClient = i.SdkClient
 	docImpl.database = i.database
 	docImpl.collection = coll
 	docImpl.flat = flatImpl
 	coll.DocumentInterface = docImpl
+
 	indexImpl := new(implementerIndex)
 	indexImpl.SdkClient = i.SdkClient
 	indexImpl.database = i.database
 	indexImpl.collection = coll
+	indexImpl.flat = flatIdexImpl
 	coll.IndexInterface = indexImpl
 	return coll
 }

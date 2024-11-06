@@ -20,8 +20,6 @@ package tcvectordb
 
 import (
 	"context"
-
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/index"
 )
 
 var _ IndexInterface = &implementerIndex{}
@@ -29,17 +27,14 @@ var _ IndexInterface = &implementerIndex{}
 type IndexInterface interface {
 	SdkClient
 	RebuildIndex(ctx context.Context, params ...*RebuildIndexParams) (result *RebuildIndexResult, err error)
+	AddIndex(ctx context.Context, params ...*AddIndexParams) (err error)
 }
 
 type implementerIndex struct {
 	SdkClient
+	flat       FlatIndexInterface
 	database   *Database
 	collection *Collection
-}
-
-type RebuildIndexParams struct {
-	DropBeforeRebuild bool
-	Throttle          int
 }
 
 type RebuildIndexResult struct {
@@ -47,25 +42,9 @@ type RebuildIndexResult struct {
 }
 
 func (i *implementerIndex) RebuildIndex(ctx context.Context, params ...*RebuildIndexParams) (*RebuildIndexResult, error) {
-	if i.database.IsAIDatabase() {
-		return nil, AIDbTypeError
-	}
-	req := new(index.RebuildReq)
-	req.Database = i.database.DatabaseName
-	req.Collection = i.collection.CollectionName
+	return i.flat.RebuildIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
+}
 
-	if len(params) != 0 && params[0] != nil {
-		param := params[0]
-		req.DropBeforeRebuild = param.DropBeforeRebuild
-		req.Throttle = int32(param.Throttle)
-	}
-
-	res := new(index.RebuildRes)
-	err := i.Request(ctx, req, &res)
-	if err != nil {
-		return nil, err
-	}
-	result := new(RebuildIndexResult)
-	result.TaskIds = res.TaskIds
-	return result, nil
+func (i *implementerIndex) AddIndex(ctx context.Context, params ...*AddIndexParams) error {
+	return i.flat.AddIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
 }

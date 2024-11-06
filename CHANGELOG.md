@@ -1,4 +1,8 @@
 # Changelog
+
+## v1.4.4
+* 新增/index/add接口实现
+
 ## v1.0.0
 
 ### DatabaseInterface
