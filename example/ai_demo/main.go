@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 	collection_view "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/collection_view"
 )
@@ -114,6 +115,11 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 			AppendTitleToChunk:    &appendTitleToChunk,
 			AppendKeywordsToChunk: &appendKeywordsToChunk,
 		},
+		// parsing files with vision model for all in this collectionView
+		// vision model parsing only for pdf filetype, and algorithm parsing for other supported filetypes
+		ParsingProcess: &api.ParsingProcess{
+			ParsingType: string(tcvectordb.VisionModelParsing),
+		},
 	})
 
 	if err != nil {
@@ -151,6 +157,11 @@ func (d *AIDemo) LoadAndSplitText(ctx context.Context, database, collection, fil
 			ChunkSplitter:         &chunkSplitter,
 			AppendTitleToChunk:    &appendTitleToChunk,
 			AppendKeywordsToChunk: &appendKeywordsToChunk,
+		},
+		// parsing this file with vision model
+		// vision model parsing only for pdf filetype, and algorithm parsing for other supported filetypes
+		ParsingProcess: &api.ParsingProcess{
+			ParsingType: string(tcvectordb.VisionModelParsing),
 		},
 	})
 	if err != nil {
@@ -200,7 +211,7 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 	// 查找与给定查询向量相似的向量。支持输入文本信息检索与输入文本相似的内容，同时，支持搭配标量字段的 Filter 表达式一并检索。
 	enableRerank := true
 	res, err := coll.Search(ctx, tcvectordb.SearchAIDocumentSetsParams{
-		Content:     "什么是向量数据库",
+		Content:     "平安保险的偿付能力是什么水平？",
 		ExpandChunk: []int{1, 0},
 		Filter:      tcvectordb.NewFilter(`test_str="v1"`),
 		Limit:       2,
@@ -287,7 +298,7 @@ func main() {
 	err = testVdb.CreateCollectionView(ctx, database, collectionView)
 	printErr(err)
 	// 当前支持的文件格式markdown(.md或.markdown)、pdf(.pdf)、ppt(.pptx)、word(.docx)
-	loadFileRes, err := testVdb.LoadAndSplitText(ctx, database, collectionView, "../tcvdb.md")
+	loadFileRes, err := testVdb.LoadAndSplitText(ctx, database, collectionView, "../demo_files/demo_vision_model_parsing.pdf")
 	printErr(err)
 	time.Sleep(time.Second * 30) // 等待后台解析文件完成
 	err = testVdb.GetFile(ctx, database, collectionView, loadFileRes.DocumentSetName)

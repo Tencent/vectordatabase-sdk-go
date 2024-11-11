@@ -134,9 +134,10 @@ type UpdateRes struct {
 
 type UploadUrlReq struct {
 	api.Meta        `path:"/ai/documentSet/uploadUrl" tags:"Document" method:"Post" summary:"获取cos上传签名"`
-	Database        string `json:"database"`
-	CollectionView  string `json:"collectionView"`
-	DocumentSetName string `json:"documentSetName"`
+	Database        string              `json:"database"`
+	CollectionView  string              `json:"collectionView"`
+	DocumentSetName string              `json:"documentSetName"`
+	ParsingProcess  *api.ParsingProcess `json:"parsingProcess,omitempty"`
 }
 
 type UploadUrlRes struct {
@@ -158,6 +159,8 @@ type Credentials struct {
 	TmpSecretID  string `json:"TmpSecretId"`
 	TmpSecretKey string `json:"TmpSecretKey"`
 	SessionToken string `json:"Token"`
+	Expiration   string `json:"Expiration,omitempty"`
+	ExpiredTime  int    `json:"ExpiredTime,omitempty"`
 }
 
 type GetReq struct {

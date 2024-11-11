@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/collection_view"
 )
@@ -132,7 +133,7 @@ func TestAIAlias(t *testing.T) {
 func TestGetCosSecret(t *testing.T) {
 	time.Sleep(5 * time.Second)
 	res, err := cli.AIDatabase(aiDatabase).CollectionView(collectionViewName).GetCosTmpSecret(ctx, tcvectordb.GetCosTmpSecretParams{
-		"tcvdb.md",
+		DocumentSetName: "tcvdb.md",
 	})
 	printErr(err)
 	t.Logf("%+v", res)
@@ -148,12 +149,6 @@ func TestLoadAndSplitText(t *testing.T) {
 		"author_name": "sam",
 		"fileKey":     1024}
 
-	// fd, err := os.Open("../example/tcvdb.md")
-	// if err != nil {
-	// 	t.Log(err)
-	// 	return
-	// }
-	// defer fd.Close()
 	appendTitleToChunk := false
 	appendKeywordsToChunk := true
 	chunkSplitter := "\n\n"
@@ -161,12 +156,15 @@ func TestLoadAndSplitText(t *testing.T) {
 	result, err := col.LoadAndSplitText(ctx, tcvectordb.LoadAndSplitTextParams{
 		// DocumentSetName: "tcvdb.md",
 		// Reader:          fd,
-		LocalFilePath: "../example/tcvdb.md",
+		LocalFilePath: "../example/demo_files/tcvdb.md",
 		MetaData:      metaData,
 		SplitterPreprocess: ai_document_set.DocumentSplitterPreprocess{
 			ChunkSplitter:         &chunkSplitter,
 			AppendTitleToChunk:    &appendTitleToChunk,
 			AppendKeywordsToChunk: &appendKeywordsToChunk,
+		},
+		ParsingProcess: &api.ParsingProcess{
+			ParsingType: string(tcvectordb.VisionModelParsing),
 		},
 	})
 	printErr(err)

@@ -134,6 +134,39 @@ func TestAddIndexString(t *testing.T) {
 	}
 }
 
+func TestAddIndexWithWrongFilterType(t *testing.T) {
+	indexPrepare()
+	db := cli.Database(database)
+	coll := db.Collection(collectionName)
+	upsertDataBeforeAddIndex()
+
+	buildExistedData := true
+	addFilterIndexs := []tcvectordb.FilterIndex{
+		{FieldName: "author", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER}}
+	err := cli.AddIndex(ctx, database, collectionName, &tcvectordb.AddIndexParams{FilterIndexs: addFilterIndexs,
+		BuildExistedData: &buildExistedData})
+	printErr(err)
+
+	time.Sleep(5 * time.Second)
+
+	res, err := db.DescribeCollection(ctx, collectionName)
+	printErr(err)
+	log.Printf("DescribeCollection result: %+v", ToJson(res))
+
+	upsertDataAfterAddIndex()
+
+	option := &tcvectordb.QueryDocumentParams{
+		Filter: tcvectordb.NewFilter("author=\"罗贯中\""),
+		Limit:  100,
+	}
+	queryResult, queryErr := coll.Query(ctx, nil, option)
+	printErr(queryErr)
+	log.Printf("total doc: %d, should be 2", queryResult.Total)
+	for _, doc := range queryResult.Documents {
+		log.Printf("document: %+v", ToJson(doc))
+	}
+}
+
 func TestAddIndexUint64(t *testing.T) {
 	indexPrepare()
 	db := cli.Database(database)

@@ -91,6 +91,13 @@ const (
 	LanguageMulti   Language = "multi"
 )
 
+type ParsingType string
+
+const (
+	AlgorithmParsing   ParsingType = "AlgorithmParsing"
+	VisionModelParsing ParsingType = "VisionModelParsing"
+)
+
 type AppendTitleToChunkType uint32
 
 const (

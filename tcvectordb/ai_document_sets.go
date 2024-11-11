@@ -34,6 +34,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
@@ -66,6 +67,7 @@ type AIDocumentSet struct {
 	DocumentSetInfo        *ai_document_set.DocumentSetInfo `json:"documentSetInfo"`
 	ScalarFields           map[string]Field
 	SplitterPreprocess     *ai_document_set.DocumentSplitterPreprocess `json:"splitterPreprocess,omitempty"`
+	ParsingProcess         *api.ParsingProcess                         `json:"parsingProcess,omitempty"`
 }
 
 type implementerAIDocumentSets struct {
@@ -341,7 +343,8 @@ func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map
 }
 
 type GetCosTmpSecretParams struct {
-	DocumentSetName string `json:"documentSetName"`
+	DocumentSetName string              `json:"documentSetName"`
+	ParsingProcess  *api.ParsingProcess `json:"parsingProcess,omitempty"`
 }
 
 type GetCosTmpSecretResult struct {
@@ -354,6 +357,8 @@ type GetCosTmpSecretResult struct {
 	TmpSecretID             string `json:"tmpSecretId"`
 	TmpSecretKey            string `json:"tmpSecretKey"`
 	SessionToken            string `json:"token"`
+	Expiration              string `json:"Expiration,omitempty"`
+	ExpiredTime             int    `json:"ExpiredTime,omitempty"`
 	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
 }
 
@@ -368,6 +373,7 @@ func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param G
 	req.Database = i.database.DatabaseName
 	req.CollectionView = i.collectionView.CollectionViewName
 	req.DocumentSetName = param.DocumentSetName
+	req.ParsingProcess = param.ParsingProcess
 
 	err := i.Request(ctx, req, res)
 	if err != nil {
@@ -387,6 +393,8 @@ func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param G
 	result.TmpSecretID = res.Credentials.TmpSecretID
 	result.TmpSecretKey = res.Credentials.TmpSecretKey
 	result.SessionToken = res.Credentials.SessionToken
+	result.Expiration = res.Credentials.Expiration
+	result.ExpiredTime = res.Credentials.ExpiredTime
 	result.MaxSupportContentLength = res.UploadCondition.MaxSupportContentLength
 
 	return result, nil
@@ -398,6 +406,14 @@ type LoadAndSplitTextParams struct {
 	LocalFilePath      string
 	MetaData           map[string]interface{}
 	SplitterPreprocess ai_document_set.DocumentSplitterPreprocess
+	ParsingProcess     *api.ParsingProcess
+}
+
+type cosMetaConfig struct {
+	AppendTitleToChunk    *bool               `json:"appendTitleToChunk,omitempty"`
+	AppendKeywordsToChunk *bool               `json:"appendKeywordsToChunk,omitempty"`
+	ChunkSplitter         *string             `json:"chunkSplitter,omitempty"`
+	ParsingProcess        *api.ParsingProcess `json:"parsingProcess,omitempty"`
 }
 
 type LoadAndSplitTextResult struct {
@@ -416,6 +432,7 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 	defer reader.Close()
 	res, err := i.GetCosTmpSecret(ctx, GetCosTmpSecretParams{
 		DocumentSetName: param.DocumentSetName,
+		ParsingProcess:  param.ParsingProcess,
 	})
 	if err != nil {
 		return nil, err
@@ -442,7 +459,15 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 	if err != nil {
 		return nil, fmt.Errorf("put param MetaData into cos header failed, err: %v", err.Error())
 	}
-	configMarshalData, err := json.Marshal(param.SplitterPreprocess)
+
+	cosMetaConfig := cosMetaConfig{
+		AppendTitleToChunk:    param.SplitterPreprocess.AppendKeywordsToChunk,
+		AppendKeywordsToChunk: param.SplitterPreprocess.AppendKeywordsToChunk,
+		ChunkSplitter:         param.SplitterPreprocess.ChunkSplitter,
+		ParsingProcess:        param.ParsingProcess,
+	}
+
+	configMarshalData, err := json.Marshal(cosMetaConfig)
 	if err != nil {
 		return nil, fmt.Errorf("put param SplitterPreprocess into cos header failed, err: %v", err.Error())
 	}
@@ -482,13 +507,14 @@ func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSp
 		}
 		param.DocumentSetName = filepath.Base(param.LocalFilePath)
 	}
-
-	if param.SplitterPreprocess.ChunkSplitter != nil && *param.SplitterPreprocess.ChunkSplitter != "" {
-		fileType := strings.ToLower(filepath.Ext(param.DocumentSetName))
-		if !(fileType == "" || fileType == string(MarkdownFileType) || fileType == string(MdFileType)) {
-			log.Printf("[Waring] %s", "param SplitterPreprocess.ChunkSplitter will be ommitted, "+
-				"because only markdown filetype supports defining ChunkSplitter")
-		}
+	fileType := strings.ToLower(filepath.Ext(param.DocumentSetName))
+	isMarkdown := false
+	if fileType == "" || fileType == string(MarkdownFileType) || fileType == string(MdFileType) {
+		isMarkdown = true
+	}
+	if !isMarkdown && param.SplitterPreprocess.ChunkSplitter != nil && *param.SplitterPreprocess.ChunkSplitter != "" {
+		log.Printf("[Waring] %s", "param SplitterPreprocess.ChunkSplitter will be ommitted, "+
+			"because only markdown filetype supports defining ChunkSplitter")
 	}
 
 	if param.LocalFilePath != "" {
@@ -546,6 +572,7 @@ func (i *implementerAIDocumentSets) toDocumentSet(item ai_document_set.QueryDocu
 
 	documentSet.AIDocumentSetInterface = docSetImpl
 	documentSet.SplitterPreprocess = item.SplitterPreprocess
+	documentSet.ParsingProcess = item.ParsingProcess
 	return documentSet
 }
 
