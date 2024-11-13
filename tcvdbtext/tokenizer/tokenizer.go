@@ -15,7 +15,6 @@ type TokenizerParams struct {
 	// string type: stopWords filePath
 	StopWords interface{} `json:"stop_words,omitempty"`
 
-	LowerCase        *bool  `json:"lower_case,omitempty"`
 	UserDictFilePath string `json:"dict_file,omitempty"`
 	CutAll           *bool  `json:"cut_all,omitempty"`
 	ForSearch        *bool  `json:"for_search,omitempty"`

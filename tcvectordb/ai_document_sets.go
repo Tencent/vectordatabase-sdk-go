@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -511,7 +510,7 @@ func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSp
 		}
 
 		size = written
-		reader = ioutil.NopCloser(bytesBuf)
+		reader = io.NopCloser(bytesBuf)
 	}
 
 	if size == 0 {

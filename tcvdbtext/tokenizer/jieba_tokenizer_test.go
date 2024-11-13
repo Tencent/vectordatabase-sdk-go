@@ -24,11 +24,9 @@ func Test_JiebaTokenizer(t *testing.T) {
 	println(ToJson(params))
 
 	println("------------case 2------------")
-	lowerCase := true
 	jbtParams := TokenizerParams{
 		UserDictFilePath: "../data/userdict_example.txt",
-		StopWords:        false,
-		LowerCase:        &lowerCase,
+		StopWords:        true,
 	}
 	jbt.UpdateParameters(jbtParams)
 	tokenizeRes = jbt.Tokenize("腾讯云的vdb是一款向量数据库")
