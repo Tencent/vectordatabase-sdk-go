@@ -426,3 +426,8 @@ func TestJson(t *testing.T) {
 	temp1 := temp["shardNum"]
 	println(fmt.Sprintf("%T, %v", temp1, temp1))
 }
+
+func TestEmeb(t *testing.T) {
+	model := "model_bge"
+	println(tcvectordb.EmbeddingModel(model))
+}

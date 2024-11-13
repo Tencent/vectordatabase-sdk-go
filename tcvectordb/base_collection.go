@@ -145,6 +145,9 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 			req.Embedding.Field = param.Embedding.Field
 			req.Embedding.VectorField = param.Embedding.VectorField
 			req.Embedding.Model = string(param.Embedding.Model)
+			if param.Embedding.ModelName != "" {
+				req.Embedding.Model = param.Embedding.ModelName
+			}
 		}
 		if param.TtlConfig != nil {
 			req.TtlConfig = new(collection.TtlConfig)
@@ -315,6 +318,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 		coll.Embedding.Field = collectionItem.Embedding.Field
 		coll.Embedding.VectorField = collectionItem.Embedding.VectorField
 		coll.Embedding.Model = EmbeddingModel(collectionItem.Embedding.Model)
+		coll.Embedding.ModelName = collectionItem.Embedding.Model
 		coll.Embedding.Enabled = collectionItem.Embedding.Status == "enabled"
 	}
 	if collectionItem.TtlConfig != nil {
@@ -462,7 +466,8 @@ type Embedding struct {
 	Field       string         `json:"field,omitempty"`
 	VectorField string         `json:"vectorField,omitempty"`
 	Model       EmbeddingModel `json:"model,omitempty"`
-	Enabled     bool           `json:"enabled,omitempty"` // 返回数据
+	ModelName   string         `json:"modelName,omitempty"` // 如果设置了ModelName，则使用ModelName；如果没设置，则使用Model
+	Enabled     bool           `json:"enabled,omitempty"`   // 返回数据
 }
 
 type IndexStatus struct {

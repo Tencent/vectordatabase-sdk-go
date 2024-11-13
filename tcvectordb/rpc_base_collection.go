@@ -101,6 +101,9 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 				VectorField: param.Embedding.VectorField,
 				ModelName:   string(param.Embedding.Model),
 			}
+			if param.Embedding.ModelName != "" {
+				req.EmbeddingParams.ModelName = param.Embedding.ModelName
+			}
 		}
 		if param.TtlConfig != nil {
 			req.TtlConfig = &olama.TTLConfig{
@@ -246,6 +249,7 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 		coll.Embedding.Field = collectionItem.EmbeddingParams.Field
 		coll.Embedding.VectorField = collectionItem.EmbeddingParams.VectorField
 		coll.Embedding.Model = EmbeddingModel(collectionItem.EmbeddingParams.ModelName)
+		coll.Embedding.ModelName = collectionItem.EmbeddingParams.ModelName
 		coll.Embedding.Enabled = false
 	}
 	if collectionItem.TtlConfig != nil {
