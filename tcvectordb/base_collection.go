@@ -463,11 +463,12 @@ func (c *Collection) WithTimeout(t time.Duration) {
 }
 
 type Embedding struct {
-	Field       string         `json:"field,omitempty"`
-	VectorField string         `json:"vectorField,omitempty"`
-	Model       EmbeddingModel `json:"model,omitempty"`
-	ModelName   string         `json:"modelName,omitempty"` // 如果设置了ModelName，则使用ModelName；如果没设置，则使用Model
-	Enabled     bool           `json:"enabled,omitempty"`   // 返回数据
+	Field       string `json:"field,omitempty"`
+	VectorField string `json:"vectorField,omitempty"`
+	// Deprecated: Use ModelName instead.
+	Model     EmbeddingModel `json:"model,omitempty"`
+	ModelName string         `json:"modelName,omitempty"`
+	Enabled   bool           `json:"enabled,omitempty"` // 返回数据
 }
 
 type IndexStatus struct {
