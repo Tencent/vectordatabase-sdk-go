@@ -109,7 +109,7 @@ func (d *EmbeddingDemo) CreateDBAndCollection(ctx context.Context, database, col
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
 
-	ebd := &tcvectordb.Embedding{VectorField: "vector", Field: "text", Model: tcvectordb.BGE_BASE_ZH}
+	ebd := &tcvectordb.Embedding{VectorField: "vector", Field: "text", ModelName: "bge-base-zh"}
 	// 第二步：创建 Collection
 	// 创建支持 Embedding 的 Collection
 	db.WithTimeout(time.Second * 30)

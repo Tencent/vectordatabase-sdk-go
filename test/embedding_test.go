@@ -37,7 +37,7 @@ func TestCreateCollectionWithEmbedding(t *testing.T) {
 		Embedding: &tcvectordb.Embedding{
 			Field:       "segment",
 			VectorField: "vector",
-			Model:       tcvectordb.BGE_BASE_ZH,
+			ModelName:   "BAAI/bge-m3",
 		},
 	}
 

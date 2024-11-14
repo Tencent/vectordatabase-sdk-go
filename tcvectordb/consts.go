@@ -71,6 +71,8 @@ const (
 	E5_LARGE_V2 EmbeddingModel = "e5-large-v2"
 	// TEXT2VEC_LARGE_CHINESE 1024
 	TEXT2VEC_LARGE_CHINESE EmbeddingModel = "text2vec-large-chinese"
+	// BAAI_BGE_M3 1024
+	BAAI_BGE_M3 EmbeddingModel = "BAAI/bge-m3"
 )
 
 type ReadConsistency string
