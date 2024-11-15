@@ -3,9 +3,7 @@
 ## Getting started
 
 ### Prerequisites
-1. Go 1.15 or higher
-2. Only support to use bm25 tcvdbtext package when the system is macos or linux, and you should install gcc firstly. Because gojieba in tcvdbtext package use cgo feature in go.  
-
+1. Go 1.17 or higher
 
 ### Install TencentCloud VectorDB Go SDK
 

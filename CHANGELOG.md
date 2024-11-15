@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.7
+* 移除buildtag，支持windows平台上编译运行
+
 ## v1.4.6
 * 支持BAAI/bge-m3新模型，也支持创建embedding collection时使用string直接设置模型
 
