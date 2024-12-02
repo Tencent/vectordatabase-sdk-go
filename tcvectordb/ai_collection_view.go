@@ -48,6 +48,7 @@ type AICollectionView struct {
 	Alias                   []string                            `json:"alias"`
 	Embedding               *collection_view.DocumentEmbedding  `json:"embedding"`
 	SplitterPreprocess      *collection_view.SplitterPreprocess `json:"splitterPreprocess"`
+	ParsingProcess          *api.ParsingProcess                 `json:"parsingProcess"`
 	IndexedDocumentSets     uint64                              `json:"indexedDocumentSets"`
 	TotalDocumentSets       uint64                              `json:"totalDocumentSets"`
 	UnIndexedDocumentSets   uint64                              `json:"unIndexedDocumentSets"`
@@ -66,6 +67,7 @@ type CreateCollectionViewParams struct {
 	Indexes            Indexes
 	Embedding          *collection_view.DocumentEmbedding
 	SplitterPreprocess *collection_view.SplitterPreprocess
+	ParsingProcess     *api.ParsingProcess
 	ExpectedFileNum    uint64
 	AverageFileSize    uint64
 }
@@ -104,6 +106,9 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 		req.SplitterPreprocess = new(collection_view.SplitterPreprocess)
 		req.SplitterPreprocess.AppendTitleToChunk = param.SplitterPreprocess.AppendTitleToChunk
 		req.SplitterPreprocess.AppendKeywordsToChunk = param.SplitterPreprocess.AppendKeywordsToChunk
+	}
+	if param.ParsingProcess != nil {
+		req.ParsingProcess = param.ParsingProcess
 	}
 	req.AverageFileSize = param.AverageFileSize
 	req.ExpectedFileNum = param.ExpectedFileNum
@@ -263,6 +268,9 @@ func (i *implementerCollectionView) toCollectionView(item *collection_view.Descr
 			AppendTitleToChunk:    item.SplitterPreprocess.AppendTitleToChunk,
 			AppendKeywordsToChunk: item.SplitterPreprocess.AppendKeywordsToChunk,
 		}
+	}
+	if item.ParsingProcess != nil {
+		coll.ParsingProcess = item.ParsingProcess
 	}
 
 	if item.Status != nil {

@@ -30,6 +30,7 @@ type CreateReq struct {
 	// AverageFileSize    uint64              `json:"averageFileSize,omitempty"`
 	Embedding          *DocumentEmbedding  `json:"embedding,omitempty"`
 	SplitterPreprocess *SplitterPreprocess `json:"splitterPreprocess,omitempty"`
+	ParsingProcess     *api.ParsingProcess `json:"parsingProcess,omitempty"`
 	Indexes            []*api.IndexColumn  `json:"indexes,omitempty"`
 	ExpectedFileNum    uint64              `json:"expectedFileNum,omitempty"`
 	AverageFileSize    uint64              `json:"averageFileSize,omitempty"`
@@ -77,6 +78,7 @@ type DescribeCollectionViewItem struct {
 	// AverageFileSize    uint64              `json:"averageFileSize,omitempty"`
 	Embedding          *DocumentEmbedding  `json:"embedding,omitempty"`
 	SplitterPreprocess *SplitterPreprocess `json:"splitterPreprocess,omitempty"`
+	ParsingProcess     *api.ParsingProcess `json:"parsingProcess,omitempty"`
 	Indexes            []*api.IndexColumn  `json:"indexes,omitempty"`
 
 	CreateTime string   `json:"createTime"`

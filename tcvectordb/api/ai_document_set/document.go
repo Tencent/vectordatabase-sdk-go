@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 )
 
 // Document document struct for document api
@@ -16,6 +18,7 @@ type QueryDocumentSet struct {
 	DocumentSetInfo    *DocumentSetInfo            `json:"documentSetInfo,omitempty"`
 	ScalarFields       map[string]interface{}      `json:"-"`
 	SplitterPreprocess *DocumentSplitterPreprocess `json:"splitterPreprocess,omitempty"`
+	ParsingProcess     *api.ParsingProcess         `json:"parsingProcess,omitempty"`
 }
 
 type DocumentSetInfo struct {

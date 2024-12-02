@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.8
+* CreateCollectionView和LoadAndSplitText接口支持设置文件解析的parsingType，可设置为AlgorithmParsing/VisionModelParsing
+
 ## v1.4.7
 * 移除buildtag，支持windows平台上编译运行
 

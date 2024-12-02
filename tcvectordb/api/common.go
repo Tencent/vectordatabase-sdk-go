@@ -75,3 +75,6 @@ type IndexParams struct {
 	Nprobe         uint32 `protobuf:"varint,3,opt,name=nprobe,proto3" json:"nprobe,omitempty"`
 	Nlist          uint32 `protobuf:"varint,4,opt,name=nlist,proto3" json:"nlist,omitempty"`
 }
+type ParsingProcess struct {
+	ParsingType string `json:"parsingType,omitempty"`
+}
