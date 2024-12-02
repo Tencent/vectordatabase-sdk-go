@@ -75,6 +75,12 @@ type IndexParams struct {
 	Nprobe         uint32 `protobuf:"varint,3,opt,name=nprobe,proto3" json:"nprobe,omitempty"`
 	Nlist          uint32 `protobuf:"varint,4,opt,name=nlist,proto3" json:"nlist,omitempty"`
 }
+
+// [ParsingProcess] holds the parameters for parsing files.
+//
+// Fields:
+//   - ParsingType:  (Optional) The type of parsing files, which can be set to AlgorithmParsing
+//     or VisionModelParsing (default to AlgorithmParsing).
 type ParsingProcess struct {
 	ParsingType string `json:"parsingType,omitempty"`
 }

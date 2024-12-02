@@ -43,16 +43,38 @@ var _ AIDocumentSetsInterface = &implementerAIDocumentSets{}
 
 type AIDocumentSetsInterface interface {
 	SdkClient
+
+	// [Query] queries documentSets that satisfies the condition from the collectionView.
 	Query(ctx context.Context, params QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error)
+
+	// [GetDocumentSetByName] gets a documentSet by the name of documentSet.
 	GetDocumentSetByName(ctx context.Context, documentSetName string) (*GetAIDocumentSetResult, error)
+
+	// [GetDocumentSetById] gets a documentSet by the documentSet id.
 	GetDocumentSetById(ctx context.Context, documentSetId string) (*GetAIDocumentSetResult, error)
+
+	// [GetChunks] gets chunks of a documentSet.
 	GetChunks(ctx context.Context, param GetAIDocumentSetChunksParams) (*GetAIDocumentSetChunksResult, error)
+
+	// [Search] returns the most similar topK chunks by the parameters of [SearchAIDocumentSetsParams].
 	Search(ctx context.Context, param SearchAIDocumentSetsParams) (*SearchAIDocumentSetResult, error)
+
+	// [DeleteByIds] deletes some documentSets by the list of documentSet ids.
 	DeleteByIds(ctx context.Context, documentSetIds ...string) (result *DeleteAIDocumentSetResult, err error)
+
+	// [DeleteByNames] deletes some documentSets by the list of documentSet names.
 	DeleteByNames(ctx context.Context, documentSetNames ...string) (result *DeleteAIDocumentSetResult, err error)
+
+	// [Delete] deletes some documentSets by the parameters of [DeleteAIDocumentSetParams].
 	Delete(ctx context.Context, param DeleteAIDocumentSetParams) (*DeleteAIDocumentSetResult, error)
+
+	// [Update] updates some documentSets in the collectionView.
 	Update(ctx context.Context, updateFields map[string]interface{}, param UpdateAIDocumentSetParams) (*UpdateAIDocumentSetResult, error)
+
+	// [LoadAndSplitText] uploads local file, which will be parsed and saved remotely.
 	LoadAndSplitText(ctx context.Context, param LoadAndSplitTextParams) (result *LoadAndSplitTextResult, err error)
+
+	// [GetCosTmpSecret] gets the temp secret to upload specific file.
 	GetCosTmpSecret(ctx context.Context, param GetCosTmpSecretParams) (*GetCosTmpSecretResult, error)
 }
 
@@ -76,6 +98,15 @@ type implementerAIDocumentSets struct {
 	collectionView *AICollectionView
 }
 
+// [QueryAIDocumentSetParams] holds the parameters for querying documentSets to a collectionView.
+//
+// Fields:
+//   - DocumentSetId: (Optional) The list of documentSet's ids to query. The maximum number of elements in the array is 20.
+//   - DocumentSetName: (Optional) The list of documentSet's names to query. The maximum number of elements in the array is 20.
+//   - Filter:  (Optional) Filter documentSets by [Filter] conditions before returning the result.
+//   - Limit: (Required) Limit the number of documentSets returned.
+//   - Offset: (Optional) Skip a specified number of documentSets in the query result set.
+//   - OutputFields: (Optional) Return columns specified by the list of column names.
 type QueryAIDocumentSetParams struct {
 	DocumentSetId   []string `json:"documentSetId"`
 	DocumentSetName []string `json:"documentSetName"`
@@ -90,8 +121,17 @@ type QueryAIDocumentSetResult struct {
 	Documents []AIDocumentSet `json:"documents"`
 }
 
-// Query query the ai_document_set by ai_document_set ids.
-// The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
+// [Query] queries documentSets that satisfies the condition from the collectionView.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A pointer to a [QueryAIDocumentSetParams] object that includes the other parameters for querying documentSets' operation.
+//     See [QueryAIDocumentSetParams] for more information.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [QueryAIDocumentSetResult] object or an error.
 func (i *implementerAIDocumentSets) Query(ctx context.Context, param QueryAIDocumentSetParams) (*QueryAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -132,10 +172,30 @@ type GetAIDocumentSetResult struct {
 	Count         uint64
 }
 
+// [GetDocumentSetByName] gets a documentSet by the name of documentSet.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentSetName: The name of the documentSet.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [GetAIDocumentSetResult] object or an error.
 func (i *implementerAIDocumentSets) GetDocumentSetByName(ctx context.Context, documentSetName string) (*GetAIDocumentSetResult, error) {
 	return i.get(ctx, GetAIDocumentSetParams{DocumentSetName: documentSetName})
 }
 
+// [GetDocumentSetById] gets a documentSet by the id of documentSet.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentSetId: The id of the documentSet.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [GetAIDocumentSetResult] object or an error.
 func (i *implementerAIDocumentSets) GetDocumentSetById(ctx context.Context, documentSetId string) (*GetAIDocumentSetResult, error) {
 	return i.get(ctx, GetAIDocumentSetParams{DocumentSetId: documentSetId})
 }
@@ -176,6 +236,17 @@ type GetAIDocumentSetChunksResult struct {
 	Chunks          []ai_document_set.Chunk `json:"chunks"`
 }
 
+// [GetChunks] gets chunks of a documentSet.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A pointer to a [GetAIDocumentSetChunksParams] object that includes the other parameters for querying documentSets' operation.
+//     See [GetAIDocumentSetChunksParams] for more information.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [GetAIDocumentSetChunksResult] object or an error.
 func (i *implementerAIDocumentSets) GetChunks(ctx context.Context, param GetAIDocumentSetChunksParams) (*GetAIDocumentSetChunksResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -203,6 +274,15 @@ func (i *implementerAIDocumentSets) GetChunks(ctx context.Context, param GetAIDo
 	return result, nil
 }
 
+// [SearchAIDocumentSetsParams] holds the parameters for searching documentSets in a collectionView.
+//
+// Fields:
+//   - Content: (Optional) The content to apply similarity search.
+//   - DocumentSetName: (Optional) The list of documentSet's names to search. The maximum number of elements in the array is 10.
+//   - RerankOption: (Optional) A pointer to a [RerankOption] object that includes the other parameters for reranking.
+//     See [RerankOption] for more information.
+//   - Filter: (Optional) Filter documentSets by [Filter] conditions when searching the results.
+//   - Limit: (Required) The value of K for returning the top K most similar items.
 type SearchAIDocumentSetsParams struct {
 	Content         string                        `json:"content"`
 	DocumentSetName []string                      `json:"documentSetName"`
@@ -218,7 +298,17 @@ type SearchAIDocumentSetResult struct {
 	Documents []AISearchDocumentSet `json:"documents"`
 }
 
-// Search search ai_document_set topK by vector. The optional parameters filter will add the filter condition to search.
+// [Search] returns the most similar topK chunks by the parameters of [SearchAIDocumentSetsParams].
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A pointer to a [SearchAIDocumentSetsParams] object that includes the other parameters for searching documentSets' operation.
+//     See [SearchAIDocumentSetsParams] for more information.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [SearchAIDocumentSetResult] object or an error.
 func (i *implementerAIDocumentSets) Search(ctx context.Context, param SearchAIDocumentSetsParams) (*SearchAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -263,6 +353,12 @@ func (i *implementerAIDocumentSets) Search(ctx context.Context, param SearchAIDo
 	return result, nil
 }
 
+// [DeleteAIDocumentSetParams] holds the parameters for deleting documentSets in a collectionView.
+//
+// Fields:
+//   - DocumentSetNames: The list of documentSet's names to delete. The maximum number of elements in the array is 20.
+//   - DocumentSetIds: The list of documentSet's ids to delete. The maximum number of elements in the array is 20.
+//   - Filter: (Optional) Filter documentSets by [Filter] conditions to delete.
 type DeleteAIDocumentSetParams struct {
 	DocumentSetNames []string `json:"documentSetNames"`
 	DocumentSetIds   []string `json:"documentSetIds"`
@@ -273,15 +369,45 @@ type DeleteAIDocumentSetResult struct {
 	AffectedCount uint64 `json:"affectedCount"`
 }
 
+// [DeleteByIds] deletes some documentSets by the list of documentSet ids.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentSetIds: The list of documentSet's ids to delete. The maximum number of elements in the array is 20.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [DeleteAIDocumentSetResult] object or an error.
 func (i *implementerAIDocumentSets) DeleteByIds(ctx context.Context, documentSetIds ...string) (result *DeleteAIDocumentSetResult, err error) {
 	return i.Delete(ctx, DeleteAIDocumentSetParams{DocumentSetIds: documentSetIds})
 }
 
+// [DeleteByNames] deletes some documentSets by the list of documentSet names.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentSetNames: The list of documentSet's names to delete. The maximum number of elements in the array is 20.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [DeleteAIDocumentSetResult] object or an error.
 func (i *implementerAIDocumentSets) DeleteByNames(ctx context.Context, documentSetNames ...string) (result *DeleteAIDocumentSetResult, err error) {
 	return i.Delete(ctx, DeleteAIDocumentSetParams{DocumentSetNames: documentSetNames})
 }
 
-// Delete delete documentSet by documentSetId or documentSetName ids
+// [Delete] deletes some documentSets by the parameters of [DeleteAIDocumentSetParams].
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A [DeleteAIDocumentSetParams] object that includes the other parameters for deleting documentSets' operation.
+//     See [DeleteAIDocumentSetParams] for more information.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [DeleteAIDocumentSetResult] object or an error.
 func (i *implementerAIDocumentSets) Delete(ctx context.Context, param DeleteAIDocumentSetParams) (result *DeleteAIDocumentSetResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -306,6 +432,12 @@ func (i *implementerAIDocumentSets) Delete(ctx context.Context, param DeleteAIDo
 	return
 }
 
+// [UpdateAIDocumentSetParams] holds the parameters for updating documentSets in a collectionView.
+//
+// Fields:
+//   - DocumentSetId: The list of documentSet's ids to update. The maximum number of elements in the array is 20.
+//   - DocumentSetName: The list of documentSet's names to update. The maximum number of elements in the array is 20.
+//   - Filter: (Optional) Filter documentSets by [Filter] conditions to update.
 type UpdateAIDocumentSetParams struct {
 	DocumentSetId   []string `json:"documentSetId"`
 	DocumentSetName []string `json:"documentSetName"`
@@ -316,7 +448,20 @@ type UpdateAIDocumentSetResult struct {
 	AffectedCount uint64 `json:"affectedCount"`
 }
 
-func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map[string]interface{}, param UpdateAIDocumentSetParams) (*UpdateAIDocumentSetResult, error) {
+// [Update] updates some documentSets in the collectionView.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - updateFields: The fields with which you want to update the documentSet.
+//   - param: A [UpdateAIDocumentSetParams] object that includes the other parameters for updating documentSets' operation.
+//     See [UpdateAIDocumentSetParams] for more information.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [UpdateAIDocumentSetResult] object or an error.
+func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map[string]interface{},
+	param UpdateAIDocumentSetParams) (*UpdateAIDocumentSetResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
 	}
@@ -342,6 +487,12 @@ func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map
 	return result, nil
 }
 
+// [GetCosTmpSecretParams] holds the parameters for getting the temp secret to upload specific file.
+//
+// Fields:
+//   - DocumentSetName: The name of the documentSet(file).
+//   - ParsingProcess: A pointer to a [ParsingProcess] object, which includes the parameters
+//     for parsing files. See [ParsingProcess] for more information.
 type GetCosTmpSecretParams struct {
 	DocumentSetName string              `json:"documentSetName"`
 	ParsingProcess  *api.ParsingProcess `json:"parsingProcess,omitempty"`
@@ -362,6 +513,17 @@ type GetCosTmpSecretResult struct {
 	MaxSupportContentLength int64  `json:"maxSupportContentLength"`
 }
 
+// [GetCosTmpSecret] gets the temp secret to upload specific file.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A [GetCosTmpSecretParams] object that includes the other parameters for getting the
+//     temp secret to upload specific file. See [GetCosTmpSecretParams] for more information.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [GetCosTmpSecretResult] object or an error.
 func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param GetCosTmpSecretParams) (*GetCosTmpSecretResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -400,6 +562,16 @@ func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param G
 	return result, nil
 }
 
+// [LoadAndSplitTextParams] holds the parameters for loading local file.
+//
+// Fields:
+//   - DocumentSetName: The name of the documentSet.
+//   - LocalFilePath: The file path of the locally uploaded file.
+//   - MetaData: The configuration for the file metadata.
+//   - SplitterPreprocess: A pointer to a [DocumentSplitterPreprocess] object, which includes the parameters
+//     for splitting document chunks. See [DocumentSplitterPreprocess] for more information.
+//   - ParsingProcess: A pointer to a [ParsingProcess] object, which includes the parameters
+//     for parsing files. See [ParsingProcess] for more information.
 type LoadAndSplitTextParams struct {
 	DocumentSetName    string
 	Reader             io.Reader
@@ -420,6 +592,17 @@ type LoadAndSplitTextResult struct {
 	GetCosTmpSecretResult
 }
 
+// [LoadAndSplitText] uploads local file, which will be parsed and saved remotely.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A [LoadAndSplitTextParams] object that includes the other parameters for uploading local file.
+//     See [LoadAndSplitTextParams] for more information.
+//
+// Notes: The name of the database and the name of collectionView are from the fields of [implementerAIDocumentSets].
+//
+// Returns a pointer to a [LoadAndSplitTextResult] object or an error.
 func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param LoadAndSplitTextParams) (result *LoadAndSplitTextResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError

@@ -18,6 +18,9 @@ type AIDemo struct {
 func NewAIDemo(url, username, key string) (*AIDemo, error) {
 	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 	// 	ReadConsistency: tcvectordb.EventualConsistency})
+
+	// ReadConsistency can be specified when the client is created,
+	// and ReadConsistency will be used in subsequent calls to the sdk interface
 	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {

@@ -32,15 +32,45 @@ var _ AICollectionViewInterface = &implementerCollectionView{}
 
 type AICollectionViewInterface interface {
 	SdkClient
+
+	// [CreateCollectionView] creates and initializes a new collectionView.
 	CreateCollectionView(ctx context.Context, name string, param CreateCollectionViewParams) (result *CreateAICollectionViewResult, err error)
+
+	// [ListCollectionViews] retrieves the list of all collectionViews in the AI database.
 	ListCollectionViews(ctx context.Context) (result *ListAICollectionViewsResult, err error)
+
+	// [DescribeCollectionView] retrieves information about a specific collectionView. See [AICollectionView] for more information.
 	DescribeCollectionView(ctx context.Context, name string) (result *DescribeAICollectionViewResult, err error)
+
+	// [DropCollectionView] drops a specific collectionView.
 	DropCollectionView(ctx context.Context, name string) (result *DropAICollectionViewResult, err error)
+
+	// [TruncateCollectionView] clears all the data and indexes in the collectionView.
 	TruncateCollectionView(ctx context.Context, name string) (result *TruncateAICollectionViewResult, err error)
+
+	// [CollectionView] returns a pointer to a [AICollectionView] object. which includes the collectionView parameters
+	// and some interfaces to operate the documentSet api.
 	CollectionView(name string) *AICollectionView
 }
 
-// CollectionView wrap the collectionView parameters and document interface to operating the document api
+// [AICollectionView] holds the collectionView parameters and some interfaces to operate the documentSet api.
+//
+// Fields:
+//   - DatabaseName: The name of the database.
+//   - CollectionViewName: The name of the collection.
+//   - Alias: All aliases of the CollectionView.
+//   - Embedding: A pointer to a [DocumentEmbedding] object, which includes the parameters for embedding.
+//     See [DocumentEmbedding] for more information.
+//   - SplitterPreprocess: A pointer to a [SplitterPreprocess] object, which includes the parameters
+//     for splitting document chunks. See [SplitterPreprocess] for more information.
+//   - ParsingProcess: A pointer to a [ParsingProcess] object, which includes the parameters
+//     for parsing files. See [ParsingProcess] for more information.
+//   - IndexedDocumentSets: The number of documentSets that have been processed.
+//   - TotalDocumentSets: The total number of documentSets in this collectionView.
+//   - UnIndexedDocumentSets: The number of documentSets that haven't been processed.
+//   - FilterIndexes: A [Indexes] object that includes a list of the scalar filter index properties for the documentSets in a collectionView.
+//   - Description: (Optional) The description of the collection.
+//   - CreateTime: The create time of collectionView.
 type AICollectionView struct {
 	AIDocumentSetsInterface `json:"-"`
 	DatabaseName            string                              `json:"databaseName"`
@@ -62,6 +92,19 @@ type implementerCollectionView struct {
 	database *AIDatabase
 }
 
+// [CreateCollectionViewParams] holds the parameters for creating a new collectionView.
+//
+// Fields:
+//   - Description: (Optional) The description of the collection.
+//   - Indexes: A [Indexes] object that includes a list of the scalar field index properties for the documentSets in a collectionView.
+//   - Embedding: A pointer to a [DocumentEmbedding] object, which includes the parameters for embedding.
+//     See [DocumentEmbedding] for more information.
+//   - SplitterPreprocess: A pointer to a [SplitterPreprocess] object, which includes the parameters
+//     for splitter process. See [SplitterPreprocess] for more information.
+//   - ParsingProcess: A pointer to a [ParsingProcess] object, which includes the parameters
+//     for parsing parameters. See [ParsingProcess] for more information.
+//   - ExpectedFileNum: Expected total number of documents.
+//   - AverageFileSize: Estimate the average document size.
 type CreateCollectionViewParams struct {
 	Description        string
 	Indexes            Indexes
@@ -77,8 +120,18 @@ type CreateAICollectionViewResult struct {
 	AffectedCount int
 }
 
-// CreateCollectionView create a collectionView. It returns collection struct if err is nil.
-// The parameter `name` must be a unique string, otherwise an error will be returned.
+// [CreateCollectionView] creates and initializes a new collectionView.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collectionView to create. CollectionView name must be 1-128 characters long,
+//     start with an alphanumeric character,
+//     and consist only of alphanumeric characters, numbers, '_' or '-'.
+//   - params: A pointer to a [CreateCollectionViewParams] object that includes the other parameters for the collectionView.
+//     See [CreateCollectionViewParams] for more information.
+//
+// Returns a pointer to a [CreateAICollectionViewResult] object or an error.
 func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, name string, param CreateCollectionViewParams) (*CreateAICollectionViewResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -137,8 +190,15 @@ type DescribeAICollectionViewResult struct {
 	AICollectionView
 }
 
-// ListCollectionViews get collectionView list.
-// It return the list of collectionView, each collectionView is as same as DescribeCollectionView return.
+// [ListCollectionViews] retrieves the list of all collectionViews in the AI database.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//
+// Notes: The database name is from the field of [implementerCollectionView].
+//
+// Returns a pointer to a [ListAICollectionViewsResult] object or an error.
 func (i *implementerCollectionView) ListCollectionViews(ctx context.Context) (*ListAICollectionViewsResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -157,8 +217,16 @@ func (i *implementerCollectionView) ListCollectionViews(ctx context.Context) (*L
 	return result, nil
 }
 
-// DescribeCollectionView get a collectionView detail.
-// It returns the collectionView object to get collectionView parameters or operate document api
+// [DescribeCollectionView] retrieves information about a specific collectionView. See [AICollectionView] for more information.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collectionView to describe.
+//
+// Notes: The database name is from the field of [implementerCollectionView].
+//
+// Returns a pointer to a [ListAICollectionViewsResult] object or an error.
 func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, name string) (*DescribeAICollectionViewResult, error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -184,7 +252,16 @@ type DropAICollectionViewResult struct {
 	AffectedCount int
 }
 
-// DropCollectionView drop a collectionView. If collectionView not exist, it return nil.
+// [DropCollectionView] drops a specific collectionView.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collectionView to drop.
+//
+// Notes: The database name is from the field of [implementerCollectionView].
+//
+// Returns a pointer to a [DropAICollectionViewResult] object or an error.
 func (i *implementerCollectionView) DropCollectionView(ctx context.Context, name string) (result *DropAICollectionViewResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -210,6 +287,16 @@ type TruncateAICollectionViewResult struct {
 	AffectedCount int
 }
 
+// [TruncateCollectionView] clears all the data and indexes in the collectionView.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collectionView to truncate.
+//
+// Notes: The database name is from the field of [implementerCollectionView].
+//
+// Returns a pointer to a [TruncateAICollectionViewResult] object or an error.
 func (i *implementerCollectionView) TruncateCollectionView(ctx context.Context, name string) (result *TruncateAICollectionViewResult, err error) {
 	if !i.database.IsAIDatabase() {
 		return nil, BaseDbTypeError
@@ -233,8 +320,15 @@ type ListAICollectionViewsResult struct {
 	CollectionViews []*AICollectionView `json:"collectionViews"`
 }
 
-// CollectionView get a collectionView interface to operate the document api. It could not send http request to vectordb.
-// If you want to show collectionView parameters, use DescribeCollectionView.
+// [CollectionView] returns a pointer to a [AICollectionView] object. which includes the collectionView parameters
+// and some interfaces to operate the documentSet api.
+//
+// Parameters:
+//   - name: The name of the collectionView to truncate.
+//
+// Notes: The database name is from the field of [implementerCollectionView].
+//
+// Returns a pointer to a [AICollectionView] object.
 func (i *implementerCollectionView) CollectionView(name string) *AICollectionView {
 	coll := new(AICollectionView)
 	coll.DatabaseName = i.database.DatabaseName

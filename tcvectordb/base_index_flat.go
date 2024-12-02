@@ -11,7 +11,11 @@ var _ FlatIndexInterface = &implementerFlatIndex{}
 
 type FlatIndexInterface interface {
 	SdkClient
+
+	// [RebuildIndex] rebuilds all indexes under the specified collection.
 	RebuildIndex(ctx context.Context, databaseName, collectionName string, params ...*RebuildIndexParams) (result *RebuildIndexResult, err error)
+
+	// [AddIndex] adds scalar field index to an existing collection.
 	AddIndex(ctx context.Context, databaseName, collectionName string, params ...*AddIndexParams) (err error)
 }
 
@@ -19,16 +23,43 @@ type implementerFlatIndex struct {
 	SdkClient
 }
 
+// [RebuildIndexParams] holds the parameters for rebuilding indexes in a collection.
+//
+// Fields:
+//   - DropBeforeRebuild: Whether to delete the old index before rebuilding the new index (defaults to false).
+//     true: first delete the old index and then rebuild the index.
+//     false: after creating the new index, then delete the old index.
+//   - Throttle: (Optional)The number of CPU cores for building an index on a single node (defaults to 1).
+//     0 means no limit.
 type RebuildIndexParams struct {
 	DropBeforeRebuild bool
 	Throttle          int
 }
 
+// [AddIndexParams] holds the parameters for adding scalar field index in a collection.
+//
+// Fields:
+//   - FilterIndexs: Whether to delete the old index before rebuilding the new index.
+//     true: first delete the old index and then rebuild the index.
+//     false: after creating the new index, then delete the old index.
+//   - BuildExistedData: (Optional) Whether scan historical data and build index (defaults to true).
+//     If there is no need to scan historical data, you can set this to false.
 type AddIndexParams struct {
 	FilterIndexs     []FilterIndex
 	BuildExistedData *bool
 }
 
+// [RebuildIndex] rebuilds all indexes under the specified collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A pointer to a [RebuildIndexParams] object that includes the other parameters for the rebuilding indexes operation.
+//     See [RebuildIndexParams] for more information.
+//
+// Returns a pointer to a [RebuildIndexResult] object or an error.
 func (i *implementerFlatIndex) RebuildIndex(ctx context.Context, databaseName, collectionName string, params ...*RebuildIndexParams) (*RebuildIndexResult, error) {
 	req := new(index.RebuildReq)
 	req.Database = databaseName
@@ -50,6 +81,17 @@ func (i *implementerFlatIndex) RebuildIndex(ctx context.Context, databaseName, c
 	return result, nil
 }
 
+// [AddIndex] adds scalar field index to an existing collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A pointer to a [AddIndexParams] object that includes the other parameters for the adding scalar field index operation.
+//     See [AddIndexParams] for more information.
+//
+// Returns an error if the addition fails.
 func (i *implementerFlatIndex) AddIndex(ctx context.Context, databaseName, collectionName string, params ...*AddIndexParams) error {
 	req := new(index.AddReq)
 	req.Database = databaseName

@@ -76,6 +76,12 @@ type SearchOption struct {
 	// Weights     SearchOptionWeight `json:"weights"`     // 多路召回
 }
 
+// [RerankOption] holds the parameters for reranking.
+//
+// Fields:
+//   - Enable:  (Optional) Whether to enable word vector reranking (default to false).
+//   - ExpectRecallMultiples:  (Optional) The recall amplification factor for word vector reordering (default to 5).
+//     The maximum number of elements to be recalled is 256.
 type RerankOption struct {
 	Enable                *bool   `json:"enable,omitempty"`
 	ExpectRecallMultiples float32 `json:"expectRecallMultiples,omitempty"`

@@ -32,6 +32,14 @@ type DocumentSetInfo struct {
 	Keywords        *string `json:"keywords,omitempty"`
 }
 
+// [DocumentSplitterPreprocess] holds the parameters for splitting document chunks.
+//
+// Fields:
+//   - AppendTitleToChunk:  (Optional) Whether to append the title to the splitting chunks (default to false).
+//   - AppendKeywordsToChunk:  (Optional) Whether to append the keywords to the splitting chunks,
+//     which are extracted from the full text (default to true).
+//   - ChunkSplitter: The regular expression used to configure the document splitting method.
+//     For example, "\n{2,}" can be used in QA contents.
 type DocumentSplitterPreprocess struct {
 	AppendTitleToChunk    *bool   `json:"appendTitleToChunk,omitempty"`
 	AppendKeywordsToChunk *bool   `json:"appendKeywordsToChunk,omitempty"`
