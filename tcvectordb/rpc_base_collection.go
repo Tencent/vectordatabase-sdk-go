@@ -18,6 +18,16 @@ type rpcImplementerCollection struct {
 	database  *Database
 }
 
+// [ExistsCollection] checks the existence of a specific collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the [collection] to check.
+//
+// Notes: It returns true if the collection exists.
+//
+// Returns a boolean variable indicating whether the collection exists or an error.
 func (r *rpcImplementerCollection) ExistsCollection(ctx context.Context, name string) (bool, error) {
 	res, err := r.DescribeCollection(ctx, name)
 	if err != nil {
@@ -32,6 +42,23 @@ func (r *rpcImplementerCollection) ExistsCollection(ctx context.Context, name st
 	return true, nil
 }
 
+// [CreateCollectionIfNotExists] creates a collection if it doesn't exist.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection. Collection name must be 1-128 characters long,
+//     start with an alphanumeric character,
+//     and consist only of alphanumeric characters, numbers, '_' or '-'.
+//   - shardNum: The shard number of the collection, which must bigger than 0.
+//   - replicasNum: The replicas number of the collection.
+//   - description: (Optional) The description of the collection.
+//   - index: A [Indexes] object that includes a list of the index properties for the documents in a collection. The vectorIndex
+//     must be set one currently, and the filterIndex sets at least one primaryKey called "id".
+//   - params: A pointer to a [CreateCollectionParams] object that includes the other parameters for the collection.
+//     See [CreateCollectionParams] for more information.
+//
+// Returns a pointer to a [Collection] object or an error.
 func (r *rpcImplementerCollection) CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
 	indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
 	res, err := r.DescribeCollection(ctx, name)
@@ -47,6 +74,23 @@ func (r *rpcImplementerCollection) CreateCollectionIfNotExists(ctx context.Conte
 	return &res.Collection, nil
 }
 
+// [CreateCollection] creates a collection if it doesn't exist.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection. Collection name must be 1-128 characters long,
+//     start with an alphanumeric character,
+//     and consist only of alphanumeric characters, numbers, '_' or '-'.
+//   - shardNum: The shard number of the collection, which must bigger than 0.
+//   - replicasNum: The replicas number of the collection.
+//   - description: (Optional) The description of the collection.
+//   - index: A [Indexes] object that includes a list of the index properties for the documents in a collection. The vectorIndex
+//     must be set one currently, and the filterIndex sets at least one primaryKey called "id".
+//   - params: A pointer to a [CreateCollectionParams] object that includes the other parameters for the collection.
+//     See [CreateCollectionParams] for more information.
+//
+// Returns a pointer to a [Collection] object or an error.
 func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string, indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
 	if r.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -126,6 +170,15 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 	return coll, nil
 }
 
+// [ListCollection] retrieves the list of all collections in the database.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//
+// Notes: The database name is from the field of [implementerCollection].
+//
+// Returns a pointer to a [ListCollectionResult] object or an error.
 func (r *rpcImplementerCollection) ListCollection(ctx context.Context) (*ListCollectionResult, error) {
 	if r.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -147,6 +200,16 @@ func (r *rpcImplementerCollection) ListCollection(ctx context.Context) (*ListCol
 	return result, nil
 }
 
+// [DescribeCollection] retrieves information about a specific [Collection]. See [Collection] for more information.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection.
+//
+// Notes: The database name is from the field of [rpcImplementerCollection].
+//
+// Returns a pointer to a [DescribeCollectionResult] object or an error.
 func (r *rpcImplementerCollection) DescribeCollection(ctx context.Context, name string) (*DescribeCollectionResult, error) {
 	if r.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -169,6 +232,16 @@ func (r *rpcImplementerCollection) DescribeCollection(ctx context.Context, name 
 	return result, nil
 }
 
+// [DropCollection] drops a specific collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection to drop.
+//
+// Notes: If the collection doesn't exist, it returns 0 for DropCollectionResult.AffectedCount.
+//
+// Returns a pointer to a [DropCollectionResult] object or an error.
 func (r *rpcImplementerCollection) DropCollection(ctx context.Context, name string) (*DropCollectionResult, error) {
 	if r.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -187,6 +260,14 @@ func (r *rpcImplementerCollection) DropCollection(ctx context.Context, name stri
 	return &DropCollectionResult{AffectedCount: int(res.AffectedCount)}, nil
 }
 
+// [TruncateCollection] clears all the data and indexes in the Collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection to truncate.
+//
+// Returns a pointer to a [TruncateCollectionResult] object or an error.
 func (r *rpcImplementerCollection) TruncateCollection(ctx context.Context, name string) (*TruncateCollectionResult, error) {
 	if r.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -202,6 +283,15 @@ func (r *rpcImplementerCollection) TruncateCollection(ctx context.Context, name 
 	return &TruncateCollectionResult{AffectedCount: int(res.AffectedCount)}, nil
 }
 
+// [Collection] returns a pointer to a [Collection] object. which includes the collection parameters
+// and some interfaces to operate the document/index api.
+//
+// Parameters:
+//   - name: The name of the collection.
+//
+// Notes:  If you want to show collection parameters, use DescribeCollection.
+//
+// Returns a pointer to a [Collection] object.
 func (r *rpcImplementerCollection) Collection(name string) *Collection {
 	coll := &Collection{
 		DatabaseName:   r.database.DatabaseName,

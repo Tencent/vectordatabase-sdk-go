@@ -19,34 +19,130 @@ type rpcImplementerDocument struct {
 	collection *Collection
 }
 
+// [Upsert] upserts documents into a collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documents: The list of the [Document] object or  map[string]interface{} to upsert. Maximum 1000.
+//   - params: A pointer to a [UpsertDocumentParams] object that includes the other parameters for upserting documents' operation.
+//     See [UpsertDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [UpsertDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Upsert(ctx context.Context, documents interface{}, params ...*UpsertDocumentParams) (*UpsertDocumentResult, error) {
 	return r.flat.Upsert(ctx, r.database.DatabaseName, r.collection.CollectionName, documents, params...)
 }
 
+// [Query] queries documents that satisfies the condition from the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [QueryDocumentParams] object that includes the other parameters for querying documents' operation.
+//     See [QueryDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [QueryDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
 	return r.flat.Query(ctx, r.database.DatabaseName, r.collection.CollectionName, documentIds, params...)
 }
 
+// [Search] returns the most similar topK vectors by the given vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - vectors: The list of vectors to search. The maximum number of elements in the array is 20.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.flat.Search(ctx, r.database.DatabaseName, r.collection.CollectionName, vectors, params...)
 }
 
+// [SearchById] returns the most similar topK vectors by the given documentIds.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.flat.SearchById(ctx, r.database.DatabaseName, r.collection.CollectionName, documentIds, params...)
 }
 
+// [SearchByText] returns the most similar topK vectors by the given text map.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - text: It is a map where the keys represent column names, and the values are lists of column values to be retrieved,
+//     which are used to retrieve data similar to ones.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.flat.SearchByText(ctx, r.database.DatabaseName, r.collection.CollectionName, text, params...)
 }
 
+// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - params: A [HybridSearchDocumentParams] object that includes the other parameters for hybrid searching documents' operation.
+//     See [HybridSearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.flat.HybridSearch(ctx, r.database.DatabaseName, r.collection.CollectionName, params)
 }
 
+// [Delete] deletes documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - params: A [DeleteDocumentParams] object that includes the other parameters for deleting documents' operation.
+//     See [DeleteDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [DeleteDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Delete(ctx context.Context, param DeleteDocumentParams) (*DeleteDocumentResult, error) {
 	return r.flat.Delete(ctx, r.database.DatabaseName, r.collection.CollectionName, param)
 }
 
+// [Update] updates documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A [UpdateDocumentParams] object that includes the other parameters for updating documents' operation.
+//     See [UpdateDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [rpcImplementerDocument].
+//
+// Returns a pointer to a [UpdateDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Update(ctx context.Context, param UpdateDocumentParams) (*UpdateDocumentResult, error) {
 	return r.flat.Update(ctx, r.database.DatabaseName, r.collection.CollectionName, param)
 }
@@ -56,6 +152,18 @@ type rpcImplementerFlatDocument struct {
 	rpcClient olama.SearchEngineClient
 }
 
+// [Upsert] upserts documents into a collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - documents: The list of the [Document] object or  map[string]interface{} to upsert. Maximum 1000.
+//   - params: A pointer to a [UpsertDocumentParams] object that includes the other parameters for upserting documents' operation.
+//     See [UpsertDocumentParams] for more information.
+//
+// Returns a pointer to a [UpsertDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) Upsert(ctx context.Context, databaseName, collectionName string,
 	documents interface{}, params ...*UpsertDocumentParams) (*UpsertDocumentResult, error) {
 	req := &olama.UpsertRequest{
@@ -154,6 +262,18 @@ func (r *rpcImplementerFlatDocument) Upsert(ctx context.Context, databaseName, c
 	return &UpsertDocumentResult{AffectedCount: int(res.AffectedCount)}, nil
 }
 
+// [Query] queries documents that satisfies the condition from the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [QueryDocumentParams] object that includes the other parameters for querying documents' operation.
+//     See [QueryDocumentParams] for more information.
+//
+// Returns a pointer to a [QueryDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) Query(ctx context.Context, databaseName, collectionName string,
 	documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
 	req := &olama.QueryRequest{
@@ -202,21 +322,69 @@ func (r *rpcImplementerFlatDocument) Query(ctx context.Context, databaseName, co
 	return result, nil
 }
 
+// [Search] returns the most similar topK vectors by the given vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - vectors: The list of vectors to search. The maximum number of elements in the array is 20.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) Search(ctx context.Context, databaseName, collectionName string,
 	vectors [][]float32, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.search(ctx, databaseName, collectionName, nil, vectors, nil, params...)
 }
 
+// [SearchById] returns the most similar topK vectors by the given documentIds.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) SearchById(ctx context.Context, databaseName, collectionName string,
 	documentIds []string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.search(ctx, databaseName, collectionName, documentIds, nil, nil, params...)
 }
 
+// [SearchByText] returns the most similar topK vectors by the given text map.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - text: It is a map where the keys represent column names, and the values are lists of column values to be retrieved,
+//     which are used to retrieve data similar to ones.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) SearchByText(ctx context.Context, databaseName, collectionName string,
 	text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.search(ctx, databaseName, collectionName, nil, nil, text, params...)
 }
 
+// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A [HybridSearchDocumentParams] object that includes the other parameters for hybrid searching documents' operation.
+//     See [HybridSearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseName, collectionName string,
 	params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
 	req := &olama.SearchRequest{
@@ -348,6 +516,17 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 	return result, nil
 }
 
+// [Delete] deletes documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A [DeleteDocumentParams] object that includes the other parameters for deleting documents' operation.
+//     See [DeleteDocumentParams] for more information.
+//
+// Returns a pointer to a [DeleteDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) Delete(ctx context.Context, databaseName, collectionName string,
 	param DeleteDocumentParams) (*DeleteDocumentResult, error) {
 	req := &olama.DeleteRequest{
@@ -365,6 +544,17 @@ func (r *rpcImplementerFlatDocument) Delete(ctx context.Context, databaseName, c
 	return &DeleteDocumentResult{AffectedCount: int(res.AffectedCount)}, nil
 }
 
+// [Update] updates documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [UpdateDocumentParams] object that includes the other parameters for updating documents' operation.
+//     See [UpdateDocumentParams] for more information.
+//
+// Returns a pointer to a [UpdateDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) Update(ctx context.Context, databaseName, collectionName string,
 	param UpdateDocumentParams) (*UpdateDocumentResult, error) {
 	req := &olama.UpdateRequest{
@@ -436,6 +626,22 @@ func (r *rpcImplementerFlatDocument) Update(ctx context.Context, databaseName, c
 	return &UpdateDocumentResult{AffectedCount: int(res.AffectedCount)}, nil
 }
 
+// [search] returns the most similar topK vectors by the given conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - vectors: The list of vectors to search. The maximum number of elements in the array is 20.
+//     Only one of the fields, vectors or documentIds, needs to be configured.
+//   - text: It is a map where the keys represent column names, and the values are lists of column values to be retrieved,
+//     which are used to retrieve data similar to ones.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerFlatDocument) search(ctx context.Context, databaseName, collectionName string,
 	documentIds []string, vectors [][]float32, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	req := &olama.SearchRequest{

@@ -31,18 +31,35 @@ import (
 
 var _ CollectionInterface = &implementerCollection{}
 
-// CollectionInterface collection api
+// [CollectionInterface] provides apis of a collection.
 type CollectionInterface interface {
 	SdkClient
+
+	// [ExistsCollection] checks the existence of a specific collection.
 	ExistsCollection(ctx context.Context, name string) (bool, error)
+
+	// [CreateCollectionIfNotExists] creates and initializes a new [Collection] if it doesn't exist.
 	CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
 		indexes Indexes, params ...*CreateCollectionParams) (*Collection, error)
+
+	// [CreateCollection] creates and initializes a new [Collection].
 	CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
 		indexes Indexes, params ...*CreateCollectionParams) (*Collection, error)
+
+	// [ListCollection] retrieves the list of all collections in the database.
 	ListCollection(ctx context.Context) (result *ListCollectionResult, err error)
+
+	// [DescribeCollection] retrieves information about a specific [Collection]. See [Collection] for more information.
 	DescribeCollection(ctx context.Context, name string) (result *DescribeCollectionResult, err error)
+
+	// [DropCollection] drops a specific collection.
 	DropCollection(ctx context.Context, name string) (result *DropCollectionResult, err error)
+
+	// [TruncateCollection] clears all the data and indexes in the Collection.
 	TruncateCollection(ctx context.Context, name string) (result *TruncateCollectionResult, err error)
+
+	// [Collection] returns a pointer to a [Collection] object. which includes the collection parameters
+	// and some interfaces to operate the document/index api.
 	Collection(name string) *Collection
 }
 
@@ -51,6 +68,14 @@ type implementerCollection struct {
 	database *Database
 }
 
+// [CreateCollectionParams] holds the parameters for creating a new collection.
+//
+// Fields:
+//   - Embedding: An optional embedding for embedding text when upsert documents.
+//   - TtlConfig: TTL configuration. When TtlConfig.Enable is set to True and TtlConfig.TimeField
+//     is set to expire_at, it means that TTL (Time to Live) is enabled.
+//     In this case, the document will be automatically removed after 60 minites when the time specified
+//     in the expire_at field is reached.
 type CreateCollectionParams struct {
 	Embedding *Embedding
 	TtlConfig *TtlConfig
@@ -60,6 +85,16 @@ type CreateCollectionResult struct {
 	Collection
 }
 
+// [ExistsCollection] checks the existence of a specific collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection to check.
+//
+// Notes: It returns true if the collection exists.
+//
+// Returns a boolean variable indicating whether the collection exists or an error.
 func (i *implementerCollection) ExistsCollection(ctx context.Context, name string) (bool, error) {
 	res, err := i.DescribeCollection(ctx, name)
 	if err != nil {
@@ -74,8 +109,25 @@ func (i *implementerCollection) ExistsCollection(ctx context.Context, name strin
 	return true, nil
 }
 
-func (i *implementerCollection) CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32, description string,
-	indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
+// [CreateCollectionIfNotExists] creates a collection if it doesn't exist.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection. Collection name must be 1-128 characters long,
+//     start with an alphanumeric character,
+//     and consist only of alphanumeric characters, numbers, '_' or '-'.
+//   - shardNum: The shard number of the collection, which must bigger than 0.
+//   - replicasNum: The replicas number of the collection.
+//   - description: (Optional) The description of the collection.
+//   - index: A [Indexes] object that includes a list of the index properties for the documents in a collection. The vectorIndex
+//     must be set one currently, and the filterIndex sets at least one primaryKey called "id".
+//   - params: A pointer to a [CreateCollectionParams] object that includes the other parameters for the collection.
+//     See [CreateCollectionParams] for more information.
+//
+// Returns a pointer to a [Collection] object or an error.
+func (i *implementerCollection) CreateCollectionIfNotExists(ctx context.Context, name string, shardNum, replicasNum uint32,
+	description string, indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
 	res, err := i.DescribeCollection(ctx, name)
 	if err != nil {
 		if strings.Contains(err.Error(), strconv.Itoa(ERR_UNDEFINED_COLLECTION)) {
@@ -89,11 +141,23 @@ func (i *implementerCollection) CreateCollectionIfNotExists(ctx context.Context,
 	return &res.Collection, nil
 }
 
-// CreateCollection create a collection. It returns collection struct if err is nil.
-// The parameter `name` must be a unique string, otherwise an error will be returned.
-// The parameter `shardNum`, `replicasNum` must bigger than 0, `description` could be empty.
-// You can set the index field in Indexes, the vectorIndex must be set one currently, and
-// the filterIndex sets at least one primaryKey value.
+// [CreateCollection] creates and initializes a new [Collection].
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection. Collection name must be 1-128 characters long,
+//     start with an alphanumeric character,
+//     and consist only of alphanumeric characters, numbers, '_' or '-'.
+//   - shardNum: The shard number of the collection, which must bigger than 0.
+//   - replicasNum: The replicas number of the collection.
+//   - description: (Optional) The description of the collection.
+//   - index: A [Indexes] object that includes a list of the index properties for the documents in a collection. The vectorIndex
+//     must be set one currently, and the filterIndex sets at least one primaryKey called "id".
+//   - params: A pointer to a [CreateCollectionParams] object that includes the other parameters for the collection.
+//     See [CreateCollectionParams] for more information.
+//
+// Returns a pointer to a [Collection] object or an error.
 func (i *implementerCollection) CreateCollection(ctx context.Context, name string, shardNum, replicasNum uint32,
 	description string, indexes Indexes, params ...*CreateCollectionParams) (*Collection, error) {
 	if i.database.IsAIDatabase() {
@@ -175,8 +239,15 @@ type ListCollectionResult struct {
 	Collections []*Collection
 }
 
-// ListCollection get collection list.
-// It return the list of collection, each collection same as DescribeCollection return.
+// [ListCollection] retrieves the list of all collections in the database.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//
+// Notes: The database name is from the field of [implementerCollection].
+//
+// Returns a pointer to a [ListCollectionResult] object or an error.
 func (i *implementerCollection) ListCollection(ctx context.Context) (*ListCollectionResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -201,8 +272,16 @@ type DescribeCollectionResult struct {
 	Collection
 }
 
-// DescribeCollection get a collection detail.
-// It returns the collection object to get collecton parameters or operate document api
+// [DescribeCollection] retrieves information about a specific [Collection]. See [Collection] for more information.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection.
+//
+// Notes: The database name is from the field of [implementerCollection].
+//
+// Returns a pointer to a [DescribeCollectionResult] object or an error.
 func (i *implementerCollection) DescribeCollection(ctx context.Context, name string) (*DescribeCollectionResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -228,7 +307,16 @@ type DropCollectionResult struct {
 	AffectedCount int
 }
 
-// DropCollection drop a collection. If collection not exist, it return nil.
+// [DropCollection] drops a specific collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection to drop.
+//
+// Notes: If the collection doesn't exist, it returns 0 for DropCollectionResult.AffectedCount.
+//
+// Returns a pointer to a [DropCollectionResult] object or an error.
 func (i *implementerCollection) DropCollection(ctx context.Context, name string) (result *DropCollectionResult, err error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -254,6 +342,14 @@ type TruncateCollectionResult struct {
 	AffectedCount int
 }
 
+// [TruncateCollection] clears all the data and indexes in the Collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the collection to truncate.
+//
+// Returns a pointer to a [TruncateCollectionResult] object or an error.
 func (i *implementerCollection) TruncateCollection(ctx context.Context, name string) (result *TruncateCollectionResult, err error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -273,8 +369,15 @@ func (i *implementerCollection) TruncateCollection(ctx context.Context, name str
 	return
 }
 
-// Collection get a collection interface to operate the document api. It could not send http request to vectordb.
-// If you want to show collection parameters, use DescribeCollection.
+// [Collection] returns a pointer to a [Collection] object. which includes the collection parameters
+// and some interfaces to operate the document/index api.
+//
+// Parameters:
+//   - name: The name of the collection.
+//
+// Notes:  If you want to show collection parameters, use DescribeCollection.
+//
+// Returns a pointer to a [Collection] object.
 func (i *implementerCollection) Collection(name string) *Collection {
 	coll := new(Collection)
 	coll.DatabaseName = i.database.DatabaseName
@@ -435,7 +538,28 @@ func optionParams(column *api.IndexColumn, v VectorIndex) {
 	}
 }
 
-// Collection wrap the collection parameters and document interface to operating the document api
+// [Collection] holds the collection parameters and some interfaces to operate the document/index api.
+//
+// Fields:
+//   - DatabaseName: The name of the database.
+//   - CollectionName: The name of the collection.
+//   - DocumentCount: The number of documents in the Collection.
+//   - Alias: All aliases of the Collection.
+//   - ShardNum: The shard number of the collection, which must bigger than 0.
+//   - ReplicasNum: The replicas number of the collection.
+//   - Indexes: A [Indexes] object that includes a list of the index properties for the documents in a collection.
+//   - IndexStatus: The status of index. which has four states:
+//     ready, which indicates that the current collection's index is ready to use.
+//     training, which indicates that the current Collection is undergoing data training, like training the model to generate vector data.
+//     building, which indicates that the current Collection is rebuilding the index, like storing the generated vector data into a new index.
+//     failed, which indicates that the index rebuilding has failed, which may affect collection read and write operations.
+//   - Embedding: An optional embedding for embedding text when upsert documents.
+//   - Description: The description of the collection.
+//   - CreateTime: The create time of collection.
+//   - TtlConfig: TTL configuration. When TtlConfig.Enable is set to True and TtlConfig.TimeField
+//     is set to expire_at, it means that TTL (Time to Live) is enabled.
+//     In this case, the document will be automatically removed after 60 minites when the time specified
+//     in the expire_at field is reached.
 type Collection struct {
 	DocumentInterface `json:"-"`
 	IndexInterface    `json:"-"`

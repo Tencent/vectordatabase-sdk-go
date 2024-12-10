@@ -26,7 +26,11 @@ var _ IndexInterface = &implementerIndex{}
 
 type IndexInterface interface {
 	SdkClient
+
+	// [RebuildIndex] rebuilds all indexes under the specified collection.
 	RebuildIndex(ctx context.Context, params ...*RebuildIndexParams) (result *RebuildIndexResult, err error)
+
+	// [AddIndex] adds scalar field index to an existing collection.
 	AddIndex(ctx context.Context, params ...*AddIndexParams) (err error)
 }
 
@@ -41,10 +45,32 @@ type RebuildIndexResult struct {
 	TaskIds []string
 }
 
+// [RebuildIndex] rebuilds all indexes under the specified collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - params: A pointer to a [RebuildIndexParams] object that includes the other parameters for the rebuilding indexes operation.
+//     See [RebuildIndexParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerIndex].
+//
+// Returns a pointer to a [RebuildIndexResult] object or an error.
 func (i *implementerIndex) RebuildIndex(ctx context.Context, params ...*RebuildIndexParams) (*RebuildIndexResult, error) {
 	return i.flat.RebuildIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
 }
 
+// [AddIndex] adds scalar field index to an existing collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - params: A pointer to a [AddIndexParams] object that includes the other parameters for the adding scalar field index operation.
+//     See [AddIndexParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerIndex].
+//
+// Returns an error if the addition fails.
 func (i *implementerIndex) AddIndex(ctx context.Context, params ...*AddIndexParams) error {
 	return i.flat.AddIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
 }

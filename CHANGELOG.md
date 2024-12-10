@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.9
+* 为tcvectordb包的部分接口，增加注释
+* ExistsDatabase实现方法中：增加对AI_DB类型数据库的判断
+
 ## v1.4.8
 * CreateCollectionView和LoadAndSplitText接口支持设置文件解析的parsingType，可设置为AlgorithmParsing/VisionModelParsing
 

@@ -17,6 +17,16 @@ type rpcImplementerDatabase struct {
 	rpcClient       olama.SearchEngineClient
 }
 
+// [ExistsDatabase] checks the existence of a specific database.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the [database] to check.
+//
+// Notes: It returns true if the database exists.
+//
+// Returns a boolean variable indicating whether the database exists or an error.
 func (r *rpcImplementerDatabase) ExistsDatabase(ctx context.Context, name string) (bool, error) {
 	dbList, err := r.ListDatabase(ctx)
 	if err != nil {
@@ -30,6 +40,14 @@ func (r *rpcImplementerDatabase) ExistsDatabase(ctx context.Context, name string
 	return false, nil
 }
 
+// [CreateDatabaseIfNotExists] creates a database if it doesn't exist.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the [database] to create.
+//
+// Returns a pointer to a [CreateDatabaseResult] object or an error.
 func (r *rpcImplementerDatabase) CreateDatabaseIfNotExists(ctx context.Context, name string) (*CreateDatabaseResult, error) {
 	dbList, err := r.ListDatabase(ctx)
 	if err != nil {
@@ -45,6 +63,16 @@ func (r *rpcImplementerDatabase) CreateDatabaseIfNotExists(ctx context.Context, 
 	return r.CreateDatabase(ctx, name)
 }
 
+// [CreateDatabase] creates a new database with user-defined name, and its database type is BASE_DB.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the [database] to drop.
+//
+// Notes: It returns error if the database exist.
+//
+// Returns a pointer to a [CreateDatabaseResult] object or an error.
 func (r *rpcImplementerDatabase) CreateDatabase(ctx context.Context, name string) (*CreateDatabaseResult, error) {
 	req := &olama.DatabaseRequest{
 		Database: name,
@@ -60,6 +88,16 @@ func (r *rpcImplementerDatabase) CreateDatabase(ctx context.Context, name string
 	return result, err
 }
 
+// [DropDatabase] drops a specific database. Its database type is BASE_DB
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the [database] to drop.
+//
+// Notes: If the database doesn't exist, it returns 0 for DropDatabaseResult.AffectedCount.
+//
+// Returns a pointer to a [DropDatabaseResult] object or an error.
 func (r *rpcImplementerDatabase) DropDatabase(ctx context.Context, name string) (*DropDatabaseResult, error) {
 	result := new(DropDatabaseResult)
 	req := &olama.DatabaseRequest{
@@ -77,6 +115,13 @@ func (r *rpcImplementerDatabase) DropDatabase(ctx context.Context, name string) 
 	return result, err
 }
 
+// [ListDatabase] retrieves the list of all Database and the list of all AIDatabases in a vectordb.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//
+// Returns a pointer to a [ListDatabaseResult] object or an error. See [ListDatabaseResult] for more information.
 func (r *rpcImplementerDatabase) ListDatabase(ctx context.Context) (result *ListDatabaseResult, err error) {
 	req := &olama.DatabaseRequest{}
 	res, err := r.rpcClient.ListDatabases(ctx, req)
@@ -99,10 +144,30 @@ func (r *rpcImplementerDatabase) ListDatabase(ctx context.Context) (result *List
 	return result, nil
 }
 
+// [CreateAIDatabase] creates a new AI database with user-defined name, and its database type is AI_DB.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the [database] to create.
+//
+// Notes: It returns error if the database exist.
+//
+// Returns a pointer to a [CreateAIDatabaseResult] object or an error.
 func (r *rpcImplementerDatabase) CreateAIDatabase(ctx context.Context, name string) (result *CreateAIDatabaseResult, err error) {
 	return r.httpImplementer.CreateAIDatabase(ctx, name)
 }
 
+// [DropAIDatabase] drops a specific AI database. Its database type is AI_DB
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - name: The name of the AI [database] to drop.
+//
+// Notes: If the database doesn't exist, it returns 0 for DropAIDatabaseResult.AffectedCount.
+//
+// Returns a pointer to a [DropAIDatabaseResult] object or an error.
 func (r *rpcImplementerDatabase) DropAIDatabase(ctx context.Context, name string) (*DropAIDatabaseResult, error) {
 	return r.httpImplementer.DropAIDatabase(ctx, name)
 }

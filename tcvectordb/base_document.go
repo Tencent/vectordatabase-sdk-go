@@ -33,24 +33,59 @@ var _ FlatInterface = &implementerFlatDocument{}
 // DocumentInterface document api
 type DocumentInterface interface {
 	SdkClient
+
+	// [Upsert] upserts documents into a collection.
 	Upsert(ctx context.Context, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error)
+
+	// [Query] queries documents that satisfies the condition from the collection.
 	Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (result *QueryDocumentResult, err error)
+
+	// [Search] returns the most similar topK vectors by the given vectors.
+	// Search is a Batch API.
 	Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
 	HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [SearchById] returns the most similar topK vectors by the given documentIds.
 	SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [SearchByText] returns the most similar topK vectors by the given text map.
+	// The texts will be firstly embedded into vectors using the embedding model of the collection on the server.
 	SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [Delete] deletes documents by conditions.
 	Delete(ctx context.Context, param DeleteDocumentParams) (result *DeleteDocumentResult, err error)
+
+	// [Update] updates documents by conditions.
 	Update(ctx context.Context, param UpdateDocumentParams) (result *UpdateDocumentResult, err error)
 }
 
 type FlatInterface interface {
+	// [Upsert] upserts documents into a collection.
 	Upsert(ctx context.Context, databaseName, collectionName string, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error)
+
+	// [Query] queries documents that satisfies the condition from the collection.
 	Query(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*QueryDocumentParams) (result *QueryDocumentResult, err error)
+
+	// [Search] returns the most similar topK vectors by the given vectors.
+	// Search is a Batch API.
 	Search(ctx context.Context, databaseName, collectionName string, vectors [][]float32, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
 	HybridSearch(ctx context.Context, databaseName, collectionName string, params HybridSearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [SearchById] returns the most similar topK vectors by the given documentIds.
 	SearchById(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [SearchByText] returns the most similar topK vectors by the given text map.
+	// The texts will be firstly embedded into vectors using the embedding model of the collection on the server.
 	SearchByText(ctx context.Context, databaseName, collectionName string, text map[string][]string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
+
+	// [Delete] deletes documents by conditions.
 	Delete(ctx context.Context, databaseName, collectionName string, param DeleteDocumentParams) (result *DeleteDocumentResult, err error)
+
+	// [Update] updates documents by conditions.
 	Update(ctx context.Context, databaseName, collectionName string, param UpdateDocumentParams) (result *UpdateDocumentResult, err error)
 }
 
@@ -61,6 +96,11 @@ type implementerDocument struct {
 	collection *Collection
 }
 
+// [UpsertDocumentParams] holds the parameters for upserting documents to a collection.
+//
+// Fields:
+//   - BuildIndex:  (Optional) if BuildIndex is true, the upserted documents' indexes will be built immediately,
+//     which will affect the performance of upsert.
 type UpsertDocumentParams struct {
 	BuildIndex *bool
 }
@@ -69,11 +109,31 @@ type UpsertDocumentResult struct {
 	AffectedCount int
 }
 
-// Upsert upsert documents into collection. Support for repeated insertion
+// [Upsert] upserts documents into a collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documents: The list of the [Document] object or  map[string]interface{} to upsert. Maximum 1000.
+//   - params: A pointer to a [UpsertDocumentParams] object that includes the other parameters for upserting documents' operation.
+//     See [UpsertDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [UpsertDocumentResult] object or an error.
 func (i *implementerDocument) Upsert(ctx context.Context, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error) {
 	return i.flat.Upsert(ctx, i.database.DatabaseName, i.collection.CollectionName, documents, params...)
 }
 
+// [QueryDocumentParams] holds the parameters for querying documents to a collection.
+//
+// Fields:
+//   - Filter:  (Optional) Filter documents by [Filter] conditions before returning the result.
+//   - RetrieveVector: (Optional) Specify whether to return vector values or not (default to false).
+//     If RetrieveVector is true, the vector values will be returned.
+//   - OutputFields: (Optional) Return columns specified by the list of column names.
+//   - Offset: (Optional) Skip a specified number of documents in the query result set.
+//   - Limit: (Optional) Limit the number of documents returned (default to 1).
 type QueryDocumentParams struct {
 	Filter         *Filter
 	RetrieveVector bool
@@ -88,12 +148,32 @@ type QueryDocumentResult struct {
 	Total         uint64
 }
 
-// Query query the document by document ids.
-// The parameters retrieveVector set true, will return the vector field, but will reduce the api speed.
+// [Query] queries documents that satisfies the condition from the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [QueryDocumentParams] object that includes the other parameters for querying documents' operation.
+//     See [QueryDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [QueryDocumentResult] object or an error.
 func (i *implementerDocument) Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
 	return i.flat.Query(ctx, i.database.DatabaseName, i.collection.CollectionName, documentIds, params...)
 }
 
+// [SearchDocumentParams] holds the parameters for searching documents to a collection.
+//
+// Fields:
+//   - Filter:  (Optional) Filter documents by [Filter] conditions before searching the results.
+//   - Params: A pointer to a [SearchDocParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocParams] for more information.
+//   - RetrieveVector: (Optional) Specify whether to return vector values or not (default to false).
+//     If RetrieveVector is true, the vector values will be returned.
+//   - OutputFields: (Optional) Return columns specified by the list of column names.
+//   - Limit: (Required) Limit the number of documents returned (default to 1).
 type SearchDocumentParams struct {
 	Filter         *Filter
 	Params         *SearchDocParams
@@ -102,6 +182,14 @@ type SearchDocumentParams struct {
 	Limit          int64
 }
 
+// [SearchDocParams] holds the parameters for searching documents to a collection.
+//
+// Fields:
+//   - Nprobe: (Optional)  IVF type index requires configuration parameter nprobe to specify the number
+//     of vectors to be accessed. Valid range is [1, nlist], and nlist is defined by creating collection.
+//   - Ef: (Optional) HNSW type index requires configuration parameter ef to specify the number
+//     of vectors to be accessed (default to 10). Valid range is [1, 32768]
+//   - Radius: (Optional) Specifies the radius range for similarity retrieval.
 type SearchDocParams struct {
 	Nprobe uint32  `json:"nprobe,omitempty"` // 搜索时查找的聚类数量，使用索引默认值即可
 	Ef     uint32  `json:"ef,omitempty"`     // HNSW
@@ -113,22 +201,71 @@ type SearchDocumentResult struct {
 	Documents [][]Document
 }
 
-// Search search document topK by vector. The optional parameters filter will add the filter condition to search.
-// The optional parameters hnswParam only be set with the HNSW vector index type.
+// [Search] returns the most similar topK vectors by the given vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - vectors: The list of vectors to search. The maximum number of elements in the array is 20.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.flat.Search(ctx, i.database.DatabaseName, i.collection.CollectionName, vectors, params...)
 }
 
-// Search search document topK by document ids. The optional parameters filter will add the filter condition to search.
-// The optional parameters hnswParam only be set with the HNSW vector index type.
+// [SearchById] returns the most similar topK vectors by the given documentIds.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.flat.SearchById(ctx, i.database.DatabaseName, i.collection.CollectionName, documentIds, params...)
 }
 
+// [SearchByText] returns the most similar topK vectors by the given text map.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - text: It is a map where the keys represent column names, and the values are lists of column values to be retrieved,
+//     which are used to retrieve data similar to ones.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.flat.SearchByText(ctx, i.database.DatabaseName, i.collection.CollectionName, text, params...)
 }
 
+// [HybridSearchDocumentParams] holds the parameters for hybrid searching documents to a collection.
+//
+// Fields:
+//   - Filter:  (Optional) Filter documents by [Filter] conditions before hybrid searching the results.
+//   - Params: A pointer to a [SearchDocParams] object that includes the other parameters for hybrid searching documents' operation.
+//     See [SearchDocParams] for more information.
+//   - RetrieveVector: (Optional) Specify whether to return vector values or not (default to false).
+//     If RetrieveVector is true, the vector values will be returned.
+//   - OutputFields: (Optional) Return columns specified by the list of column names.
+//   - Limit: (Required) Limit the number of documents returned (default to 1).
+//   - AnnParams: The list of [AnnParam] pointers for vectors retrieval configuration.
+//     See [AnnParam] for more information.
+//   - Rerank: A pointer to a [RerankOption] object for re-ranking configuration in retrieval.
+//     See [RerankOption] for more information.
+//   - Match: The list of [MatchOption] pointers for sparse vectors retrieval configuration.
+//     See [MatchOption] for more information.
 type HybridSearchDocumentParams struct {
 	Filter         *Filter
 	Params         *SearchDocParams
@@ -140,18 +277,44 @@ type HybridSearchDocumentParams struct {
 	Rerank    *RerankOption
 	Match     []*MatchOption
 }
+
+// [RerankOption] holds the parameters for re-ranking configuration in retrieval.
+//
+// Fields:
+//   - Method: The parameter method specifies the method for Rerank.
+//     It can take the following enumerated values: RerankWeighted(weighted), RerankRrf(rrf)
+//   - FieldList: Lists the fields used for weighted calculation. For example, FieldList:
+//     []string{"vector", "sparse_vector"} represents weighted calculation for dense and sparse vectors.
+//   - Weight: Sorts based on a weighted combination of scores from different fields.
+//   - RrfK: If Method is RerankRrf, you should config the RrfK, which is used to calculate the reciprocal rank score.
+//     It adjusts the scoring formula to control the distribution of rank scores (default to 60).
 type RerankOption struct {
 	Method    RerankMethod
 	FieldList []string
 	Weight    []float32
 	RrfK      int32
 }
+
+// [MatchOption] holds the parameters for sparse vectors retrieval configuration.
+//
+// Fields:
+//   - FieldName: The field name for sparse vector retrieval, for example: sparse_vector.
+//   - Data: The sparse vectors to retrieve, supporting only sparse vectors for one sentence.
+//   - Limit: The number of results returned from sparse vector retrieval.
 type MatchOption struct {
 	FieldName string
 	Data      interface{}
 	Limit     *int
 }
 
+// [AnnParam] holds the parameters for vectors hybrid retrieval configuration.
+//
+// Fields:
+//   - FieldName: The field name for retrieval, and you can set vector or id.
+//   - Data: The vectors to retrieve, supporting only vectors for one document.
+//   - Params: A pointer to a [SearchDocParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocParams] for more information.
+//   - Limit: The number of results returned from vector retrieval.
 type AnnParam struct {
 	FieldName string
 	Data      interface{}
@@ -159,10 +322,26 @@ type AnnParam struct {
 	Limit     *int
 }
 
+// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - params: A [HybridSearchDocumentParams] object that includes the other parameters for hybrid searching documents' operation.
+//     See [HybridSearchDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.flat.HybridSearch(ctx, i.database.DatabaseName, i.collection.CollectionName, params)
 }
 
+// [DeleteDocumentParams] holds the parameters for deleting documents to a collection.
+//
+// Fields:
+//   - DocumentIds: The list of the documents' ids to delete.  The maximum size of the array is 20.
+//   - Filter:  (Optional) Filter documents by [Filter] conditions to delete.
 type DeleteDocumentParams struct {
 	DocumentIds []string
 	Filter      *Filter
@@ -172,11 +351,29 @@ type DeleteDocumentResult struct {
 	AffectedCount int
 }
 
-// Delete delete document by document ids
+// [Delete] deletes documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - params: A [DeleteDocumentParams] object that includes the other parameters for deleting documents' operation.
+//     See [DeleteDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [DeleteDocumentResult] object or an error.
 func (i *implementerDocument) Delete(ctx context.Context, param DeleteDocumentParams) (result *DeleteDocumentResult, err error) {
 	return i.flat.Delete(ctx, i.database.DatabaseName, i.collection.CollectionName, param)
 }
 
+// [UpdateDocumentParams] holds the parameters for updating documents to a collection.
+//
+// Fields:
+//   - QueryIds: The list of the documents' ids to update.  The maximum size of the array is 20.
+//   - QueryFilter: (Optional) Filter documents by [Filter] conditions to update.
+//   - UpdateVector: The values with which you want to update the vector, and the updated documents are queried by QueryIds and QueryFilter.
+//   - UpdateSparseVec: The sparse values with which you want to update the vector, and the updated documents are queried by QueryIds and QueryFilter.
+//   - UpdateFields: Update documents' fields by this value, and the updated documents are queried by QueryIds and QueryFilter.
 type UpdateDocumentParams struct {
 	QueryIds        []string
 	QueryFilter     *Filter
@@ -189,6 +386,17 @@ type UpdateDocumentResult struct {
 	AffectedCount int
 }
 
+// [Update] updates documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A [UpdateDocumentParams] object that includes the other parameters for updating documents' operation.
+//     See [UpdateDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [UpdateDocumentResult] object or an error.
 func (i *implementerDocument) Update(ctx context.Context, param UpdateDocumentParams) (*UpdateDocumentResult, error) {
 	return i.flat.Update(ctx, i.database.DatabaseName, i.collection.CollectionName, param)
 }
@@ -206,6 +414,18 @@ type implementerFlatDocument struct {
 	SdkClient
 }
 
+// [Upsert] upserts documents into a collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - db: The name of the database.
+//   - coll: The name of the collection.
+//   - documents: The list of the [Document] object or  map[string]interface{} to upsert. Maximum 1000.
+//   - params: A pointer to a [UpsertDocumentParams] object that includes the other parameters for upserting documents' operation.
+//     See [UpsertDocumentParams] for more information.
+//
+// Returns a pointer to a [UpsertDocumentResult] object or an error.
 func (i *implementerFlatDocument) Upsert(ctx context.Context, db, coll string, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error) {
 	req := new(document.UpsertReq)
 	req.Database = db
@@ -290,7 +510,20 @@ func (i *implementerFlatDocument) Upsert(ctx context.Context, db, coll string, d
 	return
 }
 
-func (i *implementerFlatDocument) Query(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
+// [Query] queries documents that satisfies the condition from the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [QueryDocumentParams] object that includes the other parameters for querying documents' operation.
+//     See [QueryDocumentParams] for more information.
+//
+// Returns a pointer to a [QueryDocumentResult] object or an error.
+func (i *implementerFlatDocument) Query(ctx context.Context, databaseName, collectionName string,
+	documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
 	req := new(document.QueryReq)
 	req.Database = databaseName
 	req.Collection = collectionName
@@ -342,21 +575,74 @@ func (i *implementerFlatDocument) Query(ctx context.Context, databaseName, colle
 	return result, nil
 }
 
+// [Search] returns the most similar topK vectors by the given vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - vectors: The list of vectors to search. The maximum number of elements in the array is 20.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerFlatDocument) Search(ctx context.Context, databaseName, collectionName string,
 	vectors [][]float32, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.search(ctx, databaseName, collectionName, nil, vectors, nil, params...)
 }
 
+// [SearchById] returns the most similar topK vectors by the given documentIds.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerFlatDocument) SearchById(ctx context.Context, databaseName, collectionName string,
 	documentIds []string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.search(ctx, databaseName, collectionName, documentIds, nil, nil, params...)
 }
 
+// [SearchByText] returns the most similar topK vectors by the given text map.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - text: It is a map where the keys represent column names, and the values are lists of column values to be retrieved,
+//     which are used to retrieve data similar to ones.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerFlatDocument) SearchByText(ctx context.Context, databaseName, collectionName string,
 	text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.search(ctx, databaseName, collectionName, nil, nil, text, params...)
 }
 
+// [search] returns the most similar topK vectors by the given conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - documentIds: The list of the documents' ids, which are used for filtering documents.
+//   - vectors: The list of vectors to search. The maximum number of elements in the array is 20.
+//     Only one of the fields, vectors or documentIds, needs to be configured.
+//   - text: It is a map where the keys represent column names, and the values are lists of column values to be retrieved,
+//     which are used to retrieve data similar to ones.
+//   - params: A pointer to a [SearchDocumentParams] object that includes the other parameters for searching documents' operation.
+//     See [SearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerFlatDocument) search(ctx context.Context, databaseName, collectionName string,
 	documentIds []string, vectors [][]float32, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	req := new(document.SearchReq)
@@ -413,6 +699,17 @@ func (i *implementerFlatDocument) search(ctx context.Context, databaseName, coll
 	return result, nil
 }
 
+// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A [HybridSearchDocumentParams] object that includes the other parameters for hybrid searching documents' operation.
+//     See [HybridSearchDocumentParams] for more information.
+//
+// Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName, collectionName string,
 	params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
 	req := new(document.HybridSearchReq)
@@ -528,6 +825,17 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 	return result, nil
 }
 
+// [Delete] deletes documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A [DeleteDocumentParams] object that includes the other parameters for deleting documents' operation.
+//     See [DeleteDocumentParams] for more information.
+//
+// Returns a pointer to a [DeleteDocumentResult] object or an error.
 func (i *implementerFlatDocument) Delete(ctx context.Context, databaseName, collectionName string,
 	param DeleteDocumentParams) (*DeleteDocumentResult, error) {
 	req := new(document.DeleteReq)
@@ -548,6 +856,17 @@ func (i *implementerFlatDocument) Delete(ctx context.Context, databaseName, coll
 	return result, nil
 }
 
+// [Update] updates documents by conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [UpdateDocumentParams] object that includes the other parameters for updating documents' operation.
+//     See [UpdateDocumentParams] for more information.
+//
+// Returns a pointer to a [UpdateDocumentResult] object or an error.
 func (i *implementerFlatDocument) Update(ctx context.Context, databaseName, collectionName string,
 	param UpdateDocumentParams) (*UpdateDocumentResult, error) {
 	req := new(document.UpdateReq)

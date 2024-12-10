@@ -34,7 +34,7 @@ import (
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 )
 
-// SdkClient the http client interface
+// SdkClient provides the operations of a client.
 type SdkClient interface {
 	Request(ctx context.Context, req, res interface{}) error
 	Options() ClientOption
@@ -43,21 +43,28 @@ type SdkClient interface {
 	Close()
 }
 
+// [ClientOption] holds the parameters for creating an [Client] to a vectordb instance.
+//
+// Fields:
+//   - Timeout: (Optional) Timeout specifies a time limit for requests made by this Client (defaults to 5s).
+//   - MaxIdldConnPerHost:  (Optional) MaxIdleConnsPerHost controls the maximum idle (keep-alive) connections
+//     to keep per-host if non-zero (defaults to 2).
+//   - IdleConnTimeout: (Optional) IdleConnTimeout is the maximum amount of time an idle (keep-alive) connection
+//     will remain idle before closing itself (defaults to 60s). Zero means no limit.
+//   - ReadConsistency: (Optional) ReadConsistency represents the consistency level for reads.
+//     The default value is "eventualConsistency", but it can be set to "strongConsistency" as well.
+//   - Transport: (Optional) Transport specifies the mechanism by which individual HTTP requests are made (defaults to http.Transport).
 type ClientOption struct {
-	// Timeout: default 5s
-	Timeout time.Duration
-	// MaxIdldConnPerHost: default 2
+	Timeout            time.Duration
 	MaxIdldConnPerHost int
-	// IdleConnTimeout: default 0 means no limit
-	IdleConnTimeout time.Duration
-	// ReadConsistency: default: EventualConsistency
-	ReadConsistency ReadConsistency
-	// Transport: default: http.Transport
-	Transport http.RoundTripper
+	IdleConnTimeout    time.Duration
+	ReadConsistency    ReadConsistency
+	Transport          http.RoundTripper
 }
 type Client struct {
 	DatabaseInterface
 	FlatInterface
+	// deprecated:
 	FlatIndexInterface
 
 	cli      *http.Client
@@ -69,18 +76,32 @@ type Client struct {
 }
 
 type CommmonResponse struct {
-	// Code: 0 means success, other means failure.
-	Code int32 `json:"code,omitempty"`
-	// Msg: response msg
-	Msg string `json:"msg,omitempty"`
+	Code int32  `json:"code,omitempty"` // Code: 0 means success, others mean failure.
+	Msg  string `json:"msg,omitempty"`  // Msg: response msg
 }
 
+// ClientOption defaultOptions is the default options of a client connected to remote vectordb instance.
 var defaultOption = ClientOption{
 	Timeout:            time.Second * 5,
 	MaxIdldConnPerHost: 2,
 	IdleConnTimeout:    time.Minute,
 	ReadConsistency:    api.EventualConsistency,
 }
+
+// [NewClient] creates and initializes a new instance of [Client] with the given url, username, key and option.
+//
+// Parameters:
+//   - url: The address of vectordb, supporting http only.
+//   - username: The username of vectordb, supporting root only currently.
+//   - key: The account api key of vectordb, which you can get from console.
+//   - option: A [ClientOption] object that includes the configuration for the vectordb client. See
+//     [ClientOption] for more information.
+//
+// Notes:
+//   - It is important to handle the error returned by this function to ensure that the
+//     vectordb client has been created successfully before attempting to make API calls.
+//
+// Returns a pointer to an initialized [Client] instance or an error.
 
 func NewClient(url, username, key string, option *ClientOption) (*Client, error) {
 	if option == nil {
@@ -89,7 +110,6 @@ func NewClient(url, username, key string, option *ClientOption) (*Client, error)
 	return newClient(url, username, key, optionMerge(*option))
 }
 
-// newClient new http client with url, username and api key
 func newClient(url, username, key string, option ClientOption) (*Client, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, errors.Errorf("invalid url param with: %s", url)
@@ -133,7 +153,7 @@ func newClient(url, username, key string, option ClientOption) (*Client, error) 
 	return cli, nil
 }
 
-// Request do request for client
+// Request does request for client.
 func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 	var (
 		method = api.Method(req)
@@ -167,13 +187,13 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 	return c.handleResponse(ctx, response, res)
 }
 
-// WithTimeout set client timeout
+// WithTimeout sets client timeout.
 func (c *Client) WithTimeout(d time.Duration) {
 	c.option.Timeout = d
 	c.cli.Timeout = d
 }
 
-// Debug set debug mode to show the request and response info
+// Debug sets debug mode to show the request and response info.
 func (c *Client) Debug(v bool) {
 	c.debug = v
 }
@@ -210,11 +230,12 @@ func (c *Client) handleResponse(ctx context.Context, res *http.Response, out int
 	return nil
 }
 
-// Close wrap http.Client.CloseIdleConnections
+// Close closes idle connnections, releasing any open resources.
 func (c *Client) Close() {
 	c.cli.CloseIdleConnections()
 }
 
+// Options returns the option for the client.
 func (c *Client) Options() ClientOption {
 	return c.option
 }

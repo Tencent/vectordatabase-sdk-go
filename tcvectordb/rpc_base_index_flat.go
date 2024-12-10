@@ -13,6 +13,17 @@ type rpcImplementerFlatIndex struct {
 	rpcClient olama.SearchEngineClient
 }
 
+// [RebuildIndex] rebuilds all indexes under the specified collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A pointer to a [RebuildIndexParams] object that includes the other parameters for the rebuilding indexes operation.
+//     See [RebuildIndexParams] for more information.
+//
+// Returns a pointer to a [RebuildIndexResult] object or an error.
 func (r *rpcImplementerFlatIndex) RebuildIndex(ctx context.Context, databaseName, collectionName string, params ...*RebuildIndexParams) (*RebuildIndexResult, error) {
 	req := &olama.RebuildIndexRequest{
 		Database:   databaseName,
@@ -30,6 +41,17 @@ func (r *rpcImplementerFlatIndex) RebuildIndex(ctx context.Context, databaseName
 	return &RebuildIndexResult{TaskIds: res.TaskIds}, nil
 }
 
+// [AddIndex] adds scalar field index to an existing collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - params: A pointer to a [AddIndexParams] object that includes the other parameters for the adding scalar field index operation.
+//     See [AddIndexParams] for more information.
+//
+// Returns an error if the addition fails.
 func (r *rpcImplementerFlatIndex) AddIndex(ctx context.Context, databaseName, collectionName string, params ...*AddIndexParams) error {
 	req := &olama.AddIndexRequest{
 		Database:   databaseName,

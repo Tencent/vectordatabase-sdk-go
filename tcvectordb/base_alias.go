@@ -28,7 +28,11 @@ var _ AliasInterface = &implementerAlias{}
 
 type AliasInterface interface {
 	SdkClient
+
+	// [SetAlias] sets an alias for collection.
 	SetAlias(ctx context.Context, collectionName, aliasName string) (result *SetAliasResult, err error)
+
+	// [DeleteAlias] deletes the alias in the database.
 	DeleteAlias(ctx context.Context, aliasName string) (result *DeleteAliasResult, err error)
 }
 
@@ -41,6 +45,17 @@ type SetAliasResult struct {
 	AffectedCount int
 }
 
+// [SetAlias] sets an alias for collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - collectionName: The name of the collection.
+//   - aliasName: The alias name to set for the collection.
+//
+// Notes: The name of the database is from the field of [implementerAlias].
+//
+// Returns a pointer to a [SetAliasResult] object or an error.
 func (i *implementerAlias) SetAlias(ctx context.Context, collectionName, aliasName string) (*SetAliasResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
@@ -65,6 +80,16 @@ type DeleteAliasResult struct {
 	AffectedCount int
 }
 
+// [DeleteAlias] deletes the alias in the database.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - aliasName: The alias name to delete.
+//
+// Notes: The name of the database is from the field of [implementerAlias].
+//
+// Returns a pointer to a [DeleteAliasResult] object or an error.
 func (i *implementerAlias) DeleteAlias(ctx context.Context, aliasName string) (*DeleteAliasResult, error) {
 	if i.database.IsAIDatabase() {
 		return nil, AIDbTypeError
