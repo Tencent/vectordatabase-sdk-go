@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.0
+* support binary vector
+* support query count, and delete with limit
+* add params TerminateAfter and CutoffFrequency, when hybrid search
+* support modify vector indexes 
+
 ## v1.4.9
 * 为tcvectordb包的部分接口，增加注释
 * ExistsDatabase实现方法中：增加对AI_DB类型数据库的判断

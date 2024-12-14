@@ -77,8 +77,9 @@ type implementerCollection struct {
 //     In this case, the document will be automatically removed after 60 minites when the time specified
 //     in the expire_at field is reached.
 type CreateCollectionParams struct {
-	Embedding *Embedding
-	TtlConfig *TtlConfig
+	Embedding         *Embedding
+	TtlConfig         *TtlConfig
+	FilterIndexConfig *FilterIndexConfig
 }
 
 type CreateCollectionResult struct {
@@ -217,6 +218,12 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 			req.TtlConfig = new(collection.TtlConfig)
 			req.TtlConfig.Enable = param.TtlConfig.Enable
 			req.TtlConfig.TimeField = param.TtlConfig.TimeField
+		}
+		if param.FilterIndexConfig != nil {
+			req.FilterIndexConfig = new(collection.FilterIndexConfig)
+			req.FilterIndexConfig.FilterAll = param.FilterIndexConfig.FilterAll
+			req.FilterIndexConfig.FieldsWithoutIndex = param.FilterIndexConfig.FieldsWithoutIndex
+			req.FilterIndexConfig.MaxStrLen = param.FilterIndexConfig.MaxStrLen
 		}
 	}
 
@@ -429,6 +436,12 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 		coll.TtlConfig.Enable = collectionItem.TtlConfig.Enable
 		coll.TtlConfig.TimeField = collectionItem.TtlConfig.TimeField
 	}
+	if collectionItem.FilterIndexConfig != nil {
+		coll.FilterIndexConfig = new(FilterIndexConfig)
+		coll.FilterIndexConfig.FilterAll = collectionItem.FilterIndexConfig.FilterAll
+		coll.FilterIndexConfig.FieldsWithoutIndex = collectionItem.FilterIndexConfig.FieldsWithoutIndex
+		coll.FilterIndexConfig.MaxStrLen = collectionItem.FilterIndexConfig.MaxStrLen
+	}
 
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = IndexStatus{
@@ -563,19 +576,20 @@ func optionParams(column *api.IndexColumn, v VectorIndex) {
 type Collection struct {
 	DocumentInterface `json:"-"`
 	IndexInterface    `json:"-"`
-	DatabaseName      string      `json:"databaseName"`
-	CollectionName    string      `json:"collectionName"`
-	DocumentCount     int64       `json:"documentCount"`
-	Alias             []string    `json:"alias"`
-	ShardNum          uint32      `json:"shardNum"`
-	ReplicasNum       uint32      `json:"replicasNum"`
-	Indexes           Indexes     `json:"indexes"`
-	IndexStatus       IndexStatus `json:"indexStatus"`
-	Embedding         Embedding   `json:"embedding"`
-	Description       string      `json:"description"`
-	Size              uint64      `json:"size"`
-	CreateTime        time.Time   `json:"createTime"`
-	TtlConfig         *TtlConfig  `json:"ttlConfig,omitempty"`
+	DatabaseName      string             `json:"databaseName"`
+	CollectionName    string             `json:"collectionName"`
+	DocumentCount     int64              `json:"documentCount"`
+	Alias             []string           `json:"alias"`
+	ShardNum          uint32             `json:"shardNum"`
+	ReplicasNum       uint32             `json:"replicasNum"`
+	Indexes           Indexes            `json:"indexes"`
+	IndexStatus       IndexStatus        `json:"indexStatus"`
+	Embedding         Embedding          `json:"embedding"`
+	Description       string             `json:"description"`
+	Size              uint64             `json:"size"`
+	CreateTime        time.Time          `json:"createTime"`
+	TtlConfig         *TtlConfig         `json:"ttlConfig,omitempty"`
+	FilterIndexConfig *FilterIndexConfig `json:"filterIndexConfig,omitempty"`
 }
 
 func (c *Collection) Debug(v bool) {
@@ -603,4 +617,10 @@ type IndexStatus struct {
 type TtlConfig struct {
 	Enable    bool   `json:"enable"`
 	TimeField string `json:"timeField,omitempty"`
+}
+
+type FilterIndexConfig struct {
+	FilterAll          bool     `json:"filterAll"`
+	FieldsWithoutIndex []string `json:"fieldsWithoutIndex,omitempty"`
+	MaxStrLen          *uint32  `json:"maxStrLen,omitempty"`
 }

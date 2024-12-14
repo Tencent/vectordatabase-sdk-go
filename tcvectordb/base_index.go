@@ -32,6 +32,9 @@ type IndexInterface interface {
 
 	// [AddIndex] adds scalar field index to an existing collection.
 	AddIndex(ctx context.Context, params ...*AddIndexParams) (err error)
+
+	// [ModifyVectorIndex] modifies vector indexes to an existing collection.
+	ModifyVectorIndex(ctx context.Context, param ModifyVectorIndexParam) (err error)
 }
 
 type implementerIndex struct {
@@ -73,4 +76,9 @@ func (i *implementerIndex) RebuildIndex(ctx context.Context, params ...*RebuildI
 // Returns an error if the addition fails.
 func (i *implementerIndex) AddIndex(ctx context.Context, params ...*AddIndexParams) error {
 	return i.flat.AddIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
+}
+
+// [ModifyVectorIndex] modifies vector indexes to an existing collection.
+func (i *implementerIndex) ModifyVectorIndex(ctx context.Context, param ModifyVectorIndexParam) error {
+	return i.flat.ModifyVectorIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, param)
 }

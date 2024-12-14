@@ -23,8 +23,8 @@ var (
 func init() {
 	// 初始化客户端
 	var err error
-	cli, err = tcvectordb.NewClient("vdb addr", "root",
-		"auth key", &tcvectordb.ClientOption{Timeout: 10 * time.Second,
+	cli, err = tcvectordb.NewClient("", "root",
+		"", &tcvectordb.ClientOption{Timeout: 10 * time.Second,
 			ReadConsistency: tcvectordb.StrongConsistency})
 
 	if err != nil {

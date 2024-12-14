@@ -152,9 +152,11 @@ type RerankOption struct {
 	RrfK      int32     `protobuf:"varint,3,opt,name=rrf_k,json=rrfK,proto3" json:"rrf_k,omitempty"` // for RRF: K参数
 }
 type MatchOption struct {
-	FieldName string            `protobuf:"bytes,1,opt,name=fieldName,proto3" json:"fieldName,omitempty"`
-	Data      [][][]interface{} `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	Limit     int               `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	FieldName       string            `protobuf:"bytes,1,opt,name=fieldName,proto3" json:"fieldName,omitempty"`
+	Data            [][][]interface{} `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	Limit           int               `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	TerminateAfter  uint32            `json:"terminateAfter,omitempty"`
+	CutoffFrequency float64           `json:"cutoffFrequency,omitempty"`
 }
 
 type AnnParam struct {
@@ -208,6 +210,25 @@ type QueryRes struct {
 	api.CommonRes
 	Count     uint64      `json:"count,omitempty"`
 	Documents []*Document `json:"documents,omitempty"`
+}
+
+// CountReq query document request
+type CountReq struct {
+	api.Meta        `path:"/document/count" tags:"Document" method:"Post" summary:"基于Filter统计文档数量"`
+	Database        string          `json:"database,omitempty"`
+	Collection      string          `json:"collection,omitempty"`
+	Query           *CountQueryCond `json:"query,omitempty"`
+	ReadConsistency string          `json:"readConsistency,omitempty"`
+}
+
+type CountQueryCond struct {
+	Filter string `json:"filter,omitempty"`
+}
+
+// QueryRes query document response
+type CountRes struct {
+	api.CommonRes
+	Count uint64 `json:"count,omitempty"`
 }
 
 // DeleteReq delete document request

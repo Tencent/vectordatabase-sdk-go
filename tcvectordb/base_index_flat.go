@@ -17,6 +17,9 @@ type FlatIndexInterface interface {
 
 	// [AddIndex] adds scalar field index to an existing collection.
 	AddIndex(ctx context.Context, databaseName, collectionName string, params ...*AddIndexParams) (err error)
+
+	// [ModifyVectorIndex] modifies vector indexes to an existing collection.
+	ModifyVectorIndex(ctx context.Context, databaseName, collectionName string, param ModifyVectorIndexParam) (err error)
 }
 
 type implementerFlatIndex struct {
@@ -47,6 +50,11 @@ type RebuildIndexParams struct {
 type AddIndexParams struct {
 	FilterIndexs     []FilterIndex
 	BuildExistedData *bool
+}
+
+type ModifyVectorIndexParam struct {
+	VectorIndexes []VectorIndex
+	RebuildRules  *index.RebuildRules
 }
 
 // [RebuildIndex] rebuilds all indexes under the specified collection.
@@ -109,6 +117,34 @@ func (i *implementerFlatIndex) AddIndex(ctx context.Context, databaseName, colle
 	}
 
 	res := new(index.AddRes)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// [ModifyVectorIndex] modifies vector indexes to an existing collection.
+func (i *implementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseName, collectionName string, param ModifyVectorIndexParam) error {
+	req := new(index.ModifyVectorIndexReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+
+	for _, v := range param.VectorIndexes {
+		var column api.IndexColumn
+		column.FieldName = v.FieldName
+		column.FieldType = string(v.FieldType)
+		column.IndexType = string(v.IndexType)
+		column.MetricType = string(v.MetricType)
+		column.Dimension = v.Dimension
+
+		optionParams(&column, v)
+
+		req.VectorIndexes = append(req.VectorIndexes, &column)
+	}
+	req.RebuildRules = param.RebuildRules
+
+	res := new(index.ModifyVectorIndexReq)
 	err := i.Request(ctx, req, res)
 	if err != nil {
 		return err

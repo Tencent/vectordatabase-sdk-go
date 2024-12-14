@@ -84,3 +84,39 @@ func (r *rpcImplementerFlatIndex) AddIndex(ctx context.Context, databaseName, co
 
 	return nil
 }
+
+// [ModifyVectorIndex] modifies vector indexes to an existing collection.
+func (r *rpcImplementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseName, collectionName string,
+	param ModifyVectorIndexParam) error {
+	req := &olama.ModifyVectorIndexRequest{
+		Database:      databaseName,
+		Collection:    collectionName,
+		VectorIndexes: make(map[string]*olama.IndexColumn),
+	}
+
+	for _, v := range param.VectorIndexes {
+		column := &olama.IndexColumn{
+			FieldName:  v.FieldName,
+			FieldType:  string(v.FieldType),
+			IndexType:  string(v.IndexType),
+			MetricType: string(v.MetricType),
+			Dimension:  v.Dimension,
+		}
+		optionRpcParams(column, v)
+		req.VectorIndexes[v.FieldName] = column
+	}
+
+	defaultThrottle := int32(1)
+	if param.RebuildRules == nil {
+		req.RebuildRules = new(olama.RebuildIndexRequest)
+		req.RebuildRules.Throttle = defaultThrottle
+	} else if param.RebuildRules.Throttle == nil {
+		req.RebuildRules.Throttle = defaultThrottle
+	}
+
+	_, err := r.rpcClient.ModifyVectorIndex(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}

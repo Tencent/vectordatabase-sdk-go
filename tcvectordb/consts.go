@@ -31,6 +31,8 @@ const (
 	IVF_SQ4  IndexType = "IVF_SQ4"
 	IVF_SQ8  IndexType = "IVF_SQ8"
 	IVF_SQ16 IndexType = "IVF_SQ16"
+	BIN_FLAT IndexType = "BIN_FLAT"
+	BIN_HNSW IndexType = "BIN_HNSW"
 
 	// scalar index type
 	PRIMARY         IndexType = "primaryKey"
@@ -41,9 +43,10 @@ const (
 type MetricType string
 
 const (
-	L2     MetricType = "L2"
-	IP     MetricType = "IP"
-	COSINE MetricType = "COSINE"
+	L2      MetricType = "L2"
+	IP      MetricType = "IP"
+	COSINE  MetricType = "COSINE"
+	HAMMING MetricType = "Hamming"
 )
 
 type FieldType string
@@ -54,6 +57,7 @@ const (
 	Array        FieldType = "array"
 	Vector       FieldType = "vector"
 	SparseVector FieldType = "sparseVector"
+	BinaryVector FieldType = "binary_vector"
 )
 
 type EmbeddingModel string
@@ -136,6 +140,7 @@ var (
 const (
 	ERR_UNDEFINED_DATABASE   = 15301
 	ERR_UNDEFINED_COLLECTION = 15302
+	ERR_SYNTAX_ERROR         = 15000
 )
 
 type RerankMethod string

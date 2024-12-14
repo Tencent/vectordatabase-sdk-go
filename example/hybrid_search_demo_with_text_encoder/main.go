@@ -274,7 +274,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 			Weight:    []float32{0.1, 0.9},
 		},
 		Limit:        &limit,
-		OutputFields: []string{"id", "sparse_vector"},
+		OutputFields: []string{"id", "sparse_vector", "text"},
 	})
 	if err != nil {
 		return err

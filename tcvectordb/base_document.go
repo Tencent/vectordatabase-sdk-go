@@ -59,6 +59,9 @@ type DocumentInterface interface {
 
 	// [Update] updates documents by conditions.
 	Update(ctx context.Context, param UpdateDocumentParams) (result *UpdateDocumentResult, err error)
+
+	// [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
+	Count(ctx context.Context, params ...CountDocumentParams) (*CountDocumentResult, error)
 }
 
 type FlatInterface interface {
@@ -87,6 +90,10 @@ type FlatInterface interface {
 
 	// [Update] updates documents by conditions.
 	Update(ctx context.Context, databaseName, collectionName string, param UpdateDocumentParams) (result *UpdateDocumentResult, err error)
+
+	// [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
+	Count(ctx context.Context, databaseName, collectionName string,
+		params ...CountDocumentParams) (*CountDocumentResult, error)
 }
 
 type implementerDocument struct {
@@ -301,10 +308,17 @@ type RerankOption struct {
 //   - FieldName: The field name for sparse vector retrieval, for example: sparse_vector.
 //   - Data: The sparse vectors to retrieve, supporting only sparse vectors for one sentence.
 //   - Limit: The number of results returned from sparse vector retrieval.
+//   - TerminateAfter: (Optional) Threshold for early termination of keyword search,
+//     used to improve search efficiency.
+//   - CutoffFrequency: (Optional) CutoffFrequency specifies a positive integer limit, ranging from [1, +∞].
+//     If the term frequency is less than the cutoffFrequency, the term will be ignored during retrieval.
+//     It also supports decimal values within the range [0,1].
 type MatchOption struct {
-	FieldName string
-	Data      interface{}
-	Limit     *int
+	FieldName       string
+	Data            interface{}
+	Limit           *int
+	TerminateAfter  uint32
+	CutoffFrequency float64
 }
 
 // [AnnParam] holds the parameters for vectors hybrid retrieval configuration.
@@ -342,9 +356,11 @@ func (i *implementerDocument) HybridSearch(ctx context.Context, params HybridSea
 // Fields:
 //   - DocumentIds: The list of the documents' ids to delete.  The maximum size of the array is 20.
 //   - Filter:  (Optional) Filter documents by [Filter] conditions to delete.
+//   - Limit: (Optional) Limit the number of documents deleted.
 type DeleteDocumentParams struct {
 	DocumentIds []string
 	Filter      *Filter
+	Limit       int64
 }
 
 type DeleteDocumentResult struct {
@@ -399,6 +415,21 @@ type UpdateDocumentResult struct {
 // Returns a pointer to a [UpdateDocumentResult] object or an error.
 func (i *implementerDocument) Update(ctx context.Context, param UpdateDocumentParams) (*UpdateDocumentResult, error) {
 	return i.flat.Update(ctx, i.database.DatabaseName, i.collection.CollectionName, param)
+}
+
+// [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: A [CountDocumentParams] object that includes the other parameters for counting documents' operation.
+//     See [CountDocumentParams] for more information.
+//
+// Notes: The name of the database and the name of collection are from the fields of [implementerDocument].
+//
+// Returns a pointer to a [CountDocumentResult] object or an error.
+func (i *implementerDocument) Count(ctx context.Context, params ...CountDocumentParams) (*CountDocumentResult, error) {
+	return i.flat.Count(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
 }
 
 type Document struct {
@@ -733,6 +764,8 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 		req.Search.AnnParams[i].Data = make([]interface{}, 0)
 		if vec, ok := annParam.Data.([]float32); ok {
 			req.Search.AnnParams[i].Data = append(req.Search.AnnParams[i].Data, vec)
+		} else if text, ok := annParam.Data.(string); ok {
+			req.Search.AnnParams[i].Data = append(req.Search.AnnParams[i].Data, text)
 		} else {
 			return nil, fmt.Errorf("hybridSearch failed, because of AnnParam.Data field type, " +
 				"which must be []float32")
@@ -771,6 +804,8 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 		if matchParam.Limit != nil {
 			req.Search.Match[i].Limit = *matchParam.Limit
 		}
+		req.Search.Match[i].TerminateAfter = matchParam.TerminateAfter
+		req.Search.Match[i].CutoffFrequency = matchParam.CutoffFrequency
 		break
 	}
 
@@ -844,6 +879,7 @@ func (i *implementerFlatDocument) Delete(ctx context.Context, databaseName, coll
 	req.Query = &document.QueryCond{
 		DocumentIds: param.DocumentIds,
 		Filter:      param.Filter.Cond(),
+		Limit:       param.Limit,
 	}
 
 	res := new(document.DeleteRes)
@@ -920,6 +956,55 @@ func (i *implementerFlatDocument) Update(ctx context.Context, databaseName, coll
 		return result, err
 	}
 	result.AffectedCount = res.AffectedCount
+	return result, nil
+}
+
+// [CountDocumentParams] holds the parameters for counting the number of documents to a collection based on the [Filter] conditions.
+//
+// Fields:
+//   - CountFilter: (Optional) Filter documents by [Filter] conditions to count.
+type CountDocumentParams struct {
+	CountFilter *Filter
+}
+
+// [CountDocumentResult] holds the results for counting the number of documents to a collection based on the [Filter] conditions.
+//
+// Fields:
+//   - Count: The number of documents to a collection based on the [Filter].
+type CountDocumentResult struct {
+	Count uint64
+}
+
+// [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [CountDocumentParams] object that includes the other parameters for counting documents' operation.
+//     See [CountDocumentParams] for more information.
+//
+// Returns a pointer to a [CountDocumentResult] object or an error.
+func (i *implementerFlatDocument) Count(ctx context.Context, databaseName, collectionName string,
+	params ...CountDocumentParams) (*CountDocumentResult, error) {
+	req := new(document.CountReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	req.Query = new(document.CountQueryCond)
+
+	if len(params) != 0 {
+		param := params[0]
+		req.Query.Filter = param.CountFilter.Cond()
+	}
+
+	res := new(document.CountRes)
+	result := new(CountDocumentResult)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return result, err
+	}
+	result.Count = res.Count
 	return result, nil
 }
 

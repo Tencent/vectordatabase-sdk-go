@@ -147,6 +147,21 @@ func (r *rpcImplementerDocument) Update(ctx context.Context, param UpdateDocumen
 	return r.flat.Update(ctx, r.database.DatabaseName, r.collection.CollectionName, param)
 }
 
+// [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [CountDocumentParams] object that includes the other parameters for counting documents' operation.
+//     See [CountDocumentParams] for more information.
+//
+// Returns a pointer to a [CountDocumentResult] object or an error.
+func (r *rpcImplementerDocument) Count(ctx context.Context, params ...CountDocumentParams) (*CountDocumentResult, error) {
+	return r.flat.Count(ctx, r.database.DatabaseName, r.collection.CollectionName, params...)
+}
+
 type rpcImplementerFlatDocument struct {
 	SdkClient
 	rpcClient olama.SearchEngineClient
@@ -409,15 +424,15 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 			req.Search.Ann[i].Limit = uint32(*annParam.Limit)
 		}
 
-		vectorArray := make([]*olama.VectorArray, 0, len(req.Search.Vectors))
 		if vec, ok := annParam.Data.([]float32); ok {
-			vectorArray = append(vectorArray, &olama.VectorArray{Vector: vec})
+			req.Search.Ann[i].Data = make([]*olama.VectorArray, 0, len(req.Search.Vectors))
+			req.Search.Ann[i].Data = append(req.Search.Ann[i].Data, &olama.VectorArray{Vector: vec})
+		} else if text, ok := annParam.Data.(string); ok {
+			req.Search.Ann[i].EmbeddingItems = append(req.Search.EmbeddingItems, text)
 		} else {
-			return nil, fmt.Errorf("hybridSearch failed, because of AnnParam.Vectors field type, " +
-				"which must be []float32")
+			return nil, fmt.Errorf("hybridSearch failed, because of AnnParam.Data field type, " +
+				"which must be []float32 or string")
 		}
-
-		req.Search.Ann[i].Data = vectorArray
 
 		if annParam.Params != nil {
 			req.Search.Ann[i].Params = new(olama.SearchParams)
@@ -437,7 +452,7 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 			FieldName: fieldName,
 		})
 		if matchParam.Limit != nil {
-			req.Search.Ann[i].Limit = uint32(*matchParam.Limit)
+			req.Search.Sparse[i].Limit = uint32(*matchParam.Limit)
 		}
 
 		sparseVectorArray := make([]*olama.SparseVectorArray, 0)
@@ -458,6 +473,10 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 			return nil, fmt.Errorf("hybridSearch failed, because of Match.Data field type, " +
 				"which must be []encoder.SparseVecItem")
 		}
+
+		req.Search.Sparse[i].Params = new(olama.SparseSearchParams)
+		req.Search.Sparse[i].Params.TerminateAfter = matchParam.TerminateAfter
+		req.Search.Sparse[i].Params.CutoffFrequency = matchParam.CutoffFrequency
 		break
 	}
 
@@ -535,6 +554,7 @@ func (r *rpcImplementerFlatDocument) Delete(ctx context.Context, databaseName, c
 		Query: &olama.QueryCond{
 			DocumentIds: param.DocumentIds,
 			Filter:      param.Filter.Cond(),
+			Limit:       param.Limit,
 		},
 	}
 	res, err := r.rpcClient.Dele(ctx, req)
@@ -699,4 +719,35 @@ func (r *rpcImplementerFlatDocument) search(ctx context.Context, databaseName, c
 		Documents: documents,
 	}
 	return result, nil
+}
+
+// [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [CountDocumentParams] object that includes the other parameters for counting documents' operation.
+//     See [CountDocumentParams] for more information.
+//
+// Returns a pointer to a [CountDocumentResult] object or an error.
+func (r *rpcImplementerFlatDocument) Count(ctx context.Context, databaseName, collectionName string,
+	params ...CountDocumentParams) (*CountDocumentResult, error) {
+	req := &olama.CountRequest{
+		Database:   databaseName,
+		Collection: collectionName,
+	}
+
+	if len(params) != 0 {
+		param := params[0]
+		req.Query = &olama.QueryCond{
+			Filter: param.CountFilter.Cond(),
+		}
+	}
+	res, err := r.rpcClient.Count(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &CountDocumentResult{Count: res.Count}, nil
 }
