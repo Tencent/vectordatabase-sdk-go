@@ -50,8 +50,12 @@ type SearchEngineClient interface {
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	// 混合搜索
 	HybridSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	// 关键词检索
+	KeywordSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	// 删除向量
 	Dele(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	// count
+	Count(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*CountResponse, error)
 	// 创建 database
 	CreateDatabase(ctx context.Context, in *DatabaseRequest, opts ...grpc.CallOption) (*DatabaseResponse, error)
 	// 删除 database
@@ -62,6 +66,8 @@ type SearchEngineClient interface {
 	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
 	// 新增scalar的索引
 	AddIndex(ctx context.Context, in *AddIndexRequest, opts ...grpc.CallOption) (*AddIndexResponse, error)
+	// 修改index配置
+	ModifyVectorIndex(ctx context.Context, in *ModifyVectorIndexRequest, opts ...grpc.CallOption) (*ModifyVectorIndexResponse, error)
 }
 
 type searchEngineClient struct {
@@ -198,9 +204,27 @@ func (c *searchEngineClient) HybridSearch(ctx context.Context, in *SearchRequest
 	return out, nil
 }
 
+func (c *searchEngineClient) KeywordSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/document/keywordSearch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *searchEngineClient) Dele(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, "/document/delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) Count(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*CountResponse, error) {
+	out := new(CountResponse)
+	err := c.cc.Invoke(ctx, "/document/count", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -252,6 +276,15 @@ func (c *searchEngineClient) AddIndex(ctx context.Context, in *AddIndexRequest, 
 	return out, nil
 }
 
+func (c *searchEngineClient) ModifyVectorIndex(ctx context.Context, in *ModifyVectorIndexRequest, opts ...grpc.CallOption) (*ModifyVectorIndexResponse, error) {
+	out := new(ModifyVectorIndexResponse)
+	err := c.cc.Invoke(ctx, "/index/modifyVectorIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SearchEngineServer is the server API for SearchEngine service.
 // All implementations must embed UnimplementedSearchEngineServer
 // for forward compatibility
@@ -284,8 +317,12 @@ type SearchEngineServer interface {
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
 	// 混合搜索
 	HybridSearch(context.Context, *SearchRequest) (*SearchResponse, error)
+	// 关键词检索
+	KeywordSearch(context.Context, *SearchRequest) (*SearchRequest, error)
 	// 删除向量
 	Dele(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	// count
+	Count(context.Context, *CountRequest) (*CountResponse, error)
 	// 创建 database
 	CreateDatabase(context.Context, *DatabaseRequest) (*DatabaseResponse, error)
 	// 删除 database
@@ -296,6 +333,8 @@ type SearchEngineServer interface {
 	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
 	// 新增scalar的索引
 	AddIndex(context.Context, *AddIndexRequest) (*AddIndexResponse, error)
+	// 修改index配置
+	ModifyVectorIndex(context.Context, *ModifyVectorIndexRequest) (*ModifyVectorIndexResponse, error)
 	mustEmbedUnimplementedSearchEngineServer()
 }
 
@@ -345,8 +384,14 @@ func (UnimplementedSearchEngineServer) Search(context.Context, *SearchRequest) (
 func (UnimplementedSearchEngineServer) HybridSearch(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HybridSearch not implemented")
 }
+func (UnimplementedSearchEngineServer) KeywordSearch(context.Context, *SearchRequest) (*SearchRequest, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KeywordSearch not implemented")
+}
 func (UnimplementedSearchEngineServer) Dele(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Dele not implemented")
+}
+func (UnimplementedSearchEngineServer) Count(context.Context, *CountRequest) (*CountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Count not implemented")
 }
 func (UnimplementedSearchEngineServer) CreateDatabase(context.Context, *DatabaseRequest) (*DatabaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateDatabase not implemented")
@@ -362,6 +407,9 @@ func (UnimplementedSearchEngineServer) GetVersion(context.Context, *GetVersionRe
 }
 func (UnimplementedSearchEngineServer) AddIndex(context.Context, *AddIndexRequest) (*AddIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddIndex not implemented")
+}
+func (UnimplementedSearchEngineServer) ModifyVectorIndex(context.Context, *ModifyVectorIndexRequest) (*ModifyVectorIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ModifyVectorIndex not implemented")
 }
 func (UnimplementedSearchEngineServer) mustEmbedUnimplementedSearchEngineServer() {}
 
@@ -628,6 +676,24 @@ func _SearchEngine_HybridSearch_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SearchEngine_KeywordSearch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).KeywordSearch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/keyword_search",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).KeywordSearch(ctx, req.(*SearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SearchEngine_Dele_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
@@ -642,6 +708,24 @@ func _SearchEngine_Dele_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SearchEngineServer).Dele(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_Count_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).Count(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/count",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).Count(ctx, req.(*CountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -736,6 +820,24 @@ func _SearchEngine_AddIndex_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SearchEngine_ModifyVectorIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ModifyVectorIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).ModifyVectorIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/modifyVectorIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).ModifyVectorIndex(ctx, req.(*ModifyVectorIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SearchEngine_ServiceDesc is the grpc.ServiceDesc for SearchEngine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -800,8 +902,16 @@ var SearchEngine_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SearchEngine_HybridSearch_Handler,
 		},
 		{
+			MethodName: "keyword_search",
+			Handler:    _SearchEngine_KeywordSearch_Handler,
+		},
+		{
 			MethodName: "dele",
 			Handler:    _SearchEngine_Dele_Handler,
+		},
+		{
+			MethodName: "count",
+			Handler:    _SearchEngine_Count_Handler,
 		},
 		{
 			MethodName: "createDatabase",
@@ -823,7 +933,12 @@ var SearchEngine_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "addIndex",
 			Handler:    _SearchEngine_AddIndex_Handler,
 		},
+		{
+			MethodName: "modifyVectorIndex",
+			Handler:    _SearchEngine_ModifyVectorIndex_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "olama.proto",
 }
+

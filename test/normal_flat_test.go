@@ -237,3 +237,11 @@ func TestFlatDelete(t *testing.T) {
 	printErr(err)
 	log.Printf("Delete result: %+v", res)
 }
+
+func TestFlatCount(t *testing.T) {
+	res, err := cli.Count(ctx, database, collectionName, tcvectordb.CountDocumentParams{
+		CountFilter: tcvectordb.NewFilter(`bookName="西游记"`),
+	})
+	printErr(err)
+	log.Printf("Count result: %+v", res)
+}

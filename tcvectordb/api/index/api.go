@@ -46,3 +46,20 @@ type AddReq struct {
 type AddRes struct {
 	api.CommonRes
 }
+
+type ModifyVectorIndexReq struct {
+	api.Meta      `path:"/index/modifyVectorIndex" tags:"Index" method:"Post" summary:"调整collection的向量索引参数"`
+	Database      string             `json:"database,omitempty"`
+	Collection    string             `json:"collection,omitempty"`
+	VectorIndexes []*api.IndexColumn `json:"vectorIndexes,omitempty"`
+	RebuildRules  *RebuildRules      `json:"rebuildRules,omitempty"`
+}
+
+type RebuildRules struct {
+	DropBeforeRebuild *bool  `json:"dropBeforeRebuild,omitempty"`
+	Throttle          *int32 `json:"throttle,omitempty"`
+}
+
+type ModifyVectorIndexRes struct {
+	api.CommonRes
+}

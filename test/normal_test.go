@@ -367,6 +367,16 @@ func TestDelete(t *testing.T) {
 	log.Printf("Delete result: %+v", res)
 }
 
+func TestCount(t *testing.T) {
+	col := cli.Database(database).Collection(collectionName)
+
+	res, err := col.Count(ctx, tcvectordb.CountDocumentParams{
+		CountFilter: tcvectordb.NewFilter(`bookName="西游记"`),
+	})
+	printErr(err)
+	log.Printf("Count result: %+v", res)
+}
+
 func TestReupsertCollection(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 	testLen := int64(10)

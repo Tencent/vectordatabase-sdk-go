@@ -155,6 +155,21 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 				TimeField: param.TtlConfig.TimeField,
 			}
 		}
+		if param.FilterIndexConfig != nil {
+			req.FilterIndexConfig = &olama.FilterIndexConfig{
+				FilterAll:          param.FilterIndexConfig.FilterAll,
+				FieldsWithoutIndex: param.FilterIndexConfig.FieldsWithoutIndex,
+			}
+
+			if param.FilterIndexConfig.MaxStrLen != nil {
+				if *param.FilterIndexConfig.MaxStrLen == 0 {
+					return nil, fmt.Errorf("code: %d, message: the value of %v cannot be 0", ERR_SYNTAX_ERROR,
+						"maxStrLen")
+				} else {
+					req.FilterIndexConfig.MaxStrLen = *param.FilterIndexConfig.MaxStrLen
+				}
+			}
+		}
 	}
 
 	_, err := r.rpcClient.CreateCollection(ctx, req)
@@ -347,6 +362,14 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 		coll.TtlConfig.Enable = collectionItem.TtlConfig.Enable
 		coll.TtlConfig.TimeField = collectionItem.TtlConfig.TimeField
 	}
+	if collectionItem.FilterIndexConfig != nil {
+		coll.FilterIndexConfig = new(FilterIndexConfig)
+		coll.FilterIndexConfig.FilterAll = collectionItem.FilterIndexConfig.FilterAll
+		coll.FilterIndexConfig.FieldsWithoutIndex = collectionItem.FilterIndexConfig.FieldsWithoutIndex
+		coll.FilterIndexConfig.MaxStrLen = &collectionItem.FilterIndexConfig.MaxStrLen
+	} else {
+
+	}
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = IndexStatus{
 			Status: collectionItem.IndexStatus.Status,
@@ -359,7 +382,7 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 			continue
 		}
 		switch index.FieldType {
-		case string(Vector):
+		case string(Vector), string(BinaryVector):
 			vector := VectorIndex{}
 			vector.FieldName = index.FieldName
 			vector.FieldType = FieldType(index.FieldType)
