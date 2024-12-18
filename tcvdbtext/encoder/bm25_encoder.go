@@ -3,10 +3,11 @@ package encoder
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math"
+	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 
 	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdbtext"
@@ -88,19 +89,58 @@ func (bm25 *BM25Encoder) GetTokenizer() tokenizer.Tokenizer {
 }
 
 func (bm25 *BM25Encoder) SetDefaultParams(bm25Language string) error {
-	_, filePath, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filePath)
-
-	bm25ParamsPath := ""
+	fileName := ""
 	if bm25Language == BM25_ZH_CONTENT {
-		bm25ParamsPath = dir + BM25Params_ZH_Path
+		fileName = "bm25_zh_default.json"
 	} else if bm25Language == BM25_EN_CONTENT {
-		bm25ParamsPath = dir + BM25Params_EN_Path
+		fileName = "bm25_en_default.json"
 	} else {
-		return fmt.Errorf("input name be 'zh' or 'en'")
+		return fmt.Errorf("input language name must be 'zh' or 'en'")
+	}
+	defaultStoragePath := "/tmp/tencent/vectordatabase/data/"
+	fileStoragePath := defaultStoragePath + fileName
+
+	if !tcvdbtext.FileExists(fileStoragePath) {
+		bm25ParamsUrl := ""
+		if bm25Language == BM25_ZH_CONTENT {
+			bm25ParamsUrl = "https://vectordb-public-1310738255.cos.ap-guangzhou.myqcloud.com/sparsevector/bm25_zh_default.json"
+		} else if bm25Language == BM25_EN_CONTENT {
+			bm25ParamsUrl = "https://vectordb-public-1310738255.cos.ap-guangzhou.myqcloud.com/sparsevector/bm25_en_default.json"
+		}
+		_, err := os.Stat(defaultStoragePath)
+		if os.IsNotExist(err) {
+			err := os.MkdirAll(defaultStoragePath, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("failed to create directory: %v", err.Error())
+			}
+			log.Printf("directory created: %v", defaultStoragePath)
+		} else if err != nil {
+			return fmt.Errorf("failed to check directory: %v", err.Error())
+		}
+
+		file, err := os.Create(fileStoragePath)
+		if err != nil {
+			return fmt.Errorf("failed to create temporary file %v, err: %v",
+				fileStoragePath, err.Error())
+		}
+		defer file.Close()
+
+		log.Printf("[Waring] start to download dictionary %v and store it in %v, please wait a moment",
+			bm25ParamsUrl, fileStoragePath)
+		resp, err := http.Get(bm25ParamsUrl)
+		if err != nil {
+			return fmt.Errorf("failed to download file %v, err: %v", bm25ParamsUrl, err)
+		}
+		defer resp.Body.Close()
+
+		_, err = io.Copy(file, resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to download url %v to local dir %v, err: %v",
+				bm25ParamsUrl, fileStoragePath, err.Error())
+		}
 	}
 
-	err := bm25.SetParams(bm25ParamsPath)
+	err := bm25.SetParams(fileStoragePath)
 	if err != nil {
 		return fmt.Errorf("use default settings file for language %v to set params failed, err: %v",
 			bm25Language, err.Error())
@@ -110,12 +150,16 @@ func (bm25 *BM25Encoder) SetDefaultParams(bm25Language string) error {
 }
 
 func (bm25 *BM25Encoder) SetParams(paramsFileLoadPath string) error {
+	var data []byte
+	var err error
+
 	if !tcvdbtext.FileExists(paramsFileLoadPath) {
 		return fmt.Errorf("the filepath %v doesn't exist", paramsFileLoadPath)
-	}
-	data, err := os.ReadFile(paramsFileLoadPath)
-	if err != nil {
-		return fmt.Errorf("cannot read file: %v", err)
+	} else {
+		data, err = os.ReadFile(paramsFileLoadPath)
+		if err != nil {
+			return fmt.Errorf("cannot read file: %v", err)
+		}
 	}
 
 	bm25ParamsByFile := new(BM25Params)
