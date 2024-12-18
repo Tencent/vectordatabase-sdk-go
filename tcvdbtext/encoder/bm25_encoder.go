@@ -3,11 +3,13 @@ package encoder
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math"
+	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
+	"strings"
 
 	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdbtext"
 	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/tokenizer"
@@ -88,19 +90,16 @@ func (bm25 *BM25Encoder) GetTokenizer() tokenizer.Tokenizer {
 }
 
 func (bm25 *BM25Encoder) SetDefaultParams(bm25Language string) error {
-	_, filePath, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filePath)
-
-	bm25ParamsPath := ""
+	bm25ParamsUrl := ""
 	if bm25Language == BM25_ZH_CONTENT {
-		bm25ParamsPath = dir + BM25Params_ZH_Path
+		bm25ParamsUrl = "https://vectordb-public-1310738255.cos.ap-guangzhou.myqcloud.com/sparsevector/bm25_zh_default.json"
 	} else if bm25Language == BM25_EN_CONTENT {
-		bm25ParamsPath = dir + BM25Params_EN_Path
+		bm25ParamsUrl = "https://vectordb-public-1310738255.cos.ap-guangzhou.myqcloud.com/sparsevector/bm25_en_default.json"
 	} else {
 		return fmt.Errorf("input name be 'zh' or 'en'")
 	}
 
-	err := bm25.SetParams(bm25ParamsPath)
+	err := bm25.SetParams(bm25ParamsUrl)
 	if err != nil {
 		return fmt.Errorf("use default settings file for language %v to set params failed, err: %v",
 			bm25Language, err.Error())
@@ -110,12 +109,30 @@ func (bm25 *BM25Encoder) SetDefaultParams(bm25Language string) error {
 }
 
 func (bm25 *BM25Encoder) SetParams(paramsFileLoadPath string) error {
-	if !tcvdbtext.FileExists(paramsFileLoadPath) {
-		return fmt.Errorf("the filepath %v doesn't exist", paramsFileLoadPath)
-	}
-	data, err := os.ReadFile(paramsFileLoadPath)
-	if err != nil {
-		return fmt.Errorf("cannot read file: %v", err)
+	var data []byte
+	var err error
+	if strings.HasPrefix(paramsFileLoadPath, "http") {
+		log.Printf("[Waring] start to download dictionary %v, please wait a moment", paramsFileLoadPath)
+		resp, err := http.Get(paramsFileLoadPath)
+		if err != nil {
+			return fmt.Errorf("failed to download file %v, err: %v", paramsFileLoadPath, err)
+		}
+		defer resp.Body.Close()
+
+		// 读取文件内容
+		data, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("cannot read file: %v", err)
+		}
+	} else {
+		if !tcvdbtext.FileExists(paramsFileLoadPath) {
+			return fmt.Errorf("the filepath %v doesn't exist", paramsFileLoadPath)
+		} else {
+			data, err = os.ReadFile(paramsFileLoadPath)
+			if err != nil {
+				return fmt.Errorf("cannot read file: %v", err)
+			}
+		}
 	}
 
 	bm25ParamsByFile := new(BM25Params)
