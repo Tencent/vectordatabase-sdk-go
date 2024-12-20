@@ -13,7 +13,10 @@ func Test_BM25Encoder_DownloadParams(t *testing.T) {
 
 func Test_BM25Encoder_SetDefaultParams(t *testing.T) {
 	bm25Encoder, _ := NewBM25Encoder(nil)
-	bm25Encoder.SetDefaultParams("zh")
+	err := bm25Encoder.SetDefaultParams("zh")
+	if err != nil {
+		println(err.Error())
+	}
 	bm25Encoder.DownloadParams("./bm25_params.json")
 }
 
