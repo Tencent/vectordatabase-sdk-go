@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.5.2
+* fix: optimize the interface modifing vector indexes 
+
 ## v1.5.1
 * fix: replace large file-sized dictionaries in Git LFS with URLs to enable the usage of NewBM25Encoder with language-specific dictionaries when customers refer to the "tcvdbtext" directory in this Go package.
 

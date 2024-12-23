@@ -21,6 +21,8 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
+	"log"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -549,6 +551,33 @@ func optionParams(column *api.IndexColumn, v VectorIndex) {
 			column.Params.Nlist = param.NList
 		}
 	}
+}
+
+func optionParamsFromIndexParams(column *api.IndexColumn, v IndexParams) {
+	column.Params = new(api.IndexParams)
+	switch param := v.(type) {
+	case *HNSWParam:
+		if param != nil {
+			column.Params.M = param.M
+			column.Params.EfConstruction = param.EfConstruction
+		}
+	case *IVFFLATParams:
+		if param != nil {
+			column.Params.Nlist = param.NList
+		}
+	case *IVFSQParams:
+		if param != nil {
+			column.Params.Nlist = param.NList
+		}
+	case *IVFPQParams:
+		if param != nil {
+			column.Params.M = param.M
+			column.Params.Nlist = param.NList
+		}
+	default:
+		log.Printf("[Waring] Unknown type: %v", reflect.TypeOf(v))
+	}
+
 }
 
 // [Collection] holds the collection parameters and some interfaces to operate the document/index api.

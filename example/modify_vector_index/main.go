@@ -228,14 +228,9 @@ func (d *Demo) ModifyVectorIndex(ctx context.Context, database, collection strin
 			Throttle: &setThrottle,
 		},
 	}
-	param.VectorIndexes = make([]tcvectordb.VectorIndex, 0)
-	param.VectorIndexes = append(param.VectorIndexes, tcvectordb.VectorIndex{
-		FilterIndex: tcvectordb.FilterIndex{
-			FieldName: "vector",
-			FieldType: tcvectordb.Vector,
-			IndexType: tcvectordb.HNSW,
-		},
-		Dimension:  3,
+	param.VectorIndexes = make([]tcvectordb.ModifyVectorIndex, 0)
+	param.VectorIndexes = append(param.VectorIndexes, tcvectordb.ModifyVectorIndex{
+		FieldName:  "vector",
 		MetricType: tcvectordb.COSINE,
 		Params: &tcvectordb.HNSWParam{
 			M:              8,

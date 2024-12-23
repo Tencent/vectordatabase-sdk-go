@@ -3,6 +3,8 @@ package tcvectordb
 import (
 	"context"
 	"fmt"
+	"log"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -455,6 +457,32 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 	}
 	coll.IndexInterface = indexImpl
 	return coll
+}
+
+func optionRpcParamsFromIndexParams(column *olama.IndexColumn, v IndexParams) {
+	column.Params = new(olama.IndexParams)
+	switch param := v.(type) {
+	case *HNSWParam:
+		if param != nil {
+			column.Params.M = param.M
+			column.Params.EfConstruction = param.EfConstruction
+		}
+	case *IVFFLATParams:
+		if param != nil {
+			column.Params.Nlist = param.NList
+		}
+	case *IVFSQParams:
+		if param != nil {
+			column.Params.Nlist = param.NList
+		}
+	case *IVFPQParams:
+		if param != nil {
+			column.Params.M = param.M
+			column.Params.Nlist = param.NList
+		}
+	default:
+		log.Printf("[Waring] Unknown type: %v", reflect.TypeOf(v))
+	}
 }
 
 func optionRpcParams(column *olama.IndexColumn, v VectorIndex) {
