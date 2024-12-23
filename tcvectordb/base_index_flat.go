@@ -2,6 +2,7 @@ package tcvectordb
 
 import (
 	"context"
+	"log"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/index"
@@ -147,10 +148,11 @@ func (i *implementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseNa
 	}
 	req.RebuildRules = param.RebuildRules
 
-	res := new(index.ModifyVectorIndexReq)
+	res := new(index.ModifyVectorIndexRes)
 	err := i.Request(ctx, req, res)
 	if err != nil {
 		return err
 	}
+	log.Println("[Warning]", res.Msg)
 	return nil
 }

@@ -2,6 +2,7 @@ package tcvectordb
 
 import (
 	"context"
+	"log"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
@@ -111,9 +112,12 @@ func (r *rpcImplementerFlatIndex) ModifyVectorIndex(ctx context.Context, databas
 		req.RebuildRules.Throttle = defaultThrottle
 	}
 
-	_, err := r.rpcClient.ModifyVectorIndex(ctx, req)
+	res, err := r.rpcClient.ModifyVectorIndex(ctx, req)
 	if err != nil {
 		return err
+	}
+	if res != nil {
+		log.Println("[Warning]", res.Msg)
 	}
 	return nil
 }

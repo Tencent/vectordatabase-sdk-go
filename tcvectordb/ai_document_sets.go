@@ -696,7 +696,7 @@ func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSp
 		isMarkdown = true
 	}
 	if !isMarkdown && param.SplitterPreprocess.ChunkSplitter != nil && *param.SplitterPreprocess.ChunkSplitter != "" {
-		log.Printf("[Waring] %s", "param SplitterPreprocess.ChunkSplitter will be ommitted, "+
+		log.Printf("[Warning] %s", "param SplitterPreprocess.ChunkSplitter will be ommitted, "+
 			"because only markdown filetype supports defining ChunkSplitter")
 	}
 

@@ -48,7 +48,7 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 	defaultStopWordFilePath := dir + STOP_WORD_PATH
 
 	if params == nil {
-		log.Printf("[Waring] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
+		log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
 		jbt.StopWordsFilePath = defaultStopWordFilePath
 		err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
 		if err != nil {
@@ -76,7 +76,7 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 	if ok {
 		jbt.StopWordsEnable = stopWordsEnable
 		if stopWordsEnable {
-			log.Printf("[Waring] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
+			log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
 			jbt.StopWordsFilePath = defaultStopWordFilePath
 			err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
 			if err != nil {
@@ -206,7 +206,7 @@ func (jbt *JiebaTokenizer) UpdateParameters(params TokenizerParams) error {
 		dir := filepath.Dir(filePath)
 		defaultStopWordFilePath := dir + STOP_WORD_PATH
 
-		log.Printf("[Waring] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
+		log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
 		jbt.StopWordsFilePath = defaultStopWordFilePath
 		err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
 		if err != nil {

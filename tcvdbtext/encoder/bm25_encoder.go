@@ -125,7 +125,7 @@ func (bm25 *BM25Encoder) SetDefaultParams(bm25Language string) error {
 		}
 		defer file.Close()
 
-		log.Printf("[Waring] start to download dictionary %v and store it in %v, please wait a moment",
+		log.Printf("[Warning] start to download dictionary %v and store it in %v, please wait a moment",
 			bm25ParamsUrl, fileStoragePath)
 		resp, err := http.Get(bm25ParamsUrl)
 		if err != nil {
