@@ -53,8 +53,14 @@ type AddIndexParams struct {
 }
 
 type ModifyVectorIndexParam struct {
-	VectorIndexes []VectorIndex
+	VectorIndexes []ModifyVectorIndex
 	RebuildRules  *index.RebuildRules
+}
+
+type ModifyVectorIndex struct {
+	FieldName  string
+	MetricType MetricType
+	Params     IndexParams
 }
 
 // [RebuildIndex] rebuilds all indexes under the specified collection.
@@ -133,12 +139,9 @@ func (i *implementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseNa
 	for _, v := range param.VectorIndexes {
 		var column api.IndexColumn
 		column.FieldName = v.FieldName
-		column.FieldType = string(v.FieldType)
-		column.IndexType = string(v.IndexType)
 		column.MetricType = string(v.MetricType)
-		column.Dimension = v.Dimension
 
-		optionParams(&column, v)
+		optionParamsFromIndexParams(&column, v.Params)
 
 		req.VectorIndexes = append(req.VectorIndexes, &column)
 	}

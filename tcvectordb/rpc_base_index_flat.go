@@ -97,12 +97,9 @@ func (r *rpcImplementerFlatIndex) ModifyVectorIndex(ctx context.Context, databas
 	for _, v := range param.VectorIndexes {
 		column := &olama.IndexColumn{
 			FieldName:  v.FieldName,
-			FieldType:  string(v.FieldType),
-			IndexType:  string(v.IndexType),
 			MetricType: string(v.MetricType),
-			Dimension:  v.Dimension,
 		}
-		optionRpcParams(column, v)
+		optionRpcParamsFromIndexParams(column, v.Params)
 		req.VectorIndexes[v.FieldName] = column
 	}
 
