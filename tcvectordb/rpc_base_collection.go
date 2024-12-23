@@ -481,7 +481,7 @@ func optionRpcParamsFromIndexParams(column *olama.IndexColumn, v IndexParams) {
 			column.Params.Nlist = param.NList
 		}
 	default:
-		log.Printf("[Waring] Unknown type: %v", reflect.TypeOf(v))
+		log.Printf("[Warning] unknown type: %v", reflect.TypeOf(v))
 	}
 }
 

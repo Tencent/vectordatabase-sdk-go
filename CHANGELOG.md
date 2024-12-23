@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.5.3
+* fix: optimize warning message for modifing vector indexes interface
+
 ## v1.5.2
 * fix: optimize the interface modifing vector indexes 
 
