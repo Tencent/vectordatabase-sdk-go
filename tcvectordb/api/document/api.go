@@ -178,6 +178,7 @@ type SearchCond struct {
 	Vectors        [][]float32   `json:"vectors,omitempty"`
 	Filter         string        `json:"filter,omitempty"`
 	EmbeddingItems []string      `json:"embeddingItems,omitempty"`
+	Radius         *float32      `json:"radius,omitempty"` // 距离阈值,范围搜索时有效
 }
 
 type SearchParams struct {

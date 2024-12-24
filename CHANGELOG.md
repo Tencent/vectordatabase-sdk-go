@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.5.4
+* feat: support search radius for searching in collection
+ 
 ## v1.5.3
 * fix: optimize warning message for modifing vector indexes interface
 
