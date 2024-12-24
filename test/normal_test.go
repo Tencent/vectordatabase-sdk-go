@@ -298,13 +298,17 @@ func TestQuery(t *testing.T) {
 func TestSearch(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 
+	radius := float32(0.76)
 	searchRes, err := col.Search(ctx, [][]float32{
-		{0.3123, 0.43, 0.213},
+		//{0.3123, 0.43, 0.213},
 		{0.233, 0.12, 0.97},
 	}, &tcvectordb.SearchDocumentParams{
-		Params:         &tcvectordb.SearchDocParams{Ef: 100},
+		Params: &tcvectordb.SearchDocParams{
+			Ef: 100,
+		},
+		Radius:         &radius,
 		RetrieveVector: false,
-		Limit:          10,
+		Limit:          2,
 	})
 	printErr(err)
 	log.Printf("search by vector-----------------")

@@ -689,8 +689,15 @@ func (r *rpcImplementerFlatDocument) search(ctx context.Context, databaseName, c
 			req.Search.Params = &olama.SearchParams{
 				Nprobe: param.Params.Nprobe,
 				Ef:     param.Params.Ef,
-				Radius: param.Params.Radius,
 			}
+
+		}
+		if param.Radius != nil {
+			if req.Search.Params == nil {
+				req.Search.Params = new(olama.SearchParams)
+			}
+			req.Search.Range = true
+			req.Search.Params.Radius = *param.Radius
 		}
 	}
 	res, err := r.rpcClient.Search(ctx, req)

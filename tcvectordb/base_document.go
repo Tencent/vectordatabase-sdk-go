@@ -181,12 +181,17 @@ func (i *implementerDocument) Query(ctx context.Context, documentIds []string, p
 //     If RetrieveVector is true, the vector values will be returned.
 //   - OutputFields: (Optional) Return columns specified by the list of column names.
 //   - Limit: (Required) Limit the number of documents returned (default to 1).
+//   - Radius: (Optional) Specifies the radius range for similarity retrieval.
+//     IP: return when score >= radius, value range (-∞, +∞).
+//     COSINE: return when score >= radius, value range [-1, 1].
+//     L2: return when score <= radius, value range [0, +∞).
 type SearchDocumentParams struct {
 	Filter         *Filter
 	Params         *SearchDocParams
 	RetrieveVector bool
 	OutputFields   []string
 	Limit          int64
+	Radius         *float32
 }
 
 // [SearchDocParams] holds the parameters for searching documents to a collection.
@@ -196,10 +201,10 @@ type SearchDocumentParams struct {
 //     of vectors to be accessed. Valid range is [1, nlist], and nlist is defined by creating collection.
 //   - Ef: (Optional) HNSW type index requires configuration parameter ef to specify the number
 //     of vectors to be accessed (default to 10). Valid range is [1, 32768]
-//   - Radius: (Optional) Specifies the radius range for similarity retrieval.
 type SearchDocParams struct {
-	Nprobe uint32  `json:"nprobe,omitempty"` // 搜索时查找的聚类数量，使用索引默认值即可
-	Ef     uint32  `json:"ef,omitempty"`     // HNSW
+	Nprobe uint32 `json:"nprobe,omitempty"` // 搜索时查找的聚类数量，使用索引默认值即可
+	Ef     uint32 `json:"ef,omitempty"`     // HNSW
+	// Deprecated:  Radius is deprecated and should not be used, which is supported in [SearchDocumentParams].
 	Radius float32 `json:"radius,omitempty"` // 距离阈值,范围搜索时有效
 }
 
@@ -694,11 +699,13 @@ func (i *implementerFlatDocument) search(ctx context.Context, databaseName, coll
 		req.Search.OutputFields = param.OutputFields
 		req.Search.Limit = param.Limit
 
+		req.Search.Params = new(document.SearchParams)
 		if param.Params != nil {
-			req.Search.Params = new(document.SearchParams)
 			req.Search.Params.Nprobe = param.Params.Nprobe
 			req.Search.Params.Ef = param.Params.Ef
-			req.Search.Params.Radius = param.Params.Radius
+		}
+		if param.Radius != nil {
+			req.Search.Radius = param.Radius
 		}
 	}
 
