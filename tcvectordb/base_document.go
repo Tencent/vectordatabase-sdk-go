@@ -64,38 +64,6 @@ type DocumentInterface interface {
 	Count(ctx context.Context, params ...CountDocumentParams) (*CountDocumentResult, error)
 }
 
-type FlatInterface interface {
-	// [Upsert] upserts documents into a collection.
-	Upsert(ctx context.Context, databaseName, collectionName string, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error)
-
-	// [Query] queries documents that satisfies the condition from the collection.
-	Query(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*QueryDocumentParams) (result *QueryDocumentResult, err error)
-
-	// [Search] returns the most similar topK vectors by the given vectors.
-	// Search is a Batch API.
-	Search(ctx context.Context, databaseName, collectionName string, vectors [][]float32, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
-
-	// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
-	HybridSearch(ctx context.Context, databaseName, collectionName string, params HybridSearchDocumentParams) (result *SearchDocumentResult, err error)
-
-	// [SearchById] returns the most similar topK vectors by the given documentIds.
-	SearchById(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
-
-	// [SearchByText] returns the most similar topK vectors by the given text map.
-	// The texts will be firstly embedded into vectors using the embedding model of the collection on the server.
-	SearchByText(ctx context.Context, databaseName, collectionName string, text map[string][]string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
-
-	// [Delete] deletes documents by conditions.
-	Delete(ctx context.Context, databaseName, collectionName string, param DeleteDocumentParams) (result *DeleteDocumentResult, err error)
-
-	// [Update] updates documents by conditions.
-	Update(ctx context.Context, databaseName, collectionName string, param UpdateDocumentParams) (result *UpdateDocumentResult, err error)
-
-	// [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
-	Count(ctx context.Context, databaseName, collectionName string,
-		params ...CountDocumentParams) (*CountDocumentResult, error)
-}
-
 type implementerDocument struct {
 	SdkClient
 	flat       FlatInterface
@@ -141,12 +109,15 @@ func (i *implementerDocument) Upsert(ctx context.Context, documents interface{},
 //   - OutputFields: (Optional) Return columns specified by the list of column names.
 //   - Offset: (Optional) Skip a specified number of documents in the query result set.
 //   - Limit: (Optional) Limit the number of documents returned (default to 1).
+//   - Sort: (Optional) The list of [SortRule], only supporting uint64 filter indexes.
+//     When quering documents, the server will sort the data by the list of [SortRule] firstly.
 type QueryDocumentParams struct {
 	Filter         *Filter
 	RetrieveVector bool
 	OutputFields   []string
 	Offset         int64
 	Limit          int64
+	Sort           []document.SortRule
 }
 
 type QueryDocumentResult struct {
@@ -574,6 +545,7 @@ func (i *implementerFlatDocument) Query(ctx context.Context, databaseName, colle
 		req.Query.OutputFields = param.OutputFields
 		req.Query.Offset = param.Offset
 		req.Query.Limit = param.Limit
+		req.Query.Sort = param.Sort
 	}
 
 	res := new(document.QueryRes)

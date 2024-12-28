@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 )
 
 func TestDropDatabase(t *testing.T) {
@@ -281,10 +282,16 @@ func TestUpsertJson(t *testing.T) {
 func TestQuery(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 	option := &tcvectordb.QueryDocumentParams{
-		// Filter: tcvectordb.NewFilter(tcvectordb.Include("tag", []string{"曹操", "刘备"})),
-		// OutputFields:   []string{"id", "bookName"},
+		Filter:       tcvectordb.NewFilter("page>21"),
+		OutputFields: []string{"id", "page"},
 		// RetrieveVector: true,
-		Limit: 100,
+		Limit: 2,
+		Sort: []document.SortRule{
+			{
+				FieldName: "page",
+				Direction: "asc",
+			},
+		},
 	}
 	// documentId := []string{"0001", "0002", "0003", "0004", "0005"}
 	result, err := col.Query(ctx, nil, option)
