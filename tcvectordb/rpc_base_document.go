@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
 
@@ -167,6 +169,135 @@ type rpcImplementerFlatDocument struct {
 	rpcClient olama.SearchEngineClient
 }
 
+// [CreateUser] creates the user with the password.
+func (r *rpcImplementerFlatDocument) CreateUser(ctx context.Context, param CreateUserParams) error {
+	req := &olama.UserAccountRequest{
+		User:     param.User,
+		Password: param.Password,
+	}
+	_, err := r.rpcClient.UserCreate(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *rpcImplementerFlatDocument) GrantToUser(ctx context.Context, param GrantToUserParams) error {
+	req := &olama.UserPrivilegesRequest{
+		User: param.User,
+	}
+	for _, privileges := range param.Privileges {
+		req.Privileges = append(req.Privileges, &olama.Privilege{
+			Resource: privileges.Resource,
+			Actions:  privileges.Actions,
+		})
+	}
+
+	_, err := r.rpcClient.UserGrant(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *rpcImplementerFlatDocument) RevokeFromUser(ctx context.Context, param RevokeFromUserParams) error {
+	req := &olama.UserPrivilegesRequest{
+		User: param.User,
+	}
+	for _, privileges := range param.Privileges {
+		req.Privileges = append(req.Privileges, &olama.Privilege{
+			Resource: privileges.Resource,
+			Actions:  privileges.Actions,
+		})
+	}
+
+	_, err := r.rpcClient.UserRevoke(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *rpcImplementerFlatDocument) DescribeUser(ctx context.Context, param DescribeUserParams) (
+	result *DescribeUserResult, err error) {
+	req := &olama.UserDescribeRequest{
+		User: param.User,
+	}
+
+	res, err := r.rpcClient.UserDescribe(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	result = new(DescribeUserResult)
+	result.User = res.User.Name
+	result.CreateTime = res.User.CreateTime
+	for _, privileges := range res.User.Privileges {
+		result.Privileges = append(result.Privileges, user.Privilege{
+			Resource: privileges.Resource,
+			Actions:  privileges.Actions,
+		})
+	}
+
+	return result, nil
+}
+
+func (r *rpcImplementerFlatDocument) ListUser(ctx context.Context) (result *ListUserResult, err error) {
+	req := &olama.UserListRequest{}
+
+	res, err := r.rpcClient.UserList(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	result = new(ListUserResult)
+	for _, userPrivileges := range res.Users {
+		userDetail := user.UserPrivileges{
+			User:       userPrivileges.Name,
+			CreateTime: userPrivileges.CreateTime,
+		}
+		for _, privileges := range userPrivileges.Privileges {
+			userDetail.Privileges = append(userDetail.Privileges, user.Privilege{
+				Resource: privileges.Resource,
+				Actions:  privileges.Actions,
+			})
+		}
+		result.Users = append(result.Users, userDetail)
+	}
+
+	return result, nil
+}
+
+func (r *rpcImplementerFlatDocument) DropUser(ctx context.Context, param DropUserParams) error {
+	req := &olama.UserAccountRequest{
+		User: param.User,
+	}
+
+	_, err := r.rpcClient.UserDrop(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (r *rpcImplementerFlatDocument) ChangePassword(ctx context.Context, param ChangePasswordParams) error {
+	req := &olama.UserAccountRequest{
+		User:     param.User,
+		Password: param.Password,
+	}
+	_, err := r.rpcClient.UserChangePassword(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 // [Upsert] upserts documents into a collection.
 //
 // Parameters:
@@ -306,6 +437,20 @@ func (r *rpcImplementerFlatDocument) Query(ctx context.Context, databaseName, co
 		req.Query.OutputFields = param.OutputFields
 		req.Query.Offset = param.Offset
 		req.Query.Limit = param.Limit
+
+		for _, sortRule := range param.Sort {
+			orderRule := &olama.OrderRule{
+				FieldName: sortRule.FieldName,
+			}
+			if sortRule.Direction == "desc" {
+				orderRule.Desc = true
+			} else if sortRule.Direction == "" || sortRule.Direction == "asc" {
+				orderRule.Desc = false
+			} else {
+				return nil, errors.Errorf("code: %d, message: %s", ERR_SYNTAX_ERROR, "the sort rule direction must be asc or desc if input")
+			}
+			req.Query.Sort = append(req.Query.Sort, orderRule)
+		}
 	}
 	res, err := r.rpcClient.Query(ctx, req)
 	if err != nil {

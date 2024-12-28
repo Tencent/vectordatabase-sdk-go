@@ -197,13 +197,19 @@ type QueryReq struct {
 }
 
 type QueryCond struct {
-	DocumentIds    []string `json:"documentIds,omitempty"`
-	IndexIds       []uint64 `json:"indexIds,omitempty"`
-	RetrieveVector bool     `json:"retrieveVector,omitempty"`
-	Filter         string   `json:"filter,omitempty"`
-	Limit          int64    `json:"limit,omitempty"`
-	Offset         int64    `json:"offset,omitempty"`
-	OutputFields   []string `json:"outputFields,omitempty"`
+	DocumentIds    []string   `json:"documentIds,omitempty"`
+	IndexIds       []uint64   `json:"indexIds,omitempty"`
+	RetrieveVector bool       `json:"retrieveVector,omitempty"`
+	Filter         string     `json:"filter,omitempty"`
+	Limit          int64      `json:"limit,omitempty"`
+	Offset         int64      `json:"offset,omitempty"`
+	OutputFields   []string   `json:"outputFields,omitempty"`
+	Sort           []SortRule `json:"sort,omitempty"`
+}
+
+type SortRule struct {
+	FieldName string `json:"fieldName,omitempty"`
+	Direction string `json:"direction,omitempty"`
 }
 
 // QueryRes query document response
