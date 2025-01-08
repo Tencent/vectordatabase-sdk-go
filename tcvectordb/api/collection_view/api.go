@@ -48,12 +48,12 @@ type CreateRes struct {
 
 type SplitterPreprocess struct {
 	// AppendTitleToChunk
-	// false: no process
-	// true(default): append the file paragraph title to chunk for embedding
+	// false(default): no process
+	// true: append the file paragraph title to chunk for embedding
 	AppendTitleToChunk *bool `json:"appendTitleToChunk,omitempty"`
 	// AppendKeywordsToChunk
-	// false(default): no process
-	// true: append the file keywords to chunk for embedding
+	// false: no process
+	// true(default): append the file keywords to chunk for embedding
 	AppendKeywordsToChunk *bool `json:"appendKeywordsToChunk,omitempty"`
 }
 

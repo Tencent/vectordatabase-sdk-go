@@ -238,8 +238,8 @@ func (d *Demo) HybridSearchWithEmbedding(ctx context.Context, database, collecti
 	keywordSearch := &tcvectordb.MatchOption{
 		FieldName:       "sparse_vector",
 		Data:            sparseVec,
-		TerminateAfter:  1,
-		CutoffFrequency: 0.9,
+		TerminateAfter:  4000,
+		CutoffFrequency: 0.1,
 	}
 
 	limit := 2

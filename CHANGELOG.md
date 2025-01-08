@@ -1,5 +1,7 @@
 # Changelog
 
+## v1.5.5
+* refactor: update default stopwords file
 ## v1.5.4
 * feat: support search radius for searching in collection
  
