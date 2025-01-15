@@ -197,13 +197,24 @@ type QueryReq struct {
 }
 
 type QueryCond struct {
-	DocumentIds    []string `json:"documentIds,omitempty"`
-	IndexIds       []uint64 `json:"indexIds,omitempty"`
-	RetrieveVector bool     `json:"retrieveVector,omitempty"`
-	Filter         string   `json:"filter,omitempty"`
-	Limit          int64    `json:"limit,omitempty"`
-	Offset         int64    `json:"offset,omitempty"`
-	OutputFields   []string `json:"outputFields,omitempty"`
+	DocumentIds    []string   `json:"documentIds,omitempty"`
+	IndexIds       []uint64   `json:"indexIds,omitempty"`
+	RetrieveVector bool       `json:"retrieveVector,omitempty"`
+	Filter         string     `json:"filter,omitempty"`
+	Limit          int64      `json:"limit,omitempty"`
+	Offset         int64      `json:"offset,omitempty"`
+	OutputFields   []string   `json:"outputFields,omitempty"`
+	Sort           []SortRule `json:"sort,omitempty"`
+}
+
+// [SortRule] holds the fields for a single sort rule.
+//
+// Fields:
+//   - FieldName: (Required) The field name for the sort rule, and you can set the field name for the uint64 filter index.
+//   - Direction: (Optional) The sort direction, where you can set "desc" or "asc" (default to "asc").
+type SortRule struct {
+	FieldName string `json:"fieldName,omitempty"`
+	Direction string `json:"direction,omitempty"`
 }
 
 // QueryRes query document response

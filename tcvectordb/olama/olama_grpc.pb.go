@@ -62,6 +62,21 @@ type SearchEngineClient interface {
 	DropDatabase(ctx context.Context, in *DatabaseRequest, opts ...grpc.CallOption) (*DatabaseResponse, error)
 	// 显示全部 database
 	ListDatabases(ctx context.Context, in *DatabaseRequest, opts ...grpc.CallOption) (*DatabaseResponse, error)
+	// RBAC相关接口
+	// 创建用户
+	UserCreate(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error)
+	// 删除用户
+	UserDrop(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error)
+	// 修改用户密码
+	UserChangePassword(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error)
+	// 授予用户角色或权限
+	UserGrant(ctx context.Context, in *UserPrivilegesRequest, opts ...grpc.CallOption) (*UserPrivilegesResponse, error)
+	// 撤销用户角色或权限
+	UserRevoke(ctx context.Context, in *UserPrivilegesRequest, opts ...grpc.CallOption) (*UserPrivilegesResponse, error)
+	// 展示所有用户列表
+	UserList(ctx context.Context, in *UserListRequest, opts ...grpc.CallOption) (*UserListResponse, error)
+	// 展示某个用户的详细信息
+	UserDescribe(ctx context.Context, in *UserDescribeRequest, opts ...grpc.CallOption) (*UserDescribeResponse, error)
 	// 获取版本（api升级兼容性考虑）
 	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
 	// 新增scalar的索引
@@ -258,6 +273,69 @@ func (c *searchEngineClient) ListDatabases(ctx context.Context, in *DatabaseRequ
 	return out, nil
 }
 
+func (c *searchEngineClient) UserCreate(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error) {
+	out := new(UserAccountResponse)
+	err := c.cc.Invoke(ctx, "/user/create", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) UserDrop(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error) {
+	out := new(UserAccountResponse)
+	err := c.cc.Invoke(ctx, "/user/drop", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) UserChangePassword(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error) {
+	out := new(UserAccountResponse)
+	err := c.cc.Invoke(ctx, "/user/changePassword", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) UserGrant(ctx context.Context, in *UserPrivilegesRequest, opts ...grpc.CallOption) (*UserPrivilegesResponse, error) {
+	out := new(UserPrivilegesResponse)
+	err := c.cc.Invoke(ctx, "/user/grant", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) UserRevoke(ctx context.Context, in *UserPrivilegesRequest, opts ...grpc.CallOption) (*UserPrivilegesResponse, error) {
+	out := new(UserPrivilegesResponse)
+	err := c.cc.Invoke(ctx, "/user/revoke", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) UserList(ctx context.Context, in *UserListRequest, opts ...grpc.CallOption) (*UserListResponse, error) {
+	out := new(UserListResponse)
+	err := c.cc.Invoke(ctx, "/user/list", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) UserDescribe(ctx context.Context, in *UserDescribeRequest, opts ...grpc.CallOption) (*UserDescribeResponse, error) {
+	out := new(UserDescribeResponse)
+	err := c.cc.Invoke(ctx, "/user/describe", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *searchEngineClient) GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error) {
 	out := new(GetVersionResponse)
 	err := c.cc.Invoke(ctx, "/SearchEngine/get_version", in, out, opts...)
@@ -318,7 +396,7 @@ type SearchEngineServer interface {
 	// 混合搜索
 	HybridSearch(context.Context, *SearchRequest) (*SearchResponse, error)
 	// 关键词检索
-	KeywordSearch(context.Context, *SearchRequest) (*SearchRequest, error)
+	KeywordSearch(context.Context, *SearchRequest) (*SearchResponse, error)
 	// 删除向量
 	Dele(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// count
@@ -329,6 +407,21 @@ type SearchEngineServer interface {
 	DropDatabase(context.Context, *DatabaseRequest) (*DatabaseResponse, error)
 	// 显示全部 database
 	ListDatabases(context.Context, *DatabaseRequest) (*DatabaseResponse, error)
+	// RBAC相关接口
+	// 创建用户
+	UserCreate(context.Context, *UserAccountRequest) (*UserAccountResponse, error)
+	// 删除用户
+	UserDrop(context.Context, *UserAccountRequest) (*UserAccountResponse, error)
+	// 修改用户密码
+	UserChangePassword(context.Context, *UserAccountRequest) (*UserAccountResponse, error)
+	// 授予用户角色或权限
+	UserGrant(context.Context, *UserPrivilegesRequest) (*UserPrivilegesResponse, error)
+	// 撤销用户角色或权限
+	UserRevoke(context.Context, *UserPrivilegesRequest) (*UserPrivilegesResponse, error)
+	// 展示所有用户列表
+	UserList(context.Context, *UserListRequest) (*UserListResponse, error)
+	// 展示某个用户的详细信息
+	UserDescribe(context.Context, *UserDescribeRequest) (*UserDescribeResponse, error)
 	// 获取版本（api升级兼容性考虑）
 	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
 	// 新增scalar的索引
@@ -384,7 +477,7 @@ func (UnimplementedSearchEngineServer) Search(context.Context, *SearchRequest) (
 func (UnimplementedSearchEngineServer) HybridSearch(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HybridSearch not implemented")
 }
-func (UnimplementedSearchEngineServer) KeywordSearch(context.Context, *SearchRequest) (*SearchRequest, error) {
+func (UnimplementedSearchEngineServer) KeywordSearch(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KeywordSearch not implemented")
 }
 func (UnimplementedSearchEngineServer) Dele(context.Context, *DeleteRequest) (*DeleteResponse, error) {
@@ -401,6 +494,27 @@ func (UnimplementedSearchEngineServer) DropDatabase(context.Context, *DatabaseRe
 }
 func (UnimplementedSearchEngineServer) ListDatabases(context.Context, *DatabaseRequest) (*DatabaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDatabases not implemented")
+}
+func (UnimplementedSearchEngineServer) UserCreate(context.Context, *UserAccountRequest) (*UserAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserCreate not implemented")
+}
+func (UnimplementedSearchEngineServer) UserDrop(context.Context, *UserAccountRequest) (*UserAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserDrop not implemented")
+}
+func (UnimplementedSearchEngineServer) UserChangePassword(context.Context, *UserAccountRequest) (*UserAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserChangePassword not implemented")
+}
+func (UnimplementedSearchEngineServer) UserGrant(context.Context, *UserPrivilegesRequest) (*UserPrivilegesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserGrant not implemented")
+}
+func (UnimplementedSearchEngineServer) UserRevoke(context.Context, *UserPrivilegesRequest) (*UserPrivilegesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserRevoke not implemented")
+}
+func (UnimplementedSearchEngineServer) UserList(context.Context, *UserListRequest) (*UserListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserList not implemented")
+}
+func (UnimplementedSearchEngineServer) UserDescribe(context.Context, *UserDescribeRequest) (*UserDescribeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserDescribe not implemented")
 }
 func (UnimplementedSearchEngineServer) GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVersion not implemented")
@@ -784,6 +898,132 @@ func _SearchEngine_ListDatabases_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SearchEngine_UserCreate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).UserCreate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/user_create",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).UserCreate(ctx, req.(*UserAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_UserDrop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).UserDrop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/user_drop",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).UserDrop(ctx, req.(*UserAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_UserChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).UserChangePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/user_change_password",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).UserChangePassword(ctx, req.(*UserAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_UserGrant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserPrivilegesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).UserGrant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/user_grant",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).UserGrant(ctx, req.(*UserPrivilegesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_UserRevoke_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserPrivilegesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).UserRevoke(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/user_revoke",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).UserRevoke(ctx, req.(*UserPrivilegesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_UserList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).UserList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/user_list",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).UserList(ctx, req.(*UserListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_UserDescribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserDescribeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).UserDescribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/user_describe",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).UserDescribe(ctx, req.(*UserDescribeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SearchEngine_GetVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetVersionRequest)
 	if err := dec(in); err != nil {
@@ -926,6 +1166,34 @@ var SearchEngine_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SearchEngine_ListDatabases_Handler,
 		},
 		{
+			MethodName: "user_create",
+			Handler:    _SearchEngine_UserCreate_Handler,
+		},
+		{
+			MethodName: "user_drop",
+			Handler:    _SearchEngine_UserDrop_Handler,
+		},
+		{
+			MethodName: "user_change_password",
+			Handler:    _SearchEngine_UserChangePassword_Handler,
+		},
+		{
+			MethodName: "user_grant",
+			Handler:    _SearchEngine_UserGrant_Handler,
+		},
+		{
+			MethodName: "user_revoke",
+			Handler:    _SearchEngine_UserRevoke_Handler,
+		},
+		{
+			MethodName: "user_list",
+			Handler:    _SearchEngine_UserList_Handler,
+		},
+		{
+			MethodName: "user_describe",
+			Handler:    _SearchEngine_UserDescribe_Handler,
+		},
+		{
 			MethodName: "get_version",
 			Handler:    _SearchEngine_GetVersion_Handler,
 		},
@@ -941,4 +1209,3 @@ var SearchEngine_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "olama.proto",
 }
-

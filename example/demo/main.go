@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 )
 
 type Demo struct {
@@ -105,7 +106,7 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 	// 创建collection耗时较长，需要调整客户端的timeout
 	// 这里以三可用区实例作为参考，具体实例不同的规格所支持的shard和replicas区间不同，需要参考官方文档
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollection(ctx, collection, 3, 0, "test collection", index)
+	_, err = db.CreateCollection(ctx, collection, 3, 1, "test collection", index)
 	if err != nil {
 		return err
 	}
@@ -226,7 +227,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	// 4. 如果仅需要部分 field 的数据，可以指定 output_fields 用于指定返回数据包含哪些 field，不指定默认全部返回
 	documentIds := []string{"0001", "0002", "0003", "0004", "0005"}
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
-	outputField := []string{"id", "bookName"}
+	outputField := []string{"id", "bookName", "page"}
 
 	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
 		Filter:         filter,
@@ -234,6 +235,12 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 		OutputFields:   outputField,
 		Limit:          2,
 		Offset:         1,
+		Sort: []document.SortRule{
+			{
+				FieldName: "page",
+				Direction: "desc",
+			},
+		},
 	})
 	if err != nil {
 		return err
@@ -368,7 +375,6 @@ func main() {
 
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
-	// testVdb := NewDemo("http://127.0.0.1:80", "root","vdb-key")
 	printErr(err)
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
