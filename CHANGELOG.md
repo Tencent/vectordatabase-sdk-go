@@ -1,7 +1,14 @@
 # Changelog
 
+## v1.6.0
+* feat: support the user interface to grant or revoke privileges
+* feat: support to sort the data by the sortRules firstly, when quering documents
+* feat: return [FailIndexedDocumentSets] in describing collectionView's response
+* feat: return the number of collections/collectionViews in listing database's response 
+
 ## v1.5.5
 * refactor: update default stopwords file
+
 ## v1.5.4
 * feat: support search radius for searching in collection
  

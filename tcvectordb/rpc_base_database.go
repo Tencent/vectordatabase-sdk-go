@@ -133,11 +133,13 @@ func (r *rpcImplementerDatabase) ListDatabase(ctx context.Context) (result *List
 		if res.Info[v].DbType == olama.DataType_AI_DOC {
 			db := r.AIDatabase(v)
 			db.Info.CreateTime = strconv.FormatInt(res.Info[v].CreateTime, 10)
+			db.Info.Count = int64(res.Info[v].Count)
 			result.AIDatabases = append(result.AIDatabases, *db)
 		} else {
 			db := r.Database(v)
 			db.Info.CreateTime = strconv.FormatInt(res.Info[v].CreateTime, 10)
 			db.Info.DbType = ConvertDbType(res.Info[v].DbType)
+			db.Info.Count = int64(res.Info[v].Count)
 			result.Databases = append(result.Databases, *db)
 		}
 	}

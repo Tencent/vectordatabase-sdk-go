@@ -68,4 +68,5 @@ type ListRes struct {
 type DatabaseInfo struct {
 	CreateTime string `json:"createTime,omitempty"`
 	DbType     string `json:"dbType,omitempty"`
+	Count      int64  `json:"count"`
 }

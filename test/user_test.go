@@ -110,17 +110,18 @@ func Test_User(t *testing.T) {
 	printErr(err)
 	println(ToJson(res))
 
-	cli, err := tcvectordb.NewRpcClient("http://gz-vdb-jco3bdic.sql.tencentcdb.com:8100", "test_user_1",
+	newCli, err := tcvectordb.NewRpcClient("http://xx",
+		"test_user_1",
 		"123..A.!", &tcvectordb.ClientOption{Timeout: 10 * time.Second,
 			ReadConsistency: tcvectordb.StrongConsistency})
 	printErr(err)
-	cli.Debug(true)
+	newCli.Debug(true)
 
-	collRes, err := cli.Database(database).ListCollection(ctx)
+	collRes, err := newCli.Database(database).ListCollection(ctx)
 	printErr(err)
 	println(ToJson(collRes))
 
-	collRes, err = cli.Database(database + "1").ListCollection(ctx)
+	collRes, err = newCli.Database(database + "1").ListCollection(ctx)
 	printErr(err)
 	println(ToJson(collRes))
 

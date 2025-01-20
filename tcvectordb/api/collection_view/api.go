@@ -87,9 +87,10 @@ type DescribeCollectionViewItem struct {
 }
 
 type Status struct {
-	IndexedDocumentSets   uint64 `json:"indexedDocumentSets"`
-	TotalDocumentSets     uint64 `json:"totalDocumentSets"`
-	UnIndexedDocumentSets uint64 `json:"unIndexedDocumentSets"`
+	FailIndexedDocumentSets uint64 `json:"failIndexedDocumentSets"`
+	IndexedDocumentSets     uint64 `json:"indexedDocumentSets"`
+	TotalDocumentSets       uint64 `json:"totalDocumentSets"`
+	UnIndexedDocumentSets   uint64 `json:"unIndexedDocumentSets"`
 }
 
 // DropReq delete collectionView request

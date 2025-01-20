@@ -275,7 +275,7 @@ func (c *searchEngineClient) ListDatabases(ctx context.Context, in *DatabaseRequ
 
 func (c *searchEngineClient) UserCreate(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error) {
 	out := new(UserAccountResponse)
-	err := c.cc.Invoke(ctx, "/user/create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/user_create", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (c *searchEngineClient) UserCreate(ctx context.Context, in *UserAccountRequ
 
 func (c *searchEngineClient) UserDrop(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error) {
 	out := new(UserAccountResponse)
-	err := c.cc.Invoke(ctx, "/user/drop", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/user_drop", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +293,7 @@ func (c *searchEngineClient) UserDrop(ctx context.Context, in *UserAccountReques
 
 func (c *searchEngineClient) UserChangePassword(ctx context.Context, in *UserAccountRequest, opts ...grpc.CallOption) (*UserAccountResponse, error) {
 	out := new(UserAccountResponse)
-	err := c.cc.Invoke(ctx, "/user/changePassword", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/user_change_password", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +302,7 @@ func (c *searchEngineClient) UserChangePassword(ctx context.Context, in *UserAcc
 
 func (c *searchEngineClient) UserGrant(ctx context.Context, in *UserPrivilegesRequest, opts ...grpc.CallOption) (*UserPrivilegesResponse, error) {
 	out := new(UserPrivilegesResponse)
-	err := c.cc.Invoke(ctx, "/user/grant", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/user_grant", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +311,7 @@ func (c *searchEngineClient) UserGrant(ctx context.Context, in *UserPrivilegesRe
 
 func (c *searchEngineClient) UserRevoke(ctx context.Context, in *UserPrivilegesRequest, opts ...grpc.CallOption) (*UserPrivilegesResponse, error) {
 	out := new(UserPrivilegesResponse)
-	err := c.cc.Invoke(ctx, "/user/revoke", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/user_revoke", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (c *searchEngineClient) UserRevoke(ctx context.Context, in *UserPrivilegesR
 
 func (c *searchEngineClient) UserList(ctx context.Context, in *UserListRequest, opts ...grpc.CallOption) (*UserListResponse, error) {
 	out := new(UserListResponse)
-	err := c.cc.Invoke(ctx, "/user/list", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/user_list", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (c *searchEngineClient) UserList(ctx context.Context, in *UserListRequest, 
 
 func (c *searchEngineClient) UserDescribe(ctx context.Context, in *UserDescribeRequest, opts ...grpc.CallOption) (*UserDescribeResponse, error) {
 	out := new(UserDescribeResponse)
-	err := c.cc.Invoke(ctx, "/user/describe", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/user_describe", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
