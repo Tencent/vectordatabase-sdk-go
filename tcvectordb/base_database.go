@@ -263,11 +263,13 @@ func (i *implementerDatabase) ListDatabase(ctx context.Context) (result *ListDat
 		if res.Info[v].DbType == AIDOCDbType || res.Info[v].DbType == DbTypeAI {
 			db := i.AIDatabase(v)
 			db.Info.CreateTime = res.Info[v].CreateTime
+			db.Info.Count = res.Info[v].Count
 			result.AIDatabases = append(result.AIDatabases, *db)
 		} else {
 			db := i.Database(v)
 			db.Info.CreateTime = res.Info[v].CreateTime
 			db.Info.DbType = res.Info[v].DbType
+			db.Info.Count = res.Info[v].Count
 			result.Databases = append(result.Databases, *db)
 		}
 	}
@@ -353,6 +355,7 @@ func (d Database) IsAIDatabase() bool {
 type DatabaseItem struct {
 	CreateTime string `json:"createTime,omitempty"`
 	DbType     string `json:"dbType,omitempty"`
+	Count      int64  `json:"count"`
 }
 
 // Debug sets the debug mode for the SdkClient, which prints the request and response of a network call.

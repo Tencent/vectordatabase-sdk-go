@@ -58,12 +58,14 @@ func TestListDatabase(t *testing.T) {
 	printErr(err)
 	log.Printf("base database ======================")
 	for _, db := range dbList.Databases {
-		log.Printf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
+		log.Printf("database: %s, createTime: %s, dbType: %s, collectionNum: %v", db.DatabaseName,
+			db.Info.CreateTime, db.Info.DbType, db.Info.Count)
 	}
 
 	log.Printf("AI database ======================")
 	for _, db := range dbList.AIDatabases {
-		log.Printf("database: %s, createTime: %s, dbType: %s", db.DatabaseName, db.Info.CreateTime, db.Info.DbType)
+		log.Printf("database: %s, createTime: %s, dbType: %s, collectionViewNum: %v", db.DatabaseName,
+			db.Info.CreateTime, db.Info.DbType, db.Info.Count)
 	}
 }
 

@@ -233,8 +233,8 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 		Filter:         filter,
 		RetrieveVector: true,
 		OutputFields:   outputField,
-		Limit:          2,
-		Offset:         1,
+		Limit:          5,
+		Offset:         0,
 		Sort: []document.SortRule{
 			{
 				FieldName: "page",

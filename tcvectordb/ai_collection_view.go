@@ -65,7 +65,8 @@ type AICollectionViewInterface interface {
 //     for splitting document chunks. See [SplitterPreprocess] for more information.
 //   - ParsingProcess: A pointer to a [ParsingProcess] object, which includes the parameters
 //     for parsing files. See [ParsingProcess] for more information.
-//   - IndexedDocumentSets: The number of documentSets that have been processed.
+//   - FailIndexedDocumentSets: The number of documentSets that failed to be processed.
+//   - IndexedDocumentSets: The number of documentSets that have been processed successfully.
 //   - TotalDocumentSets: The total number of documentSets in this collectionView.
 //   - UnIndexedDocumentSets: The number of documentSets that haven't been processed.
 //   - FilterIndexes: A [Indexes] object that includes a list of the scalar filter index properties for the documentSets in a collectionView.
@@ -79,6 +80,7 @@ type AICollectionView struct {
 	Embedding               *collection_view.DocumentEmbedding  `json:"embedding"`
 	SplitterPreprocess      *collection_view.SplitterPreprocess `json:"splitterPreprocess"`
 	ParsingProcess          *api.ParsingProcess                 `json:"parsingProcess"`
+	FailIndexedDocumentSets uint64                              `json:"failIndexedDocumentSets"`
 	IndexedDocumentSets     uint64                              `json:"indexedDocumentSets"`
 	TotalDocumentSets       uint64                              `json:"totalDocumentSets"`
 	UnIndexedDocumentSets   uint64                              `json:"unIndexedDocumentSets"`
@@ -368,6 +370,7 @@ func (i *implementerCollectionView) toCollectionView(item *collection_view.Descr
 	}
 
 	if item.Status != nil {
+		coll.FailIndexedDocumentSets = item.Status.FailIndexedDocumentSets
 		coll.IndexedDocumentSets = item.Status.IndexedDocumentSets
 		coll.TotalDocumentSets = item.Status.TotalDocumentSets
 		coll.UnIndexedDocumentSets = item.Status.UnIndexedDocumentSets
