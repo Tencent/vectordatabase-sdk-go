@@ -67,6 +67,7 @@ type IndexColumn struct {
 	MetricType       string       `json:"metricType,omitempty"`
 	IndexedCount     uint64       `json:"indexedCount,omitempty"`
 	Params           *IndexParams `json:"params,omitempty"`
+	AutoId           string       `json:"autoId,omitempty"`
 }
 
 type IndexParams struct {

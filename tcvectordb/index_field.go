@@ -40,6 +40,7 @@ type FilterIndex struct {
 	FieldType FieldType
 	ElemType  FieldType
 	IndexType IndexType
+	AutoId    string
 }
 
 func (i *FilterIndex) IsPrimaryKey() bool {

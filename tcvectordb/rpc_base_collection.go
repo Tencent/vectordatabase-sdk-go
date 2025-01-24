@@ -133,6 +133,7 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 			FieldName: v.FieldName,
 			FieldType: string(v.FieldType),
 			IndexType: string(v.IndexType),
+			AutoId:    v.AutoId,
 		}
 		if v.FieldType == Array {
 			column.FieldElementType = string(String)
@@ -428,6 +429,7 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 			filter.FieldName = index.FieldName
 			filter.FieldType = FieldType(index.FieldType)
 			filter.IndexType = IndexType(index.IndexType)
+			filter.AutoId = index.AutoId
 
 			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 		}
