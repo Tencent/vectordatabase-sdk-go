@@ -20,6 +20,8 @@ func ConvertDbType(dataType olama.DataType) string {
 
 func ConvertField2Grpc(field *Field) (result *olama.Field) {
 	switch field.Type() {
+	case Double:
+		result = &olama.Field{OneofVal: &olama.Field_ValDouble{ValDouble: field.Float()}}
 	case Uint64:
 		result = &olama.Field{OneofVal: &olama.Field_ValU64{ValU64: field.Uint64()}}
 	case String:

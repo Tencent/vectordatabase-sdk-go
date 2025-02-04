@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.1
+* feat: support configuring autoId for the primary key in collection, which can only be set to uuid
+* feat: support a new field indexType json, allowing for one layer of JSON Fields. JSON keys mush be string, while values ​​can be string, uint64 or array
+
 ## v1.6.0
 * feat: support the user interface to grant or revoke privileges
 * feat: support to sort the data by the sortRules firstly, when quering documents

@@ -114,8 +114,17 @@ func (f Field) Type() FieldType {
 		return Array
 	case map[string]interface{}:
 		return Json
+	case float32, float64:
+		return Double
 	case json.Number:
-		return Uint64
+		data := f.Val.(json.Number)
+		if _, err := data.Float64(); err == nil {
+			return Double
+		}
+		if _, err := data.Int64(); err == nil {
+			return Uint64
+		}
+		return ""
 	}
 	return ""
 }

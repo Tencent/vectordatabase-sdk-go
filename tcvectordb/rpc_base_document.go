@@ -700,7 +700,9 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 	req.Search.Filter = params.Filter.Cond()
 	req.Search.RetrieveVector = params.RetrieveVector
 	req.Search.Outputfields = params.OutputFields
-	req.Search.Limit = uint32(*params.Limit)
+	if params.Limit != nil {
+		req.Search.Limit = uint32(*params.Limit)
+	}
 
 	res, err := r.rpcClient.HybridSearch(ctx, req)
 	if err != nil {
