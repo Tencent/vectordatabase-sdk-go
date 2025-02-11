@@ -72,24 +72,24 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 		jbt.useHmm = *params.Hmm
 	}
 
-	stopWordsEnable, ok := params.StopWords.(bool)
+	stopWordFilePath, ok := params.StopWords.(string)
 	if ok {
-		jbt.StopWordsEnable = stopWordsEnable
-		if stopWordsEnable {
-			log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
-			jbt.StopWordsFilePath = defaultStopWordFilePath
-			err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
-			if err != nil {
-				return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
-			}
+		jbt.StopWordsFilePath = stopWordFilePath
+		err := jbt.Jieba.LoadStop(jbt.StopWordsFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
 	} else {
-		stopWordFilePath, ok := params.StopWords.(string)
+		stopWordsEnable, ok := params.StopWords.(bool)
 		if ok {
-			jbt.StopWordsFilePath = stopWordFilePath
-			err := jbt.Jieba.LoadStop(jbt.StopWordsFilePath)
-			if err != nil {
-				return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
+			jbt.StopWordsEnable = stopWordsEnable
+			if stopWordsEnable {
+				log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
+				jbt.StopWordsFilePath = defaultStopWordFilePath
+				err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
+				if err != nil {
+					return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
+				}
 			}
 		}
 	}
@@ -185,13 +185,16 @@ func (jbt *JiebaTokenizer) UpdateParameters(params TokenizerParams) error {
 	}
 
 	if params.StopWords != nil {
-		stopWordsEnable, ok := params.StopWords.(bool)
-		if ok {
-			jbt.StopWordsEnable = stopWordsEnable
+		stopWordFilePath, stringOk := params.StopWords.(string)
+		if stringOk {
+			jbt.StopWordsFilePath = stopWordFilePath
 		} else {
-			stopWordFilePath, stringOk := params.StopWords.(string)
-			if stringOk {
-				jbt.StopWordsFilePath = stopWordFilePath
+			stopWordsEnable, ok := params.StopWords.(bool)
+			if ok {
+				jbt.StopWordsEnable = stopWordsEnable
+				if !jbt.StopWordsEnable {
+					jbt.StopWordsFilePath = ""
+				}
 			}
 		}
 	}
@@ -212,8 +215,13 @@ func (jbt *JiebaTokenizer) UpdateParameters(params TokenizerParams) error {
 		if err != nil {
 			return fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
+	} else if !jbt.StopWordsEnable {
+		err := jbt.Jieba.EmptyStop()
+		if err != nil {
+			return fmt.Errorf("jieba empty stopwords. err: %v", err.Error())
+		}
+		jbt.StopWordsFilePath = ""
 	}
-
 	return nil
 }
 func (jbt *JiebaTokenizer) GetParameters() TokenizerParams {

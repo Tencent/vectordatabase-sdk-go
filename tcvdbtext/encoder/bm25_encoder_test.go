@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"testing"
+
+	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/tokenizer"
 )
 
 func Test_BM25Encoder_DownloadParams(t *testing.T) {
@@ -20,7 +22,17 @@ func Test_BM25Encoder_SetDefaultParams(t *testing.T) {
 	bm25Encoder.DownloadParams("./bm25_params.json")
 }
 
+func Test_BM25Encoder_SetParams(t *testing.T) {
+	bm25Encoder, _ := NewBM25Encoder(nil)
+	err := bm25Encoder.SetDefaultParams("zh")
+	if err != nil {
+		println(err.Error())
+	}
+	bm25Encoder.DownloadParams("./bm25_params.json")
+}
+
 func Test_BM25Encoder_baseUsage(t *testing.T) {
+
 	bm25, err := NewBM25Encoder(nil)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -89,4 +101,82 @@ func Test_BM25Encoder_fitAndLoad(t *testing.T) {
 		log.Fatalf(err.Error())
 	}
 	fmt.Printf("encode with your own fit params: %v\n", query_vectors)
+}
+
+func Test_BM25Encoder_PreciseMode(t *testing.T) {
+	bm25, err := NewBM25Encoder(&BM25EncoderParams{Bm25Language: "zh"})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库"))
+}
+
+func Test_BM25Encoder_CutAllMode(t *testing.T) {
+	bm25, err := NewBM25Encoder(&BM25EncoderParams{Bm25Language: "zh"})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	cutAll := true
+	jbtParams := tokenizer.TokenizerParams{
+		CutAll: &cutAll,
+	}
+	err = bm25.GetTokenizer().UpdateParameters(jbtParams)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库"))
+}
+
+func Test_BM25Encoder_NoStopwords(t *testing.T) {
+	bm25, err := NewBM25Encoder(&BM25EncoderParams{Bm25Language: "zh"})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	jbtParams := tokenizer.TokenizerParams{
+		StopWords: false,
+	}
+	err = bm25.GetTokenizer().UpdateParameters(jbtParams)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库。"))
+}
+
+func Test_BM25Encoder_WithDefaultStopwords(t *testing.T) {
+	bm25, err := NewBM25Encoder(&BM25EncoderParams{Bm25Language: "zh"})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	// 默认开启停用词
+	jbtParams := tokenizer.TokenizerParams{
+		StopWords: true,
+	}
+	err = bm25.GetTokenizer().UpdateParameters(jbtParams)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库。"))
+}
+
+func Test_BM25Encoder_WithUserDefineStopwords(t *testing.T) {
+	bm25, err := NewBM25Encoder(&BM25EncoderParams{Bm25Language: "zh"})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	// 默认开启停用词
+	jbtParams := tokenizer.TokenizerParams{
+		StopWords: "../data/user_define_stopwords.txt",
+	}
+	err = bm25.GetTokenizer().UpdateParameters(jbtParams)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库。"))
 }
