@@ -19,7 +19,6 @@
 package tcvectordb
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -608,11 +607,11 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 		return nil, BaseDbTypeError
 	}
 
-	size, reader, err := i.loadAndSplitTextCheckParams(&param)
+	size, err := i.loadAndSplitTextCheckParams(&param)
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+
 	res, err := i.GetCosTmpSecret(ctx, GetCosTmpSecretParams{
 		DocumentSetName: param.DocumentSetName,
 		ParsingProcess:  param.ParsingProcess,
@@ -644,7 +643,7 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 	}
 
 	cosMetaConfig := cosMetaConfig{
-		AppendTitleToChunk:    param.SplitterPreprocess.AppendKeywordsToChunk,
+		AppendTitleToChunk:    param.SplitterPreprocess.AppendTitleToChunk,
 		AppendKeywordsToChunk: param.SplitterPreprocess.AppendKeywordsToChunk,
 		ChunkSplitter:         param.SplitterPreprocess.ChunkSplitter,
 		ParsingProcess:        param.ParsingProcess,
@@ -667,26 +666,33 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 		return nil, fmt.Errorf("cos header for param MetaData is too large, it can not be more than 2k")
 	}
 
-	opt := &cos.ObjectPutOptions{
-		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
-			ContentLength: size,
-			XCosMetaXXX:   &header,
+	opt := &cos.MultiUploadOptions{
+		OptIni: &cos.InitiateMultipartUploadOptions{
+			nil,
+			&cos.ObjectPutHeaderOptions{
+				XCosMetaXXX: &header,
+				//Listener:    &cos.DefaultProgressListener{},
+			},
 		},
+		// Whether to enable resume from breakpoint, default is false
+		CheckPoint: true,
+		PartSize:   5,
 	}
 
-	_, err = c.Object.Put(ctx, res.UploadPath, reader, opt)
+	_, _, err = c.Object.Upload(ctx, res.UploadPath, param.LocalFilePath, opt)
 	if err != nil {
 		return nil, err
 	}
+
 	result = new(LoadAndSplitTextResult)
 	result.GetCosTmpSecretResult = *res
 	return result, nil
 }
 
-func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSplitTextParams) (size int64, reader io.ReadCloser, err error) {
+func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSplitTextParams) (size int64, err error) {
 	if param.DocumentSetName == "" {
 		if param.LocalFilePath == "" {
-			return 0, nil, errors.New("need param: DocumentSetName")
+			return 0, errors.New("need param: DocumentSetName")
 		}
 		param.DocumentSetName = filepath.Base(param.LocalFilePath)
 	}
@@ -700,33 +706,17 @@ func (i *implementerAIDocumentSets) loadAndSplitTextCheckParams(param *LoadAndSp
 			"because only markdown filetype supports defining ChunkSplitter")
 	}
 
-	if param.LocalFilePath != "" {
-		fd, err := os.Open(param.LocalFilePath)
-		if err != nil {
-			return 0, nil, err
-		}
-		reader = fd
-		fstat, err := fd.Stat()
-		if err != nil {
-			return 0, nil, err
-		}
-		size = fstat.Size()
-	} else {
-		bytesBuf := bytes.NewBuffer(nil)
-		written, err := io.Copy(bytesBuf, param.Reader)
-		if err != nil {
-			return 0, nil, err
-		}
-
-		size = written
-		reader = io.NopCloser(bytesBuf)
+	fileInfo, err := os.Stat(param.LocalFilePath)
+	if err != nil {
+		return 0, errors.Errorf("get file size failed. err: %v", err.Error())
 	}
+	size = fileInfo.Size()
 
 	if size == 0 {
-		return 0, nil, errors.New("file size cannot be 0")
+		return 0, errors.New("file size cannot be 0")
 	}
 
-	return size, reader, nil
+	return size, nil
 }
 
 func (i *implementerAIDocumentSets) toDocumentSet(item ai_document_set.QueryDocumentSet) *AIDocumentSet {

@@ -964,3 +964,11 @@ func (r *rpcImplementerFlatDocument) Count(ctx context.Context, databaseName, co
 	}
 	return &CountDocumentResult{Count: res.Count}, nil
 }
+
+func (r *rpcImplementerFlatDocument) UploadFile(ctx context.Context, databaseName, collectionName string, param UploadFileParams) (result *UploadFileResult, err error) {
+	return uploadFile(ctx, r.SdkClient, databaseName, collectionName, param)
+}
+
+func (r *rpcImplementerFlatDocument) GetImageUrl(ctx context.Context, databaseName, collectionName string, param GetImageUrlParams) (result *GetImageUrlResult, err error) {
+	return getImageUrl(ctx, r.SdkClient, databaseName, collectionName, param)
+}

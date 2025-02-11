@@ -20,9 +20,23 @@ package tcvectordb
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/pkg/errors"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
 	api_user "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
+	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
 type FlatInterface interface {
@@ -76,6 +90,12 @@ type FlatInterface interface {
 
 	// [ChangePassword] changes the password for the specific user.
 	ChangePassword(ctx context.Context, param ChangePasswordParams) error
+
+	// []
+	UploadFile(ctx context.Context, databaseName, collectionName string, param UploadFileParams) (result *UploadFileResult, err error)
+
+	GetImageUrl(ctx context.Context, databaseName, collectionName string,
+		param GetImageUrlParams) (result *GetImageUrlResult, err error)
 }
 
 // [CreateUserParams] holds the parameters for creating the user.
@@ -309,4 +329,184 @@ func (i *implementerFlatDocument) ChangePassword(ctx context.Context, param Chan
 	}
 
 	return nil
+}
+
+type UploadFileParams struct {
+	FileName           string
+	LocalFilePath      string
+	SplitterPreprocess ai_document_set.DocumentSplitterPreprocess
+	EmbeddingModel     string
+	ParsingProcess     *api.ParsingProcess
+	FieldMappings      map[string]string
+	MetaData           map[string]interface{}
+}
+
+type UploadFileResult struct {
+	FileName        string
+	CosEndpoint     string
+	CosRegion       string
+	CosBucket       string
+	UploadPath      string
+	Credentials     *ai_document_set.Credentials
+	UploadCondition *ai_document_set.UploadCondition
+}
+
+func (i *implementerFlatDocument) UploadFile(ctx context.Context, databaseName, collectionName string, param UploadFileParams) (result *UploadFileResult, err error) {
+	return uploadFile(ctx, i, databaseName, collectionName, param)
+}
+
+func checkUploadFileParam(ctx context.Context, param *UploadFileParams) (size int64, err error) {
+	if param.FileName == "" {
+		if param.LocalFilePath == "" {
+			return 0, errors.New("need param: FileName or LocalFilePath")
+		}
+		param.FileName = filepath.Base(param.LocalFilePath)
+	}
+	fileType := strings.ToLower(filepath.Ext(param.FileName))
+	isMarkdown := false
+	if fileType == "" || fileType == string(MarkdownFileType) || fileType == string(MdFileType) {
+		isMarkdown = true
+	}
+	if !isMarkdown && param.SplitterPreprocess.ChunkSplitter != nil && *param.SplitterPreprocess.ChunkSplitter != "" {
+		log.Printf("[Warning] %s", "param SplitterPreprocess.ChunkSplitter will be ommitted, "+
+			"because only markdown filetype supports defining ChunkSplitter")
+	}
+
+	fileInfo, err := os.Stat(param.LocalFilePath)
+	if err != nil {
+		return 0, errors.Errorf("get file size failed. err: %v", err.Error())
+	}
+	size = fileInfo.Size()
+
+	if size == 0 {
+		return 0, errors.New("file size cannot be 0")
+	}
+	return size, nil
+}
+func uploadFile(ctx context.Context, cli SdkClient, databaseName, collectionName string,
+	param UploadFileParams) (result *UploadFileResult, err error) {
+	size, err := checkUploadFileParam(ctx, &param)
+	if err != nil {
+		return nil, err
+	}
+
+	req := new(document.UploadUrlReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	req.FileName = param.FileName
+	req.EmbeddingModel = param.EmbeddingModel
+	req.SplitterPreprocess = &param.SplitterPreprocess
+
+	if param.ParsingProcess != nil {
+		req.ParsingProcess = new(api.ParsingProcess)
+		req.ParsingProcess.ParsingType = param.ParsingProcess.ParsingType
+	}
+	req.FieldMappings = make(map[string]string)
+	for field, mapping := range param.FieldMappings {
+		req.FieldMappings[field] = mapping
+	}
+	res := new(document.UploadUrlRes)
+	err = cli.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+	if res.Warning != "" {
+		log.Printf("[Warning] %s", res.Warning)
+	}
+	if res.UploadCondition != nil && size > res.UploadCondition.MaxSupportContentLength {
+		return nil, fmt.Errorf("fileSize is invalid, support max content length is %v bytes", res.UploadCondition.MaxSupportContentLength)
+	}
+	if res.Credentials == nil {
+		return nil, fmt.Errorf("get credentials for uploading file failed")
+	}
+
+	result = new(UploadFileResult)
+	result.FileName = param.FileName
+	result.CosEndpoint = res.CosEndpoint
+	result.CosRegion = res.CosRegion
+	result.CosBucket = res.CosBucket
+	result.UploadPath = res.UploadPath
+	result.Credentials = res.Credentials
+	result.UploadCondition = res.UploadCondition
+
+	u, _ := url.Parse(res.CosEndpoint)
+	b := &cos.BaseURL{BucketURL: u}
+
+	c := cos.NewClient(b, &http.Client{
+		Transport: &cos.AuthorizationTransport{
+			SecretID:     res.Credentials.TmpSecretID,  // 用户的 SecretId，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参考 https://cloud.tencent.com/ai_document_set/product/598/37140
+			SecretKey:    res.Credentials.TmpSecretKey, // 用户的 SecretKey，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参考 https://cloud.tencent.com/ai_document_set/product/598/37140
+			SessionToken: res.Credentials.SessionToken,
+		},
+	})
+
+	header := make(http.Header)
+
+	marshalData, err := json.Marshal(param.MetaData)
+	if err != nil {
+		return nil, fmt.Errorf("put param MetaData into cos header failed, err: %v", err.Error())
+	}
+
+	header.Add("x-cos-meta-data", url.QueryEscape(base64.StdEncoding.EncodeToString(marshalData)))
+
+	headerData, err := json.Marshal(header)
+	if err != nil {
+		return nil, fmt.Errorf("marshal cos header failed, err: %v", err.Error())
+	}
+	if len(headerData) > 2048 {
+		return nil, fmt.Errorf("cos header for param MetaData is too large, it can not be more than 2k")
+	}
+
+	opt := &cos.MultiUploadOptions{
+		OptIni: &cos.InitiateMultipartUploadOptions{
+			nil,
+			&cos.ObjectPutHeaderOptions{
+				XCosMetaXXX: &header,
+				//Listener:    &cos.DefaultProgressListener{},
+			},
+		},
+		// Whether to enable resume from breakpoint, default is false
+		CheckPoint: true,
+		PartSize:   5,
+	}
+
+	_, _, err = c.Object.Upload(ctx, res.UploadPath, param.LocalFilePath, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+type GetImageUrlParams struct {
+	FileName    string
+	DocumentIds []string
+}
+
+type GetImageUrlResult struct {
+	Images [][]document.ImageInfo
+}
+
+func (i *implementerFlatDocument) GetImageUrl(ctx context.Context, databaseName, collectionName string,
+	param GetImageUrlParams) (result *GetImageUrlResult, err error) {
+	return getImageUrl(ctx, i.SdkClient, databaseName, collectionName, param)
+}
+
+func getImageUrl(ctx context.Context, cli SdkClient, databaseName, collectionName string,
+	param GetImageUrlParams) (result *GetImageUrlResult, err error) {
+	req := new(document.GetImageUrlReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	req.FileName = param.FileName
+	req.DocumentIds = param.DocumentIds
+
+	res := new(document.GetImageUrlRes)
+	err = cli.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+
+	result = new(GetImageUrlResult)
+	result.Images = res.Images
+	return result, nil
 }
