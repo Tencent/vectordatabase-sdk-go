@@ -180,3 +180,18 @@ func Test_BM25Encoder_WithUserDefineStopwords(t *testing.T) {
 
 	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库。"))
 }
+
+func Test_BM25Encoder_WithUserDefineDict(t *testing.T) {
+	bm25, err := NewBM25Encoder(&BM25EncoderParams{Bm25Language: "zh"})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库。"))
+
+	err = bm25.SetDict("../data/userdict_example.txt")
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	fmt.Println(bm25.GetTokenizer().Tokenize("什么是腾讯云向量数据库。"))
+}

@@ -41,6 +41,7 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 	jbt.useHmm = defaultUseHmm
 	jbt.StopWordsEnable = defaultStopWordsEnable
 	jbt.Jieba = new(gse.Segmenter)
+	jbt.Jieba.LoadNoFreq = true
 
 	_, filePath, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filePath)
@@ -54,7 +55,6 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 		if err != nil {
 			return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
-
 		jbt.Jieba.LoadDict()
 		jbt.hashFunc = hash.NewMmh3Hash()
 		return jbt, nil
@@ -176,12 +176,12 @@ func (jbt *JiebaTokenizer) UpdateParameters(params TokenizerParams) error {
 		}
 
 		jbt.UserDictFilePath = params.UserDictFilePath
-		newJieba, err := gse.New(jbt.UserDictFilePath)
+		jbt.Jieba = new(gse.Segmenter)
+		jbt.Jieba.LoadNoFreq = true
+		err := jbt.Jieba.LoadDict(jbt.UserDictFilePath)
 		if err != nil {
 			return fmt.Errorf("jieba loads file %v for userdict failed. err: %v", jbt.UserDictFilePath, err.Error())
 		}
-		jbt.Jieba = &newJieba
-
 	}
 
 	if params.StopWords != nil {
