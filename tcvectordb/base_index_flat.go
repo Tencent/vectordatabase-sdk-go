@@ -33,11 +33,12 @@ type implementerFlatIndex struct {
 //   - DropBeforeRebuild: Whether to delete the old index before rebuilding the new index (defaults to false).
 //     true: first delete the old index and then rebuild the index.
 //     false: after creating the new index, then delete the old index.
-//   - Throttle: (Optional)The number of CPU cores for building an index on a single node (defaults to 1).
-//     0 means no limit.
+//   - Throttle: (Optional) The number of CPU cores for building an index on a single node. only support 1 currently.
+//   - UnLimitedCPU: (Optional) Using all CPU cores for building an index on a single node (defaults to false).
 type RebuildIndexParams struct {
 	DropBeforeRebuild bool
 	Throttle          int
+	UnLimitedCPU      bool
 }
 
 // [AddIndexParams] holds the parameters for adding scalar field index in a collection.
@@ -84,6 +85,13 @@ func (i *implementerFlatIndex) RebuildIndex(ctx context.Context, databaseName, c
 		param := params[0]
 		req.DropBeforeRebuild = param.DropBeforeRebuild
 		req.Throttle = int32(param.Throttle)
+		if req.Throttle == 0 {
+			// UnLimitedCPU is true and  Throttle is 0, mean unlimited cpu to build
+			if !param.UnLimitedCPU {
+				req.Throttle = 1
+			}
+		}
+
 	}
 
 	res := new(index.RebuildRes)

@@ -3007,7 +3007,7 @@ type RebuildIndexRequest struct {
 	Database          string `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Collection        string `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
 	DropBeforeRebuild bool   `protobuf:"varint,3,opt,name=dropBeforeRebuild,proto3" json:"dropBeforeRebuild,omitempty"`
-	Throttle          int32  `protobuf:"varint,4,opt,name=throttle,proto3" json:"throttle,omitempty"`
+	Throttle          int32  `protobuf:"varint,4,opt,name=throttle,proto3" json:"throttle"`
 	DisableTrain      bool   `protobuf:"varint,5,opt,name=disable_train,json=disableTrain,proto3" json:"disable_train,omitempty"`
 	ForceRebuild      bool   `protobuf:"varint,6,opt,name=force_rebuild,json=forceRebuild,proto3" json:"force_rebuild,omitempty"`
 }

@@ -34,6 +34,12 @@ func (r *rpcImplementerFlatIndex) RebuildIndex(ctx context.Context, databaseName
 		param := params[0]
 		req.DropBeforeRebuild = param.DropBeforeRebuild
 		req.Throttle = int32(param.Throttle)
+		if req.Throttle == 0 {
+			// UnLimitedCPU is true and  Throttle is 0, mean unlimited cpu to build
+			if !param.UnLimitedCPU {
+				req.Throttle = 1
+			}
+		}
 	}
 	res, err := r.rpcClient.RebuildIndex(ctx, req)
 	if err != nil {
