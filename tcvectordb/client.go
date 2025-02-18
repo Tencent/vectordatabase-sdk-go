@@ -167,7 +167,7 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 		return fmt.Errorf("%w, %#v", err, req)
 	}
 
-	request, err := http.NewRequest(strings.ToUpper(method), c.url+path, reqBody)
+	request, err := http.NewRequestWithContext(ctx, strings.ToUpper(method), c.url+path, reqBody)
 	if err != nil {
 		return err
 	}

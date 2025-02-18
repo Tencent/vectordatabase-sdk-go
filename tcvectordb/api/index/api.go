@@ -25,7 +25,7 @@ type RebuildReq struct {
 	Database          string `json:"database,omitempty"`
 	Collection        string `json:"collection,omitempty"`
 	DropBeforeRebuild bool   `json:"dropBeforeRebuild,omitempty"`
-	Throttle          int32  `json:"throttle,omitempty"`
+	Throttle          int32  `json:"throttle"`
 	DisableTrain      bool   `json:"disable_train,omitempty"`
 	ForceRebuild      bool   `json:"force_rebuild,omitempty"`
 }

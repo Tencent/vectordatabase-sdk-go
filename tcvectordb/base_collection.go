@@ -204,6 +204,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 			column.FieldElementType = string(v.ElemType)
 		}
 		column.IndexType = string(v.IndexType)
+		column.AutoId = v.AutoId
 		req.Indexes = append(req.Indexes, &column)
 	}
 	if len(params) != 0 && params[0] != nil {
@@ -502,6 +503,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			filter.FieldName = index.FieldName
 			filter.FieldType = FieldType(index.FieldType)
 			filter.IndexType = IndexType(index.IndexType)
+			filter.AutoId = index.AutoId
 			coll.Indexes.FilterIndex = append(coll.Indexes.FilterIndex, filter)
 		}
 	}

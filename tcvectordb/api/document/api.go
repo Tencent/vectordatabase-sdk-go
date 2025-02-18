@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
 )
 
 // UpsertReq upsert document request
@@ -269,4 +270,45 @@ type UpdateRes struct {
 	api.CommonRes
 	AffectedCount int    `json:"affectedCount,omitempty"`
 	Warning       string `json:"warning,omitempty"`
+}
+
+type UploadUrlReq struct {
+	api.Meta           `path:"/ai/document/uploadUrl" tags:"Document" method:"Post" summary:"collection表上传文件"`
+	Database           string                                      `json:"database"`
+	Collection         string                                      `json:"collection"`
+	FileName           string                                      `json:"fileName"`
+	SplitterPreprocess *ai_document_set.DocumentSplitterPreprocess `json:"splitterPreprocess,omitempty"`
+	EmbeddingModel     string                                      `json:"embeddingModel,omitempty"`
+	ParsingProcess     *api.ParsingProcess                         `json:"parsingProcess,omitempty"`
+	FieldMappings      map[string]string                           `json:"fieldMappings,omitempty"`
+}
+
+type UploadUrlRes struct {
+	api.CommonRes
+	Warning         string                           `json:"warning,omitempty"`
+	CosEndpoint     string                           `json:"cosEndpoint,omitempty"`
+	CosRegion       string                           `json:"cosRegion,omitempty"`
+	CosBucket       string                           `json:"cosBucket,omitempty"`
+	UploadPath      string                           `json:"uploadPath,omitempty"`
+	Credentials     *ai_document_set.Credentials     `json:"credentials,omitempty"`
+	UploadCondition *ai_document_set.UploadCondition `json:"uploadCondition,omitempty"`
+}
+
+type GetImageUrlReq struct {
+	api.Meta    `path:"/ai/document/getImageUrl" tags:"Document" method:"Post" summary:"获取图片访问地址"`
+	Database    string   `json:"database"`
+	Collection  string   `json:"collection"`
+	FileName    string   `json:"fileName"`
+	DocumentIds []string `json:"documentIds"`
+}
+
+type GetImageUrlRes struct {
+	api.CommonRes
+	Images [][]ImageInfo `json:"images"`
+}
+
+type ImageInfo struct {
+	DocumentId string `json:"documentId"`
+	ImageName  string `json:"imageName"`
+	ImageUrl   string `json:"imageUrl"`
 }

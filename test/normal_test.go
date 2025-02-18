@@ -98,7 +98,7 @@ func TestCreateCollection(t *testing.T) {
 			},
 		},
 		FilterIndex: []tcvectordb.FilterIndex{
-			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY},
+			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY, AutoId: "uuid"},
 			{FieldName: "bookName", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER},
 			{FieldName: "page", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER},
 			{FieldName: "tag", FieldType: tcvectordb.Array, IndexType: tcvectordb.FILTER},

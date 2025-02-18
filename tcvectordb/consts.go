@@ -55,6 +55,8 @@ const (
 	Uint64       FieldType = "uint64"
 	String       FieldType = "string"
 	Array        FieldType = "array"
+	Json         FieldType = "json"
+	Double       FieldType = "double"
 	Vector       FieldType = "vector"
 	SparseVector FieldType = "sparseVector"
 	BinaryVector FieldType = "binary_vector"
