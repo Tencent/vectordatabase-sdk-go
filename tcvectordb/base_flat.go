@@ -19,10 +19,12 @@
 package tcvectordb
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -91,7 +93,6 @@ type FlatInterface interface {
 	// [ChangePassword] changes the password for the specific user.
 	ChangePassword(ctx context.Context, param ChangePasswordParams) error
 
-	// []
 	UploadFile(ctx context.Context, databaseName, collectionName string, param UploadFileParams) (result *UploadFileResult, err error)
 
 	GetImageUrl(ctx context.Context, databaseName, collectionName string,
@@ -334,6 +335,7 @@ func (i *implementerFlatDocument) ChangePassword(ctx context.Context, param Chan
 type UploadFileParams struct {
 	FileName           string
 	LocalFilePath      string
+	Reader             io.Reader
 	SplitterPreprocess ai_document_set.DocumentSplitterPreprocess
 	EmbeddingModel     string
 	ParsingProcess     *api.ParsingProcess
@@ -355,10 +357,10 @@ func (i *implementerFlatDocument) UploadFile(ctx context.Context, databaseName, 
 	return uploadFile(ctx, i, databaseName, collectionName, param)
 }
 
-func checkUploadFileParam(ctx context.Context, param *UploadFileParams) (size int64, err error) {
+func checkUploadFileParam(ctx context.Context, param *UploadFileParams) (size int64, reader io.ReadCloser, err error) {
 	if param.FileName == "" {
 		if param.LocalFilePath == "" {
-			return 0, errors.New("need param: FileName or LocalFilePath")
+			return 0, nil, errors.New("need param: FileName or LocalFilePath")
 		}
 		param.FileName = filepath.Base(param.LocalFilePath)
 	}
@@ -371,24 +373,41 @@ func checkUploadFileParam(ctx context.Context, param *UploadFileParams) (size in
 		log.Printf("[Warning] %s", "param SplitterPreprocess.ChunkSplitter will be ommitted, "+
 			"because only markdown filetype supports defining ChunkSplitter")
 	}
+	if param.LocalFilePath != "" {
+		fd, err := os.Open(param.LocalFilePath)
+		if err != nil {
+			return 0, nil, err
+		}
+		reader = fd
+		fstat, err := fd.Stat()
+		if err != nil {
+			return 0, nil, err
+		}
+		size = fstat.Size()
+	} else {
+		bytesBuf := bytes.NewBuffer(nil)
+		written, err := io.Copy(bytesBuf, param.Reader)
+		if err != nil {
+			return 0, nil, err
+		}
 
-	fileInfo, err := os.Stat(param.LocalFilePath)
-	if err != nil {
-		return 0, errors.Errorf("get file size failed. err: %v", err.Error())
+		size = written
+		reader = io.NopCloser(bytesBuf)
 	}
-	size = fileInfo.Size()
 
 	if size == 0 {
-		return 0, errors.New("file size cannot be 0")
+		return 0, nil, errors.New("file size cannot be 0")
 	}
-	return size, nil
+
+	return size, reader, nil
 }
 func uploadFile(ctx context.Context, cli SdkClient, databaseName, collectionName string,
 	param UploadFileParams) (result *UploadFileResult, err error) {
-	size, err := checkUploadFileParam(ctx, &param)
+	size, reader, err := checkUploadFileParam(ctx, &param)
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 
 	req := new(document.UploadUrlReq)
 	req.Database = databaseName
@@ -457,22 +476,36 @@ func uploadFile(ctx context.Context, cli SdkClient, databaseName, collectionName
 		return nil, fmt.Errorf("cos header for param MetaData is too large, it can not be more than 2k")
 	}
 
-	opt := &cos.MultiUploadOptions{
-		OptIni: &cos.InitiateMultipartUploadOptions{
-			nil,
-			&cos.ObjectPutHeaderOptions{
-				XCosMetaXXX: &header,
-				//Listener:    &cos.DefaultProgressListener{},
+	if param.LocalFilePath != "" {
+		opt := &cos.MultiUploadOptions{
+			OptIni: &cos.InitiateMultipartUploadOptions{
+				nil,
+				&cos.ObjectPutHeaderOptions{
+					XCosMetaXXX: &header,
+					//Listener:    &cos.DefaultProgressListener{},
+				},
 			},
-		},
-		// Whether to enable resume from breakpoint, default is false
-		CheckPoint: true,
-		PartSize:   5,
-	}
+			// Whether to enable resume from breakpoint, default is false
+			CheckPoint: true,
+			PartSize:   5,
+		}
 
-	_, _, err = c.Object.Upload(ctx, res.UploadPath, param.LocalFilePath, opt)
-	if err != nil {
-		return nil, err
+		_, _, err = c.Object.Upload(ctx, res.UploadPath, param.LocalFilePath, opt)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+
+		opt := &cos.ObjectPutOptions{
+			ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
+				ContentLength: size,
+				XCosMetaXXX:   &header,
+			},
+		}
+		_, err = c.Object.Put(ctx, res.UploadPath, reader, opt)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return result, nil

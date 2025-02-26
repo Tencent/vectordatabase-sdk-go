@@ -82,8 +82,17 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection s
 func (d *Demo) UploadFile(ctx context.Context, database, collection, localFilePath string) error {
 	appendKeywordsToChunk := false
 	appendTitleToChunk := false
+
+	// filename := filepath.Base(localFilePath)
+	// fd, err := os.Open(localFilePath)
+	// if err != nil {
+	// 	return err
+	// }
+
 	param := tcvectordb.UploadFileParams{
 		LocalFilePath: localFilePath,
+		//FileName: filename,
+		//Reader:   fd,
 		SplitterPreprocess: ai_document_set.DocumentSplitterPreprocess{
 			AppendKeywordsToChunk: &appendKeywordsToChunk,
 			AppendTitleToChunk:    &appendTitleToChunk,
@@ -160,7 +169,6 @@ func main() {
 
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
-	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.UploadFile(ctx, database, collectionName, localFilePath)

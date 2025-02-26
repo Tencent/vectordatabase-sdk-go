@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -158,6 +159,41 @@ func TestLoadAndSplitText(t *testing.T) {
 		// Reader:          fd,
 		LocalFilePath: "../example/demo_files/tcvdb.md",
 		MetaData:      metaData,
+		SplitterPreprocess: ai_document_set.DocumentSplitterPreprocess{
+			ChunkSplitter:         &chunkSplitter,
+			AppendTitleToChunk:    &appendTitleToChunk,
+			AppendKeywordsToChunk: &appendKeywordsToChunk,
+		},
+		ParsingProcess: &api.ParsingProcess{
+			ParsingType: string(tcvectordb.VisionModelParsing),
+		},
+	})
+	printErr(err)
+	t.Logf("%+v", result)
+}
+
+func TestLoadAndSplitTextByReader(t *testing.T) {
+	defer cli.Close()
+
+	col := cli.AIDatabase(aiDatabase).CollectionView(collectionViewName)
+
+	metaData := map[string]interface{}{
+		// 元数据只支持string、uint64类型的值
+		"author_name": "sam",
+		"fileKey":     1024}
+
+	appendTitleToChunk := false
+	appendKeywordsToChunk := true
+	chunkSplitter := "\n\n"
+
+	fd, err := os.Open("../example/demo_files/tcvdb.md")
+	printErr(err)
+
+	result, err := col.LoadAndSplitText(ctx, tcvectordb.LoadAndSplitTextParams{
+		DocumentSetName: "tcvdb.md",
+		Reader:          fd,
+		//LocalFilePath: "../example/demo_files/tcvdb.md",
+		MetaData: metaData,
 		SplitterPreprocess: ai_document_set.DocumentSplitterPreprocess{
 			ChunkSplitter:         &chunkSplitter,
 			AppendTitleToChunk:    &appendTitleToChunk,
