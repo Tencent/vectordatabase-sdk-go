@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.3
+* feat: tcvdbtext add [NewBM25EncoderByFiles] functions to init encoder  in an offline environment without internet access
+
 ## v1.6.2
 * fix: upload file by io.Reader
 
