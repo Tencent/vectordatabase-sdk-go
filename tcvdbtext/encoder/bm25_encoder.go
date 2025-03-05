@@ -37,6 +37,18 @@ type BM25EncoderParams struct {
 	Bm25Language string
 }
 
+// [BM25EncoderFileParams] holds the parameters for initing bm25 encoder by local files.
+//
+// Fields:
+//   - WordsFreqFile: The local file path of the words frequency.
+//   - StopWordsFile: The local file path of the stopwords.
+//   - UserDictFile: The local file path of the user define dictionary.
+type BM25EncoderFileParams struct {
+	WordsFreqFile string
+	StopWordsFile string
+	UserDictFile  string
+}
+
 type BM25LearnedParams struct {
 	TokenFreq        map[string]float64 `json:"token_freq,omitempty"`
 	DocCount         int64              `json:"doc_count,omitempty"`
@@ -79,6 +91,63 @@ func NewBM25Encoder(params *BM25EncoderParams) (SparseEncoder, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	return bm25, nil
+}
+
+func NewBM25EncoderByFiles(params *BM25EncoderFileParams) (SparseEncoder, error) {
+	bm25 := new(BM25Encoder)
+	var stopWords interface{}
+	if params.StopWordsFile == "" {
+		stopWords = false
+	} else {
+		stopWords = params.StopWordsFile
+	}
+	JiebaTokenizer, err := tokenizer.NewJiebaTokenizer(&tokenizer.TokenizerParams{
+		StopWords:        stopWords,
+		UserDictFilePath: params.UserDictFile,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	bm25.Tokenizer = JiebaTokenizer
+
+	if params.WordsFreqFile == "" {
+		return bm25, nil
+	}
+
+	var data []byte
+	if !tcvdbtext.FileExists(params.WordsFreqFile) {
+		return nil, fmt.Errorf("the filepath %v doesn't exist", params.WordsFreqFile)
+	} else {
+		data, err = os.ReadFile(params.WordsFreqFile)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read file: %v", err)
+		}
+	}
+
+	bm25ParamsByFile := new(BM25Params)
+	err = json.Unmarshal(data, bm25ParamsByFile)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse file %v to JSON, err: %v", params.WordsFreqFile, err.Error())
+	}
+
+	bm25.B = *bm25ParamsByFile.B
+	bm25.K1 = *bm25ParamsByFile.K1
+	bm25.BM25LearnedParams = bm25ParamsByFile.BM25LearnedParams
+
+	err = bm25.Tokenizer.UpdateParameters(tokenizer.TokenizerParams{
+		ForSearch: bm25ParamsByFile.ForSearch,
+		CutAll:    bm25ParamsByFile.CutAll,
+		Hmm:       bm25ParamsByFile.Hmm,
+
+		HashFunction: bm25ParamsByFile.HashFunction,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("update parameters by file %v failed, err: %v", params.WordsFreqFile, err.Error())
 	}
 
 	return bm25, nil
