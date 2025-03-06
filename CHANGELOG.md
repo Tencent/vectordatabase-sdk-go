@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.4
+* feat: support rpc client pool
+
 ## v1.6.3
 * feat: tcvdbtext add [NewBM25EncoderByFiles] functions to init encoder  in an offline environment without internet access
 
