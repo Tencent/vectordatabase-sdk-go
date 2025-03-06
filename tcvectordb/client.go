@@ -47,7 +47,7 @@ type SdkClient interface {
 //
 // Fields:
 //   - Timeout: (Optional) Timeout specifies a time limit for requests made by this Client (defaults to 5s).
-//   - MaxIdldConnPerHost:  (Optional) MaxIdleConnsPerHost controls the maximum idle (keep-alive) connections
+//   - MaxIdleConnPerHost:  (Optional) MaxIdleConnsPerHost controls the maximum idle (keep-alive) connections
 //     to keep per-host if non-zero (defaults to 2).
 //   - IdleConnTimeout: (Optional) IdleConnTimeout is the maximum amount of time an idle (keep-alive) connection
 //     will remain idle before closing itself (defaults to 60s). Zero means no limit.
@@ -56,10 +56,14 @@ type SdkClient interface {
 //   - Transport: (Optional) Transport specifies the mechanism by which individual HTTP requests are made (defaults to http.Transport).
 type ClientOption struct {
 	Timeout            time.Duration
+	MaxIdleConnPerHost int
+	// Deprecated: MaxIdldConnPerHost is deprecated.
+	// Use MaxIdleConnPerHost instead.
 	MaxIdldConnPerHost int
 	IdleConnTimeout    time.Duration
 	ReadConsistency    ReadConsistency
 	Transport          http.RoundTripper
+	RpcPoolSize        int
 }
 type Client struct {
 	DatabaseInterface
@@ -84,9 +88,13 @@ type CommmonResponse struct {
 var defaultOption = ClientOption{
 	Timeout:            time.Second * 5,
 	MaxIdldConnPerHost: 2,
+	MaxIdleConnPerHost: 2,
 	IdleConnTimeout:    time.Minute,
 	ReadConsistency:    api.EventualConsistency,
+	RpcPoolSize:        defaultRpcPoolSize,
 }
+
+var defaultRpcPoolSize = 2
 
 // [NewClient] creates and initializes a new instance of [Client] with the given url, username, key and option.
 //
@@ -130,11 +138,15 @@ func newClient(url, username, key string, option ClientOption) (*Client, error) 
 	if option.Transport != nil {
 		cli.cli.Transport = option.Transport
 	} else {
+		maxIdleConnsPerHost := cli.option.MaxIdldConnPerHost
+		if cli.option.MaxIdleConnPerHost != 0 {
+			maxIdleConnsPerHost = cli.option.MaxIdleConnPerHost
+		}
 		cli.cli.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 			},
-			MaxIdleConnsPerHost: cli.option.MaxIdldConnPerHost,
+			MaxIdleConnsPerHost: maxIdleConnsPerHost,
 			IdleConnTimeout:     cli.option.IdleConnTimeout,
 		}
 	}
@@ -249,6 +261,9 @@ func optionMerge(option ClientOption) ClientOption {
 	}
 	if option.MaxIdldConnPerHost == 0 {
 		option.MaxIdldConnPerHost = defaultOption.MaxIdldConnPerHost
+	}
+	if option.MaxIdleConnPerHost == 0 {
+		option.MaxIdleConnPerHost = defaultOption.MaxIdleConnPerHost
 	}
 	if option.ReadConsistency == "" {
 		option.ReadConsistency = defaultOption.ReadConsistency
