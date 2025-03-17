@@ -19,6 +19,9 @@ type FlatIndexInterface interface {
 	// [AddIndex] adds scalar field index to an existing collection.
 	AddIndex(ctx context.Context, databaseName, collectionName string, params ...*AddIndexParams) (err error)
 
+	// [DropIndex] drops scalar field index to an existing collection.
+	DropIndex(ctx context.Context, databaseName, collectionName string, params DropIndexParams) (err error)
+
 	// [ModifyVectorIndex] modifies vector indexes to an existing collection.
 	ModifyVectorIndex(ctx context.Context, databaseName, collectionName string, param ModifyVectorIndexParam) (err error)
 }
@@ -132,6 +135,23 @@ func (i *implementerFlatIndex) AddIndex(ctx context.Context, databaseName, colle
 	}
 
 	res := new(index.AddRes)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type DropIndexParams struct {
+	FieldNames []string
+}
+
+func (i *implementerFlatIndex) DropIndex(ctx context.Context, databaseName, collectionName string, params DropIndexParams) error {
+	req := new(index.DropReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	req.FieldNames = params.FieldNames
+	res := new(index.DropRes)
 	err := i.Request(ctx, req, res)
 	if err != nil {
 		return err

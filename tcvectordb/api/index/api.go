@@ -47,6 +47,17 @@ type AddRes struct {
 	api.CommonRes
 }
 
+type DropReq struct {
+	api.Meta   `path:"/index/drop" tags:"Index" method:"Post" summary:"删除collection的索引"`
+	Database   string   `json:"database,omitempty"`
+	Collection string   `json:"collection,omitempty"`
+	FieldNames []string `json:"fieldNames,omitempty"`
+}
+
+type DropRes struct {
+	api.CommonRes
+}
+
 type ModifyVectorIndexReq struct {
 	api.Meta      `path:"/index/modifyVectorIndex" tags:"Index" method:"Post" summary:"调整collection的向量索引参数"`
 	Database      string             `json:"database,omitempty"`

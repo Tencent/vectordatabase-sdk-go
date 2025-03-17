@@ -81,6 +81,8 @@ type SearchEngineClient interface {
 	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
 	// 新增scalar的索引
 	AddIndex(ctx context.Context, in *AddIndexRequest, opts ...grpc.CallOption) (*AddIndexResponse, error)
+	// 删除scalar的索引
+	DropIndex(ctx context.Context, in *DropIndexRequest, opts ...grpc.CallOption) (*DropIndexResponse, error)
 	// 修改index配置
 	ModifyVectorIndex(ctx context.Context, in *ModifyVectorIndexRequest, opts ...grpc.CallOption) (*ModifyVectorIndexResponse, error)
 }
@@ -354,6 +356,15 @@ func (c *searchEngineClient) AddIndex(ctx context.Context, in *AddIndexRequest, 
 	return out, nil
 }
 
+func (c *searchEngineClient) DropIndex(ctx context.Context, in *DropIndexRequest, opts ...grpc.CallOption) (*DropIndexResponse, error) {
+	out := new(DropIndexResponse)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/dropIndex", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *searchEngineClient) ModifyVectorIndex(ctx context.Context, in *ModifyVectorIndexRequest, opts ...grpc.CallOption) (*ModifyVectorIndexResponse, error) {
 	out := new(ModifyVectorIndexResponse)
 	err := c.cc.Invoke(ctx, "/index/modifyVectorIndex", in, out, opts...)
@@ -426,6 +437,8 @@ type SearchEngineServer interface {
 	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
 	// 新增scalar的索引
 	AddIndex(context.Context, *AddIndexRequest) (*AddIndexResponse, error)
+	// 删除scalar的索引
+	DropIndex(context.Context, *DropIndexRequest) (*DropIndexResponse, error)
 	// 修改index配置
 	ModifyVectorIndex(context.Context, *ModifyVectorIndexRequest) (*ModifyVectorIndexResponse, error)
 	mustEmbedUnimplementedSearchEngineServer()
@@ -521,6 +534,9 @@ func (UnimplementedSearchEngineServer) GetVersion(context.Context, *GetVersionRe
 }
 func (UnimplementedSearchEngineServer) AddIndex(context.Context, *AddIndexRequest) (*AddIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddIndex not implemented")
+}
+func (UnimplementedSearchEngineServer) DropIndex(context.Context, *DropIndexRequest) (*DropIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DropIndex not implemented")
 }
 func (UnimplementedSearchEngineServer) ModifyVectorIndex(context.Context, *ModifyVectorIndexRequest) (*ModifyVectorIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ModifyVectorIndex not implemented")
@@ -1060,6 +1076,24 @@ func _SearchEngine_AddIndex_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SearchEngine_DropIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DropIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).DropIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/olama.SearchEngine/dropIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).DropIndex(ctx, req.(*DropIndexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SearchEngine_ModifyVectorIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ModifyVectorIndexRequest)
 	if err := dec(in); err != nil {
@@ -1200,6 +1234,10 @@ var SearchEngine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "addIndex",
 			Handler:    _SearchEngine_AddIndex_Handler,
+		},
+		{
+			MethodName: "dropIndex",
+			Handler:    _SearchEngine_DropIndex_Handler,
 		},
 		{
 			MethodName: "modifyVectorIndex",

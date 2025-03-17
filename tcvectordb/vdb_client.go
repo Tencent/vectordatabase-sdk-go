@@ -45,5 +45,6 @@ type VdbClient interface {
 
 	RebuildIndex(ctx context.Context, databaseName, collectionName string, params ...*RebuildIndexParams) (result *RebuildIndexResult, err error)
 	AddIndex(ctx context.Context, databaseName, collectionName string, params ...*AddIndexParams) (err error)
+	DropIndex(ctx context.Context, databaseName, collectionName string, params DropIndexParams) (err error)
 	ModifyVectorIndex(ctx context.Context, databaseName, collectionName string, param ModifyVectorIndexParam) (err error)
 }
