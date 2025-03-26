@@ -100,11 +100,7 @@ func (r *rpcImplementerFlatIndex) DropIndex(ctx context.Context, databaseName, c
 		FieldNames: params.FieldNames,
 	}
 	_, err := r.rpcClient.DropIndex(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // [ModifyVectorIndex] modifies vector indexes to an existing collection.

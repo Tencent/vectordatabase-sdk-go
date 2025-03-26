@@ -153,10 +153,7 @@ func (i *implementerFlatIndex) DropIndex(ctx context.Context, databaseName, coll
 	req.FieldNames = params.FieldNames
 	res := new(index.DropRes)
 	err := i.Request(ctx, req, res)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // [ModifyVectorIndex] modifies vector indexes to an existing collection.

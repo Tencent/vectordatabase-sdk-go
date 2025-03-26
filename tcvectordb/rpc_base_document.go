@@ -948,8 +948,9 @@ func (r *rpcImplementerFlatDocument) search(ctx context.Context, databaseName, c
 func (r *rpcImplementerFlatDocument) Count(ctx context.Context, databaseName, collectionName string,
 	params ...CountDocumentParams) (*CountDocumentResult, error) {
 	req := &olama.CountRequest{
-		Database:   databaseName,
-		Collection: collectionName,
+		Database:        databaseName,
+		Collection:      collectionName,
+		ReadConsistency: string(r.SdkClient.Options().ReadConsistency),
 	}
 
 	if len(params) != 0 {
