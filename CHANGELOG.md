@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.5
+* feat: get stopwords from cos
+
 ## v1.6.4
 * feat: support rpc client pool
 
