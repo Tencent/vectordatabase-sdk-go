@@ -2,18 +2,16 @@ package tokenizer
 
 import (
 	"fmt"
+	"io"
 	"log"
-	"path/filepath"
-	"runtime"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/go-ego/gse"
 
 	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdbtext"
 	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/hash"
-)
-
-const (
-	STOP_WORD_PATH = "/../data/stopwords.txt"
 )
 
 type JiebaTokenizer struct {
@@ -43,10 +41,16 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 	jbt.Jieba = new(gse.Segmenter)
 	jbt.Jieba.LoadNoFreq = true
 
-	_, filePath, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filePath)
+	defaultStorageDir := tcvdbtext.DefaultStorageDir
+	defaultStopWordFilePath := defaultStorageDir + tcvdbtext.DefaultStopWordsFileName
+	cosStopWordsUrl := tcvdbtext.CosSparsevectorDir + tcvdbtext.DefaultStopWordsFileName
 
-	defaultStopWordFilePath := dir + STOP_WORD_PATH
+	if jbt.StopWordsFilePath == "" {
+		err := jbt.downloadFileFromCos(tcvdbtext.DefaultStorageDir, defaultStopWordFilePath, cosStopWordsUrl)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if params == nil {
 		log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
@@ -55,7 +59,7 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 		if err != nil {
 			return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
-		jbt.Jieba.LoadDict()
+		jbt.Jieba.LoadDict("")
 		jbt.hashFunc = hash.NewMmh3Hash()
 		return jbt, nil
 	}
@@ -205,13 +209,18 @@ func (jbt *JiebaTokenizer) UpdateParameters(params TokenizerParams) error {
 			return fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
 	} else if jbt.StopWordsEnable {
-		_, filePath, _, _ := runtime.Caller(0)
-		dir := filepath.Dir(filePath)
-		defaultStopWordFilePath := dir + STOP_WORD_PATH
+		defaultStorageDir := tcvdbtext.DefaultStorageDir
+		defaultStopWordFilePath := defaultStorageDir + tcvdbtext.DefaultStopWordsFileName
+		cosStopWordsUrl := tcvdbtext.CosSparsevectorDir + tcvdbtext.DefaultStopWordsFileName
+
+		err := jbt.downloadFileFromCos(tcvdbtext.DefaultStorageDir, defaultStopWordFilePath, cosStopWordsUrl)
+		if err != nil {
+			return fmt.Errorf("jieba download file %v for default stopwords failed. err: %v", cosStopWordsUrl, err.Error())
+		}
 
 		log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
 		jbt.StopWordsFilePath = defaultStopWordFilePath
-		err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
+		err = jbt.Jieba.LoadStop(defaultStopWordFilePath)
 		if err != nil {
 			return fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
@@ -251,5 +260,46 @@ func (jbt *JiebaTokenizer) SetDict(dictFile string) error {
 		return fmt.Errorf("set dictionary failed, because refreshing jieba failed. err: %v", err.Error())
 	}
 	jbt.UserDictFilePath = dictFile
+	return nil
+}
+
+func (jbt *JiebaTokenizer) downloadFileFromCos(localFileDir, localFilePath, cosUrl string) error {
+	if tcvdbtext.FileExists(localFilePath) {
+		return nil
+	}
+
+	err := os.MkdirAll(localFileDir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create directory: %v", err.Error())
+	}
+	log.Printf("directory ready: %v", localFileDir)
+
+	file, err := os.Create(localFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create temporary file %v, err: %v",
+			localFilePath, err.Error())
+	}
+	defer file.Close()
+
+	log.Printf("[Warning] start to download dictionary %v and store it in %v, please wait a moment",
+		cosUrl, localFilePath)
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	resp, err := client.Get(cosUrl)
+	if err != nil {
+		return fmt.Errorf("failed to download file %v, err: %v", cosUrl, err)
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("failed to download file %v, resp.StatusCode: %v", cosUrl, resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to download url %v to local dir %v, err: %v",
+			cosUrl, localFilePath, err.Error())
+	}
+
 	return nil
 }

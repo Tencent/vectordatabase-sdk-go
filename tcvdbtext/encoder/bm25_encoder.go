@@ -166,7 +166,7 @@ func (bm25 *BM25Encoder) SetDefaultParams(bm25Language string) error {
 	} else {
 		return fmt.Errorf("input language name must be 'zh' or 'en'")
 	}
-	defaultStoragePath := "/tmp/tencent/vectordatabase/data/"
+	defaultStoragePath := tcvdbtext.DefaultStorageDir
 	fileStoragePath := defaultStoragePath + fileName
 
 	if !tcvdbtext.FileExists(fileStoragePath) {
@@ -176,16 +176,12 @@ func (bm25 *BM25Encoder) SetDefaultParams(bm25Language string) error {
 		} else if bm25Language == BM25_EN_CONTENT {
 			bm25ParamsUrl = "https://vectordb-public-1310738255.cos.ap-guangzhou.myqcloud.com/sparsevector/bm25_en_default.json"
 		}
-		_, err := os.Stat(defaultStoragePath)
-		if os.IsNotExist(err) {
-			err := os.MkdirAll(defaultStoragePath, os.ModePerm)
-			if err != nil {
-				return fmt.Errorf("failed to create directory: %v", err.Error())
-			}
-			log.Printf("directory created: %v", defaultStoragePath)
-		} else if err != nil {
-			return fmt.Errorf("failed to check directory: %v", err.Error())
+
+		err := os.MkdirAll(defaultStoragePath, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create directory: %v", err.Error())
 		}
+		log.Printf("directory ready: %v", defaultStoragePath)
 
 		file, err := os.Create(fileStoragePath)
 		if err != nil {
