@@ -186,6 +186,13 @@ func TestDescribeCollection(t *testing.T) {
 	log.Printf("DescribeCollection result: %+v", ToJson(res))
 }
 
+func TestDropIndex(t *testing.T) {
+	err := cli.DropIndex(ctx, database, collectionName, tcvectordb.DropIndexParams{
+		FieldNames: []string{"bookName", "tag"},
+	})
+	printErr(err)
+
+}
 func TestUpsert(t *testing.T) {
 	col := cli.Database(database).Collection(collectionName)
 

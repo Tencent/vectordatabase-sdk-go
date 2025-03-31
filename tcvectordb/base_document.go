@@ -970,6 +970,7 @@ func (i *implementerFlatDocument) Count(ctx context.Context, databaseName, colle
 	req := new(document.CountReq)
 	req.Database = databaseName
 	req.Collection = collectionName
+	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Query = new(document.CountQueryCond)
 
 	if len(params) != 0 {

@@ -92,6 +92,17 @@ func (r *rpcImplementerFlatIndex) AddIndex(ctx context.Context, databaseName, co
 	return nil
 }
 
+func (r *rpcImplementerFlatIndex) DropIndex(ctx context.Context, databaseName, collectionName string,
+	params DropIndexParams) error {
+	req := &olama.DropIndexRequest{
+		Database:   databaseName,
+		Collection: collectionName,
+		FieldNames: params.FieldNames,
+	}
+	_, err := r.rpcClient.DropIndex(ctx, req)
+	return err
+}
+
 // [ModifyVectorIndex] modifies vector indexes to an existing collection.
 func (r *rpcImplementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseName, collectionName string,
 	param ModifyVectorIndexParam) error {

@@ -29,6 +29,9 @@ func NewRpcClientPool(url, username, key string, option *ClientOption) (VdbClien
 	for i := 0; i < option.RpcPoolSize; i++ {
 		client, err := NewRpcClient(url, username, key, option)
 		if err != nil {
+			for j := 0; j < i; j++ {
+				clients[i].Close()
+			}
 			return nil, fmt.Errorf("new rpc client for client pool failed. err: %v", err.Error())
 		}
 		clients[i] = client
@@ -353,6 +356,15 @@ func (pool *RpcClientPool) AddIndex(ctx context.Context, databaseName, collectio
 		return fmt.Errorf("get rpc client failed. err: %v", err.Error())
 	}
 	return client.AddIndex(ctx, databaseName, collectionName, params...)
+}
+
+func (pool *RpcClientPool) DropIndex(ctx context.Context, databaseName, collectionName string,
+	params DropIndexParams) (err error) {
+	client, err := pool.getRpcClient()
+	if err != nil {
+		return fmt.Errorf("get rpc client failed. err: %v", err.Error())
+	}
+	return client.DropIndex(ctx, databaseName, collectionName, params)
 }
 
 func (pool *RpcClientPool) ModifyVectorIndex(ctx context.Context, databaseName, collectionName string,

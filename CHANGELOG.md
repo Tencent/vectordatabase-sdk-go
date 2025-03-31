@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.7.0
+* feat: support /index/drop interface
+* feat: /document/count support config the ReadConsistency param
+
 ## v1.6.5
 * feat: get stopwords from cos
 

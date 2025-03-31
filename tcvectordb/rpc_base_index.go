@@ -24,6 +24,10 @@ func (r *rpcImplementerIndex) AddIndex(ctx context.Context, params ...*AddIndexP
 	return r.flat.AddIndex(ctx, r.database.DatabaseName, r.collection.CollectionName, params...)
 }
 
+func (r *rpcImplementerIndex) DropIndex(ctx context.Context, params DropIndexParams) error {
+	return r.flat.DropIndex(ctx, r.database.DatabaseName, r.collection.CollectionName, params)
+}
+
 // [ModifyVectorIndex] modifies vector indexes to an existing collection.
 func (r *rpcImplementerIndex) ModifyVectorIndex(ctx context.Context, param ModifyVectorIndexParam) error {
 	return r.flat.ModifyVectorIndex(ctx, r.database.DatabaseName, r.collection.CollectionName, param)

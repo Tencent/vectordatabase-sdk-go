@@ -33,6 +33,9 @@ type IndexInterface interface {
 	// [AddIndex] adds scalar field index to an existing collection.
 	AddIndex(ctx context.Context, params ...*AddIndexParams) (err error)
 
+	// [DropIndex] drops scalar field index to an existing collection.
+	DropIndex(ctx context.Context, params DropIndexParams) (err error)
+
 	// [ModifyVectorIndex] modifies vector indexes to an existing collection.
 	ModifyVectorIndex(ctx context.Context, param ModifyVectorIndexParam) (err error)
 }
@@ -76,6 +79,10 @@ func (i *implementerIndex) RebuildIndex(ctx context.Context, params ...*RebuildI
 // Returns an error if the addition fails.
 func (i *implementerIndex) AddIndex(ctx context.Context, params ...*AddIndexParams) error {
 	return i.flat.AddIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
+}
+
+func (i *implementerIndex) DropIndex(ctx context.Context, params DropIndexParams) error {
+	return i.flat.DropIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params)
 }
 
 // [ModifyVectorIndex] modifies vector indexes to an existing collection.
