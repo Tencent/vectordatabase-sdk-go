@@ -143,6 +143,7 @@ type UploadUrlReq struct {
 	Database        string              `json:"database"`
 	CollectionView  string              `json:"collectionView"`
 	DocumentSetName string              `json:"documentSetName"`
+	ByteLength      *uint64             `json:"byteLength,omitempty"`
 	ParsingProcess  *api.ParsingProcess `json:"parsingProcess,omitempty"`
 }
 

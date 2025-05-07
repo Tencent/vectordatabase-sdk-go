@@ -496,6 +496,7 @@ func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map
 type GetCosTmpSecretParams struct {
 	DocumentSetName string              `json:"documentSetName"`
 	ParsingProcess  *api.ParsingProcess `json:"parsingProcess,omitempty"`
+	ByteLength      *uint64             `json:"byteLength,omitempty"`
 }
 
 type GetCosTmpSecretResult struct {
@@ -536,6 +537,7 @@ func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param G
 	req.CollectionView = i.collectionView.CollectionViewName
 	req.DocumentSetName = param.DocumentSetName
 	req.ParsingProcess = param.ParsingProcess
+	req.ByteLength = param.ByteLength
 
 	err := i.Request(ctx, req, res)
 	if err != nil {
@@ -614,9 +616,11 @@ func (i *implementerAIDocumentSets) LoadAndSplitText(ctx context.Context, param 
 	}
 	defer reader.Close()
 
+	byteLength := uint64(size)
 	res, err := i.GetCosTmpSecret(ctx, GetCosTmpSecretParams{
 		DocumentSetName: param.DocumentSetName,
 		ParsingProcess:  param.ParsingProcess,
+		ByteLength:      &byteLength,
 	})
 	if err != nil {
 		return nil, err

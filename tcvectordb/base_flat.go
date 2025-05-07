@@ -409,12 +409,15 @@ func uploadFile(ctx context.Context, cli SdkClient, databaseName, collectionName
 	}
 	defer reader.Close()
 
+	byteLength := uint64(size)
+
 	req := new(document.UploadUrlReq)
 	req.Database = databaseName
 	req.Collection = collectionName
 	req.FileName = param.FileName
 	req.EmbeddingModel = param.EmbeddingModel
 	req.SplitterPreprocess = &param.SplitterPreprocess
+	req.ByteLength = &byteLength
 
 	if param.ParsingProcess != nil {
 		req.ParsingProcess = new(api.ParsingProcess)
