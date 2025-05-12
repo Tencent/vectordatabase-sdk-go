@@ -308,6 +308,7 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 		return nil, fmt.Errorf("get collection %s failed", name)
 	}
 	coll := i.toCollection(res.Collection)
+	coll.connCollectionName = name
 	result := new(DescribeCollectionResult)
 	result.Collection = *coll
 	return result, nil
@@ -392,6 +393,7 @@ func (i *implementerCollection) Collection(name string) *Collection {
 	coll := new(Collection)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionName = name
+	coll.connCollectionName = name
 
 	flatImpl := new(implementerFlatDocument)
 	flatImpl.SdkClient = i.SdkClient
@@ -421,6 +423,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	coll := new(Collection)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionName = collectionItem.Collection
+	coll.connCollectionName = collectionItem.Collection
 	coll.DocumentCount = collectionItem.DocumentCount
 	coll.Alias = collectionItem.Alias
 	coll.ShardNum = collectionItem.ShardNum
@@ -605,22 +608,23 @@ func optionParamsFromIndexParams(column *api.IndexColumn, v IndexParams) {
 //     In this case, the document will be automatically removed after 60 minites when the time specified
 //     in the expire_at field is reached.
 type Collection struct {
-	DocumentInterface `json:"-"`
-	IndexInterface    `json:"-"`
-	DatabaseName      string             `json:"databaseName"`
-	CollectionName    string             `json:"collectionName"`
-	DocumentCount     int64              `json:"documentCount"`
-	Alias             []string           `json:"alias"`
-	ShardNum          uint32             `json:"shardNum"`
-	ReplicasNum       uint32             `json:"replicasNum"`
-	Indexes           Indexes            `json:"indexes"`
-	IndexStatus       IndexStatus        `json:"indexStatus"`
-	Embedding         Embedding          `json:"embedding"`
-	Description       string             `json:"description"`
-	Size              uint64             `json:"size"`
-	CreateTime        time.Time          `json:"createTime"`
-	TtlConfig         *TtlConfig         `json:"ttlConfig,omitempty"`
-	FilterIndexConfig *FilterIndexConfig `json:"filterIndexConfig,omitempty"`
+	DocumentInterface  `json:"-"`
+	IndexInterface     `json:"-"`
+	DatabaseName       string `json:"databaseName"`
+	CollectionName     string `json:"collectionName"`
+	connCollectionName string
+	DocumentCount      int64              `json:"documentCount"`
+	Alias              []string           `json:"alias"`
+	ShardNum           uint32             `json:"shardNum"`
+	ReplicasNum        uint32             `json:"replicasNum"`
+	Indexes            Indexes            `json:"indexes"`
+	IndexStatus        IndexStatus        `json:"indexStatus"`
+	Embedding          Embedding          `json:"embedding"`
+	Description        string             `json:"description"`
+	Size               uint64             `json:"size"`
+	CreateTime         time.Time          `json:"createTime"`
+	TtlConfig          *TtlConfig         `json:"ttlConfig,omitempty"`
+	FilterIndexConfig  *FilterIndexConfig `json:"filterIndexConfig,omitempty"`
 }
 
 func (c *Collection) Debug(v bool) {

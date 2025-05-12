@@ -97,7 +97,7 @@ type UpsertDocumentResult struct {
 //
 // Returns a pointer to a [UpsertDocumentResult] object or an error.
 func (i *implementerDocument) Upsert(ctx context.Context, documents interface{}, params ...*UpsertDocumentParams) (result *UpsertDocumentResult, err error) {
-	return i.flat.Upsert(ctx, i.database.DatabaseName, i.collection.CollectionName, documents, params...)
+	return i.flat.Upsert(ctx, i.database.DatabaseName, i.collection.connCollectionName, documents, params...)
 }
 
 // [QueryDocumentParams] holds the parameters for querying documents to a collection.
@@ -139,7 +139,7 @@ type QueryDocumentResult struct {
 //
 // Returns a pointer to a [QueryDocumentResult] object or an error.
 func (i *implementerDocument) Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
-	return i.flat.Query(ctx, i.database.DatabaseName, i.collection.CollectionName, documentIds, params...)
+	return i.flat.Query(ctx, i.database.DatabaseName, i.collection.connCollectionName, documentIds, params...)
 }
 
 // [SearchDocumentParams] holds the parameters for searching documents to a collection.
@@ -197,7 +197,7 @@ type SearchDocumentResult struct {
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
-	return i.flat.Search(ctx, i.database.DatabaseName, i.collection.CollectionName, vectors, params...)
+	return i.flat.Search(ctx, i.database.DatabaseName, i.collection.connCollectionName, vectors, params...)
 }
 
 // [SearchById] returns the most similar topK vectors by the given documentIds.
@@ -213,7 +213,7 @@ func (i *implementerDocument) Search(ctx context.Context, vectors [][]float32, p
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
-	return i.flat.SearchById(ctx, i.database.DatabaseName, i.collection.CollectionName, documentIds, params...)
+	return i.flat.SearchById(ctx, i.database.DatabaseName, i.collection.connCollectionName, documentIds, params...)
 }
 
 // [SearchByText] returns the most similar topK vectors by the given text map.
@@ -230,7 +230,7 @@ func (i *implementerDocument) SearchById(ctx context.Context, documentIds []stri
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
-	return i.flat.SearchByText(ctx, i.database.DatabaseName, i.collection.CollectionName, text, params...)
+	return i.flat.SearchByText(ctx, i.database.DatabaseName, i.collection.connCollectionName, text, params...)
 }
 
 // [HybridSearchDocumentParams] holds the parameters for hybrid searching documents to a collection.
@@ -324,7 +324,7 @@ type AnnParam struct {
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
-	return i.flat.HybridSearch(ctx, i.database.DatabaseName, i.collection.CollectionName, params)
+	return i.flat.HybridSearch(ctx, i.database.DatabaseName, i.collection.connCollectionName, params)
 }
 
 // [DeleteDocumentParams] holds the parameters for deleting documents to a collection.
@@ -355,7 +355,7 @@ type DeleteDocumentResult struct {
 //
 // Returns a pointer to a [DeleteDocumentResult] object or an error.
 func (i *implementerDocument) Delete(ctx context.Context, param DeleteDocumentParams) (result *DeleteDocumentResult, err error) {
-	return i.flat.Delete(ctx, i.database.DatabaseName, i.collection.CollectionName, param)
+	return i.flat.Delete(ctx, i.database.DatabaseName, i.collection.connCollectionName, param)
 }
 
 // [UpdateDocumentParams] holds the parameters for updating documents to a collection.
@@ -390,7 +390,7 @@ type UpdateDocumentResult struct {
 //
 // Returns a pointer to a [UpdateDocumentResult] object or an error.
 func (i *implementerDocument) Update(ctx context.Context, param UpdateDocumentParams) (*UpdateDocumentResult, error) {
-	return i.flat.Update(ctx, i.database.DatabaseName, i.collection.CollectionName, param)
+	return i.flat.Update(ctx, i.database.DatabaseName, i.collection.connCollectionName, param)
 }
 
 // [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
@@ -405,7 +405,7 @@ func (i *implementerDocument) Update(ctx context.Context, param UpdateDocumentPa
 //
 // Returns a pointer to a [CountDocumentResult] object or an error.
 func (i *implementerDocument) Count(ctx context.Context, params ...CountDocumentParams) (*CountDocumentResult, error) {
-	return i.flat.Count(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
+	return i.flat.Count(ctx, i.database.DatabaseName, i.collection.connCollectionName, params...)
 }
 
 type Document struct {

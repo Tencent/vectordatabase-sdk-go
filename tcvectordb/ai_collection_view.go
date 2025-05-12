@@ -74,8 +74,9 @@ type AICollectionViewInterface interface {
 //   - CreateTime: The create time of collectionView.
 type AICollectionView struct {
 	AIDocumentSetsInterface `json:"-"`
-	DatabaseName            string                              `json:"databaseName"`
-	CollectionViewName      string                              `json:"collectionViewName"`
+	DatabaseName            string `json:"databaseName"`
+	CollectionViewName      string `json:"collectionViewName"`
+	connCollectionViewName  string
 	Alias                   []string                            `json:"alias"`
 	Embedding               *collection_view.DocumentEmbedding  `json:"embedding"`
 	SplitterPreprocess      *collection_view.SplitterPreprocess `json:"splitterPreprocess"`
@@ -245,6 +246,7 @@ func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, 
 		return nil, fmt.Errorf("get collectionView %s failed", name)
 	}
 	coll := i.toCollectionView(res.CollectionView)
+	coll.connCollectionViewName = name
 	result := new(DescribeAICollectionViewResult)
 	result.AICollectionView = *coll
 	return result, nil
@@ -335,6 +337,7 @@ func (i *implementerCollectionView) CollectionView(name string) *AICollectionVie
 	coll := new(AICollectionView)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionViewName = name
+	coll.connCollectionViewName = name
 
 	docImpl := new(implementerAIDocumentSets)
 	docImpl.SdkClient = i.SdkClient
@@ -349,6 +352,7 @@ func (i *implementerCollectionView) toCollectionView(item *collection_view.Descr
 	coll := new(AICollectionView)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionViewName = item.CollectionView
+	coll.connCollectionViewName = item.CollectionView
 	coll.Description = item.Description
 	coll.Alias = item.Alias
 	coll.CreateTime, _ = time.Parse("2006-01-02 15:04:05", item.CreateTime)

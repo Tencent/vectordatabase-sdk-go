@@ -140,7 +140,7 @@ func (i *implementerAIDocumentSets) Query(ctx context.Context, param QueryAIDocu
 	res := new(ai_document_set.QueryRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionViewName
+	req.CollectionView = i.collectionView.connCollectionViewName
 	req.Query = &ai_document_set.QueryCond{
 		DocumentSetId:   param.DocumentSetId,
 		DocumentSetName: param.DocumentSetName,
@@ -208,7 +208,7 @@ func (i *implementerAIDocumentSets) get(ctx context.Context, param GetAIDocument
 	res := new(ai_document_set.GetRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionViewName
+	req.CollectionView = i.collectionView.connCollectionViewName
 	req.DocumentSetId = param.DocumentSetId
 	req.DocumentSetName = param.DocumentSetName
 
@@ -255,7 +255,7 @@ func (i *implementerAIDocumentSets) GetChunks(ctx context.Context, param GetAIDo
 	res := new(ai_document_set.GetChunksRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionViewName
+	req.CollectionView = i.collectionView.connCollectionViewName
 	req.DocumentSetId = param.DocumentSetId
 	req.DocumentSetName = param.DocumentSetName
 	req.Limit = param.Limit
@@ -317,7 +317,7 @@ func (i *implementerAIDocumentSets) Search(ctx context.Context, param SearchAIDo
 	res := new(ai_document_set.SearchRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionViewName
+	req.CollectionView = i.collectionView.connCollectionViewName
 	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
 	req.Search = new(ai_document_set.SearchCond)
 
@@ -416,7 +416,7 @@ func (i *implementerAIDocumentSets) Delete(ctx context.Context, param DeleteAIDo
 	res := new(ai_document_set.DeleteRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionViewName
+	req.CollectionView = i.collectionView.connCollectionViewName
 	req.Query = &ai_document_set.DeleteQueryCond{
 		DocumentSetId:   param.DocumentSetIds,
 		DocumentSetName: param.DocumentSetNames,
@@ -469,7 +469,7 @@ func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map
 	res := new(ai_document_set.UpdateRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionViewName
+	req.CollectionView = i.collectionView.connCollectionViewName
 
 	req.Query = ai_document_set.UpdateQueryCond{
 		DocumentSetId:   param.DocumentSetId,
@@ -534,7 +534,7 @@ func (i *implementerAIDocumentSets) GetCosTmpSecret(ctx context.Context, param G
 	res := new(ai_document_set.UploadUrlRes)
 
 	req.Database = i.database.DatabaseName
-	req.CollectionView = i.collectionView.CollectionViewName
+	req.CollectionView = i.collectionView.connCollectionViewName
 	req.DocumentSetName = param.DocumentSetName
 	req.ParsingProcess = param.ParsingProcess
 	req.ByteLength = param.ByteLength

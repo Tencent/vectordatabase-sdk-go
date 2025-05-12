@@ -63,7 +63,7 @@ type RebuildIndexResult struct {
 //
 // Returns a pointer to a [RebuildIndexResult] object or an error.
 func (i *implementerIndex) RebuildIndex(ctx context.Context, params ...*RebuildIndexParams) (*RebuildIndexResult, error) {
-	return i.flat.RebuildIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
+	return i.flat.RebuildIndex(ctx, i.database.DatabaseName, i.collection.connCollectionName, params...)
 }
 
 // [AddIndex] adds scalar field index to an existing collection.
@@ -78,14 +78,14 @@ func (i *implementerIndex) RebuildIndex(ctx context.Context, params ...*RebuildI
 //
 // Returns an error if the addition fails.
 func (i *implementerIndex) AddIndex(ctx context.Context, params ...*AddIndexParams) error {
-	return i.flat.AddIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params...)
+	return i.flat.AddIndex(ctx, i.database.DatabaseName, i.collection.connCollectionName, params...)
 }
 
 func (i *implementerIndex) DropIndex(ctx context.Context, params DropIndexParams) error {
-	return i.flat.DropIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, params)
+	return i.flat.DropIndex(ctx, i.database.DatabaseName, i.collection.connCollectionName, params)
 }
 
 // [ModifyVectorIndex] modifies vector indexes to an existing collection.
 func (i *implementerIndex) ModifyVectorIndex(ctx context.Context, param ModifyVectorIndexParam) error {
-	return i.flat.ModifyVectorIndex(ctx, i.database.DatabaseName, i.collection.CollectionName, param)
+	return i.flat.ModifyVectorIndex(ctx, i.database.DatabaseName, i.collection.connCollectionName, param)
 }
