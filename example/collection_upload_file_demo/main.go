@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
@@ -23,7 +24,7 @@ func NewDemo(url, username, key string) (*Demo, error) {
 	if err != nil {
 		return nil, err
 	}
-	// disable/enable http request log print
+	// disable/enable request log print
 	// cli.Debug(false)
 	return &Demo{client: cli}, nil
 }
@@ -62,26 +63,20 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection s
 	})
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY})
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "file_name", FieldType: tcvectordb.String, IndexType: tcvectordb.FILTER})
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "chunk_num", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "section_num", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
 
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollectionIfNotExists(ctx, collection, 3, 1, "test collection", index)
+	_, err = db.CreateCollectionIfNotExists(ctx, collection, 3, 0, "test collection", index)
 	if err != nil {
 		return err
 	}
-
-	log.Println("------------------------ DescribeCollection ------------------------")
-	// 查看 Collection 信息
-	colRes, err := db.DescribeCollection(ctx, collection)
-	if err != nil {
-		return err
-	}
-	log.Printf("DescribeCollection: %+v", colRes)
 	return nil
 }
 
 func (d *Demo) UploadFile(ctx context.Context, database, collection, localFilePath string) error {
 	appendKeywordsToChunk := false
-	appendTitleToChunk := false
+	appendTitleToChunk := true
 
 	// filename := filepath.Base(localFilePath)
 	// fd, err := os.Open(localFilePath)
@@ -102,41 +97,48 @@ func (d *Demo) UploadFile(ctx context.Context, database, collection, localFilePa
 		},
 		EmbeddingModel: "bge-base-zh",
 		FieldMappings: map[string]string{
-			"filename":  "file_name",
-			"text":      "text",
-			"imageList": "image_list",
+			"filename":   "file_name",
+			"text":       "text",
+			"imageList":  "image_list",
+			"chunkNum":   "chunk_num",
+			"sectionNum": "section_num",
 		},
 		MetaData: map[string]interface{}{
-			"author": "sam",
+			"testStr": "v1",
+			"testInt": 1024,
 		},
 	}
-	result, err := d.client.UploadFile(ctx, database, collection, param)
+
+	_, err := d.client.UploadFile(ctx, database, collection, param)
 	if err != nil {
-		return err
+		log.Printf("UploadFile err: %+v", err.Error())
 	}
-	log.Printf("UploadFile result: %+v", result)
+
 	return nil
 }
 
 func (d *Demo) QueryData(ctx context.Context, database, collection, filename string) error {
-	time.Sleep(10 * time.Second)
-	log.Println("------------------------------ Query after waiting 10s to parse file ------------------------------")
+	time.Sleep(15 * time.Second)
+	log.Println("------------------------------ Query after waiting 15s to parse file ------------------------------")
 
 	result, err := d.client.Query(ctx, database, collection, []string{}, &tcvectordb.QueryDocumentParams{
-		Filter:         tcvectordb.NewFilter(`file_name="` + filename + `"`),
-		RetrieveVector: false,
-		Limit:          1000,
-		OutputFields:   []string{"id", "file_name", "name"},
+		Filter: tcvectordb.NewFilter(`file_name="` + filename + `"`),
+		Limit:  2,
 	})
 	if err != nil {
 		return err
 	}
 	ids := []string{}
 	for _, doc := range result.Documents {
-		log.Printf("QueryDocument: %+v", doc)
+		log.Printf("File chunk: %+v", doc)
 		ids = append(ids, doc.Id)
 	}
 
+	if len(ids) == 0 {
+		return nil
+	}
+
+	log.Println("------------------------------ Get file chunks' imageUrls ------------------------------")
 	res, err := d.client.GetImageUrl(ctx, database, collection, tcvectordb.GetImageUrlParams{
 		FileName:    filename,
 		DocumentIds: ids,
@@ -148,6 +150,54 @@ func (d *Demo) QueryData(ctx context.Context, database, collection, filename str
 		for _, docImage := range docImages {
 			log.Printf("docImage: %+v", docImage)
 		}
+	}
+
+	log.Println("------------------------------ Query file neighbor chunks ------------------------------")
+	if len(result.Documents) != 2 {
+		return nil
+	}
+	chunkDoc := result.Documents[1]
+	if _, ok := chunkDoc.Fields["chunk_num"]; !ok || chunkDoc.Fields["chunk_num"].Type() != tcvectordb.Uint64 {
+		return nil
+	}
+
+	chunkNum := chunkDoc.Fields["chunk_num"].Uint64()
+	leftChunkNum := uint64(0)
+	if chunkNum >= 2 {
+		leftChunkNum = chunkNum - 2
+	}
+	rightChunkNum := chunkNum + 2
+
+	result, err = d.client.Query(ctx, database, collection, []string{}, &tcvectordb.QueryDocumentParams{
+		Filter: tcvectordb.NewFilter(`file_name="` + filename + `"`).And(`chunk_num>=` +
+			strconv.Itoa(int(leftChunkNum)) + ` and chunk_num<=` + strconv.Itoa(int(rightChunkNum))),
+		Limit: 10,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, doc := range result.Documents {
+		log.Printf("File expand chunk: %+v", doc)
+	}
+
+	log.Println("------------------------------ Query file neighbor chunks  with same section ------------------------------")
+	if _, ok := chunkDoc.Fields["section_num"]; !ok || chunkDoc.Fields["section_num"].Type() != tcvectordb.Uint64 {
+		return nil
+	}
+	sectionNum := chunkDoc.Fields["section_num"].Uint64()
+	result, err = d.client.Query(ctx, database, collection, []string{}, &tcvectordb.QueryDocumentParams{
+		Filter: tcvectordb.NewFilter(`file_name="` + filename + `"`).And(`chunk_num>=` +
+			strconv.Itoa(int(leftChunkNum)) + ` and chunk_num<=` + strconv.Itoa(int(rightChunkNum))).And(
+			`section_num=` + strconv.Itoa(int(sectionNum))),
+		Limit: 10,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, doc := range result.Documents {
+		log.Printf("File expand chunk with same section: %+v", doc)
 	}
 
 	return nil
@@ -164,11 +214,13 @@ func main() {
 	collectionName := "go-sdk-demo-col-test4"
 
 	_, filePath, _, _ := runtime.Caller(0)
-	localFilePath := path.Join(path.Dir(filePath), "../demo_files/demo_pdf_image2text_search.pdf")
+	localFilePath := path.Join(path.Dir(filePath), "../demo_files/tcvdb.pdf")
 	filename := filepath.Base(localFilePath)
 
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
+	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
+	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.UploadFile(ctx, database, collectionName, localFilePath)

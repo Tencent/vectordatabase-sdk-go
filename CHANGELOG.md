@@ -1,5 +1,11 @@
 # Changelog
 
+
+## v1.7.1
+* fix: Keep using collection/collectionView user defined to access the interface within the Collection/AICollectionView object
+* feat: support chunk_num and section_num when uploading files in a collection
+* feat: support to check file byte size when uploading files in a collection or collectionView
+
 ## v1.7.0
 * feat: support /index/drop interface
 * feat: /document/count support config the ReadConsistency param
