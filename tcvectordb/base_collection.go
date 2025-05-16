@@ -590,6 +590,7 @@ func optionParamsFromIndexParams(column *api.IndexColumn, v IndexParams) {
 // Fields:
 //   - DatabaseName: The name of the database.
 //   - CollectionName: The name of the collection.
+//   - connCollectionName: The name of the collection used for connection operations.
 //   - DocumentCount: The number of documents in the Collection.
 //   - Alias: All aliases of the Collection.
 //   - ShardNum: The shard number of the collection, which must bigger than 0.
@@ -608,10 +609,11 @@ func optionParamsFromIndexParams(column *api.IndexColumn, v IndexParams) {
 //     In this case, the document will be automatically removed after 60 minites when the time specified
 //     in the expire_at field is reached.
 type Collection struct {
-	DocumentInterface  `json:"-"`
-	IndexInterface     `json:"-"`
-	DatabaseName       string `json:"databaseName"`
-	CollectionName     string `json:"collectionName"`
+	DocumentInterface `json:"-"`
+	IndexInterface    `json:"-"`
+	DatabaseName      string `json:"databaseName"`
+	CollectionName    string `json:"collectionName"`
+	// connCollectionName: The name of the collection used for connection operations.
 	connCollectionName string
 	DocumentCount      int64              `json:"documentCount"`
 	Alias              []string           `json:"alias"`

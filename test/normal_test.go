@@ -461,3 +461,73 @@ func TestEmeb(t *testing.T) {
 	model := "model_bge"
 	println(tcvectordb.EmbeddingModel(model))
 }
+
+func TestAliaCollection(t *testing.T) {
+	_, err := cli.DropDatabase(ctx, database)
+	printErr(err)
+	_, err = cli.CreateDatabase(ctx, database)
+	printErr(err)
+	db := cli.Database(database)
+
+	collectionName1 := collectionName + "1"
+	collectionName2 := collectionName + "2"
+
+	index := tcvectordb.Indexes{
+		VectorIndex: []tcvectordb.VectorIndex{
+			{
+				FilterIndex: tcvectordb.FilterIndex{
+					FieldName: "vector",
+					FieldType: tcvectordb.Vector,
+					IndexType: tcvectordb.HNSW,
+				},
+				Dimension:  3,
+				MetricType: tcvectordb.COSINE,
+				Params: &tcvectordb.HNSWParam{
+					M:              16,
+					EfConstruction: 200,
+				},
+			},
+		},
+		FilterIndex: []tcvectordb.FilterIndex{
+			{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY, AutoId: "uuid"},
+		},
+	}
+
+	db.WithTimeout(time.Second * 30)
+	db.CreateCollection(ctx, collectionName1, 3, 1, "test collection", index)
+	db.CreateCollection(ctx, collectionName2, 3, 1, "test collection", index)
+
+	_, err = cli.Upsert(ctx, database, collectionName1, []map[string]interface{}{
+		{
+			"id":       "12",
+			"vector":   []float32{0.2123, 0.24, 0.213},
+			"bookName": "三国演义",
+			"author":   "罗贯中",
+			"page":     24,
+			"segment":  "布大惊，与陈宫商议。宫曰：“闻刘玄德新领徐州，可往投之。”布从其言，竟投徐州来。有人报知玄德。",
+			"tag":      []string{"曹操", "诸葛亮", "刘备"},
+		},
+	})
+	printErr(err)
+
+	collectionAliasTemp := collectionName + "alias"
+	db.SetAlias(ctx, collectionName1, collectionAliasTemp)
+	coll, err := db.DescribeCollection(ctx, collectionAliasTemp)
+	res, err := coll.Query(ctx, nil, &tcvectordb.QueryDocumentParams{
+		Limit: 3,
+	})
+	printErr(err)
+	if len(res.Documents) == 1 {
+		log.Println("res.Documents query count is 1")
+	}
+	db.SetAlias(ctx, collectionName2, collectionAliasTemp)
+	res, err = coll.Query(ctx, nil, &tcvectordb.QueryDocumentParams{
+		Limit: 3,
+	})
+	printErr(err)
+	print(len(res.Documents))
+	if len(res.Documents) == 0 {
+		log.Println("res.Documents query count is 0")
+	}
+
+}

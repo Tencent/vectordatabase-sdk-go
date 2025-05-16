@@ -34,6 +34,8 @@ type CreateReq struct {
 	Indexes            []*api.IndexColumn  `json:"indexes,omitempty"`
 	ExpectedFileNum    uint64              `json:"expectedFileNum,omitempty"`
 	AverageFileSize    uint64              `json:"averageFileSize,omitempty"`
+	ReplicaNum         *uint32             `json:"replicaNum,omitempty"`
+	ShardNum           *uint32             `json:"shardNum,omitempty"`
 }
 
 type DocumentEmbedding struct {
@@ -84,6 +86,9 @@ type DescribeCollectionViewItem struct {
 	CreateTime string   `json:"createTime"`
 	Alias      []string `json:"alias,omitempty"`
 	Status     *Status  `json:"stats"`
+
+	ReplicaNum *uint32 `json:"replicaNum,omitempty"`
+	ShardNum   *uint32 `json:"shardNum,omitempty"`
 }
 
 type Status struct {

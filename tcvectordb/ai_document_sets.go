@@ -493,6 +493,7 @@ func (i *implementerAIDocumentSets) Update(ctx context.Context, updateFields map
 //   - DocumentSetName: The name of the documentSet(file).
 //   - ParsingProcess: A pointer to a [ParsingProcess] object, which includes the parameters
 //     for parsing files. See [ParsingProcess] for more information.
+//   - ByteLength: (Optional) The size of the file to be uploaded in bytes.
 type GetCosTmpSecretParams struct {
 	DocumentSetName string              `json:"documentSetName"`
 	ParsingProcess  *api.ParsingProcess `json:"parsingProcess,omitempty"`

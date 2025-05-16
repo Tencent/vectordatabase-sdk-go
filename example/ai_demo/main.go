@@ -103,9 +103,12 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 
 	db.WithTimeout(time.Second * 30)
 
-	enableWordsEmbedding := true
-	appendTitleToChunk := true
-	appendKeywordsToChunk := false
+	enableWordsEmbedding := false
+	appendTitleToChunk := false
+	appendKeywordsToChunk := true
+
+	shardNum := uint32(3)
+	replicaNum := uint32(1)
 
 	_, err := db.CreateCollectionView(ctx, collectionView, tcvectordb.CreateCollectionViewParams{
 		Description: "desc",
@@ -123,6 +126,8 @@ func (d *AIDemo) CreateCollectionView(ctx context.Context, database, collectionV
 		ParsingProcess: &api.ParsingProcess{
 			ParsingType: string(tcvectordb.VisionModelParsing),
 		},
+		ShardNum:   &shardNum,
+		ReplicaNum: &replicaNum,
 	})
 
 	if err != nil {

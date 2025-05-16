@@ -332,6 +332,17 @@ func (i *implementerFlatDocument) ChangePassword(ctx context.Context, param Chan
 	return nil
 }
 
+// UploadFileParams holds the parameters for uploading a file to the collection.
+//
+// Fields:
+//   - FileName: The name of the file to be uploaded. If not provided, it will be derived from LocalFilePath.
+//   - LocalFilePath: The local path of the file to be uploaded. Either this or Reader must be provided.
+//   - Reader: An io.Reader that provides the file content. Either this or LocalFilePath must be provided.
+//   - SplitterPreprocess: Configuration for document splitting preprocessing.
+//   - EmbeddingModel: The model to use for embedding the document content.
+//   - ParsingProcess: Configuration for parsing the uploaded file.
+//   - FieldMappings: A map of field names to their corresponding mappings in the document.
+//   - MetaData: Additional metadata to be associated with the uploaded file.
 type UploadFileParams struct {
 	FileName           string
 	LocalFilePath      string

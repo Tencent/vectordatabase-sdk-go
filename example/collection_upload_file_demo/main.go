@@ -12,6 +12,7 @@ import (
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 )
 
 type Demo struct {
@@ -66,8 +67,12 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection s
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "chunk_num", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "section_num", FieldType: tcvectordb.Uint64, IndexType: tcvectordb.FILTER})
 
+	ebd := &tcvectordb.Embedding{VectorField: "vector", Field: "text", ModelName: "bge-base-zh"}
+
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollectionIfNotExists(ctx, collection, 3, 0, "test collection", index)
+	_, err = db.CreateCollectionIfNotExists(ctx, collection, 3, 1, "test collection", index, &tcvectordb.CreateCollectionParams{
+		Embedding: ebd,
+	})
 	if err != nil {
 		return err
 	}
@@ -75,8 +80,8 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection s
 }
 
 func (d *Demo) UploadFile(ctx context.Context, database, collection, localFilePath string) error {
-	appendKeywordsToChunk := false
-	appendTitleToChunk := true
+	appendKeywordsToChunk := true
+	appendTitleToChunk := false
 
 	// filename := filepath.Base(localFilePath)
 	// fd, err := os.Open(localFilePath)
@@ -112,6 +117,7 @@ func (d *Demo) UploadFile(ctx context.Context, database, collection, localFilePa
 	_, err := d.client.UploadFile(ctx, database, collection, param)
 	if err != nil {
 		log.Printf("UploadFile err: %+v", err.Error())
+		return err
 	}
 
 	return nil
@@ -124,6 +130,12 @@ func (d *Demo) QueryData(ctx context.Context, database, collection, filename str
 	result, err := d.client.Query(ctx, database, collection, []string{}, &tcvectordb.QueryDocumentParams{
 		Filter: tcvectordb.NewFilter(`file_name="` + filename + `"`),
 		Limit:  2,
+		Sort: []document.SortRule{
+			{
+				FieldName: "chunk_num",
+				Direction: "asc",
+			},
+		},
 	})
 	if err != nil {
 		return err
@@ -172,6 +184,12 @@ func (d *Demo) QueryData(ctx context.Context, database, collection, filename str
 		Filter: tcvectordb.NewFilter(`file_name="` + filename + `"`).And(`chunk_num>=` +
 			strconv.Itoa(int(leftChunkNum)) + ` and chunk_num<=` + strconv.Itoa(int(rightChunkNum))),
 		Limit: 10,
+		Sort: []document.SortRule{
+			{
+				FieldName: "chunk_num",
+				Direction: "asc",
+			},
+		},
 	})
 	if err != nil {
 		return err
@@ -191,6 +209,12 @@ func (d *Demo) QueryData(ctx context.Context, database, collection, filename str
 			strconv.Itoa(int(leftChunkNum)) + ` and chunk_num<=` + strconv.Itoa(int(rightChunkNum))).And(
 			`section_num=` + strconv.Itoa(int(sectionNum))),
 		Limit: 10,
+		Sort: []document.SortRule{
+			{
+				FieldName: "chunk_num",
+				Direction: "asc",
+			},
+		},
 	})
 	if err != nil {
 		return err
@@ -198,6 +222,25 @@ func (d *Demo) QueryData(ctx context.Context, database, collection, filename str
 
 	for _, doc := range result.Documents {
 		log.Printf("File expand chunk with same section: %+v", doc)
+	}
+
+	log.Println("------------------------------ search file chunks by text  ------------------------------")
+	filter := tcvectordb.NewFilter(`file_name="` + filename + `"`)
+	searchResult, err := d.client.SearchByText(ctx, database, collection, map[string][]string{"text": {"商标声明"}},
+		&tcvectordb.SearchDocumentParams{
+			Filter: filter,
+			Params: &tcvectordb.SearchDocParams{Ef: 200}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
+			Limit:  2,                                    // 指定 Top K 的 K 值
+		})
+	if err != nil {
+		return err
+	}
+	// 输出相似性检索结果，检索结果为二维数组，每一位为一组返回结果，分别对应search时指定的多个向量
+	for i, item := range searchResult.Documents {
+		log.Printf("SearchDocumentResult, index: %d ==================", i)
+		for _, doc := range item {
+			log.Printf("SearchDocument: %+v", doc)
+		}
 	}
 
 	return nil
@@ -219,8 +262,6 @@ func main() {
 
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
-	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
-	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.UploadFile(ctx, database, collectionName, localFilePath)
