@@ -244,6 +244,7 @@ func (r *rpcImplementerCollection) DescribeCollection(ctx context.Context, name 
 		return nil, fmt.Errorf("get collection %s failed", name)
 	}
 	coll := r.toCollection(res.Collection)
+	coll.connCollectionName = name
 	result := &DescribeCollectionResult{
 		Collection: *coll,
 	}
@@ -312,8 +313,9 @@ func (r *rpcImplementerCollection) TruncateCollection(ctx context.Context, name 
 // Returns a pointer to a [Collection] object.
 func (r *rpcImplementerCollection) Collection(name string) *Collection {
 	coll := &Collection{
-		DatabaseName:   r.database.DatabaseName,
-		CollectionName: name,
+		DatabaseName:       r.database.DatabaseName,
+		CollectionName:     name,
+		connCollectionName: name,
 	}
 	flatImpl := &rpcImplementerFlatDocument{
 		SdkClient: r.SdkClient,
@@ -344,14 +346,15 @@ func (r *rpcImplementerCollection) Collection(name string) *Collection {
 
 func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateCollectionRequest) *Collection {
 	coll := &Collection{
-		DatabaseName:   r.database.DatabaseName,
-		CollectionName: collectionItem.Collection,
-		DocumentCount:  int64(collectionItem.Size),
-		Alias:          collectionItem.AliasList,
-		ShardNum:       collectionItem.ShardNum,
-		ReplicasNum:    collectionItem.ReplicaNum,
-		Description:    collectionItem.Description,
-		Size:           collectionItem.Size,
+		DatabaseName:       r.database.DatabaseName,
+		CollectionName:     collectionItem.Collection,
+		connCollectionName: collectionItem.Collection,
+		DocumentCount:      int64(collectionItem.Size),
+		Alias:              collectionItem.AliasList,
+		ShardNum:           collectionItem.ShardNum,
+		ReplicasNum:        collectionItem.ReplicaNum,
+		Description:        collectionItem.Description,
+		Size:               collectionItem.Size,
 	}
 	if collectionItem.EmbeddingParams != nil {
 		coll.Embedding.Field = collectionItem.EmbeddingParams.Field
@@ -370,8 +373,6 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 		coll.FilterIndexConfig.FilterAll = collectionItem.FilterIndexConfig.FilterAll
 		coll.FilterIndexConfig.FieldsWithoutIndex = collectionItem.FilterIndexConfig.FieldsWithoutIndex
 		coll.FilterIndexConfig.MaxStrLen = &collectionItem.FilterIndexConfig.MaxStrLen
-	} else {
-
 	}
 	if collectionItem.IndexStatus != nil {
 		coll.IndexStatus = IndexStatus{

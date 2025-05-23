@@ -34,7 +34,7 @@ type rpcImplementerDocument struct {
 //
 // Returns a pointer to a [UpsertDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Upsert(ctx context.Context, documents interface{}, params ...*UpsertDocumentParams) (*UpsertDocumentResult, error) {
-	return r.flat.Upsert(ctx, r.database.DatabaseName, r.collection.CollectionName, documents, params...)
+	return r.flat.Upsert(ctx, r.database.DatabaseName, r.collection.connCollectionName, documents, params...)
 }
 
 // [Query] queries documents that satisfies the condition from the collection.
@@ -50,7 +50,7 @@ func (r *rpcImplementerDocument) Upsert(ctx context.Context, documents interface
 //
 // Returns a pointer to a [QueryDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Query(ctx context.Context, documentIds []string, params ...*QueryDocumentParams) (*QueryDocumentResult, error) {
-	return r.flat.Query(ctx, r.database.DatabaseName, r.collection.CollectionName, documentIds, params...)
+	return r.flat.Query(ctx, r.database.DatabaseName, r.collection.connCollectionName, documentIds, params...)
 }
 
 // [Search] returns the most similar topK vectors by the given vectors.
@@ -68,7 +68,7 @@ func (r *rpcImplementerDocument) Query(ctx context.Context, documentIds []string
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Search(ctx context.Context, vectors [][]float32, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
-	return r.flat.Search(ctx, r.database.DatabaseName, r.collection.CollectionName, vectors, params...)
+	return r.flat.Search(ctx, r.database.DatabaseName, r.collection.connCollectionName, vectors, params...)
 }
 
 // [SearchById] returns the most similar topK vectors by the given documentIds.
@@ -84,7 +84,7 @@ func (r *rpcImplementerDocument) Search(ctx context.Context, vectors [][]float32
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
-	return r.flat.SearchById(ctx, r.database.DatabaseName, r.collection.CollectionName, documentIds, params...)
+	return r.flat.SearchById(ctx, r.database.DatabaseName, r.collection.connCollectionName, documentIds, params...)
 }
 
 // [SearchByText] returns the most similar topK vectors by the given text map.
@@ -101,7 +101,7 @@ func (r *rpcImplementerDocument) SearchById(ctx context.Context, documentIds []s
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
-	return r.flat.SearchByText(ctx, r.database.DatabaseName, r.collection.CollectionName, text, params...)
+	return r.flat.SearchByText(ctx, r.database.DatabaseName, r.collection.connCollectionName, text, params...)
 }
 
 // [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
@@ -116,7 +116,7 @@ func (r *rpcImplementerDocument) SearchByText(ctx context.Context, text map[stri
 //
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
-	return r.flat.HybridSearch(ctx, r.database.DatabaseName, r.collection.CollectionName, params)
+	return r.flat.HybridSearch(ctx, r.database.DatabaseName, r.collection.connCollectionName, params)
 }
 
 // [Delete] deletes documents by conditions.
@@ -131,7 +131,7 @@ func (r *rpcImplementerDocument) HybridSearch(ctx context.Context, params Hybrid
 //
 // Returns a pointer to a [DeleteDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Delete(ctx context.Context, param DeleteDocumentParams) (*DeleteDocumentResult, error) {
-	return r.flat.Delete(ctx, r.database.DatabaseName, r.collection.CollectionName, param)
+	return r.flat.Delete(ctx, r.database.DatabaseName, r.collection.connCollectionName, param)
 }
 
 // [Update] updates documents by conditions.
@@ -146,7 +146,7 @@ func (r *rpcImplementerDocument) Delete(ctx context.Context, param DeleteDocumen
 //
 // Returns a pointer to a [UpdateDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Update(ctx context.Context, param UpdateDocumentParams) (*UpdateDocumentResult, error) {
-	return r.flat.Update(ctx, r.database.DatabaseName, r.collection.CollectionName, param)
+	return r.flat.Update(ctx, r.database.DatabaseName, r.collection.connCollectionName, param)
 }
 
 // [Count] counts the number of documents in a collection that satisfy the specified filter conditions.
@@ -161,7 +161,7 @@ func (r *rpcImplementerDocument) Update(ctx context.Context, param UpdateDocumen
 //
 // Returns a pointer to a [CountDocumentResult] object or an error.
 func (r *rpcImplementerDocument) Count(ctx context.Context, params ...CountDocumentParams) (*CountDocumentResult, error) {
-	return r.flat.Count(ctx, r.database.DatabaseName, r.collection.CollectionName, params...)
+	return r.flat.Count(ctx, r.database.DatabaseName, r.collection.connCollectionName, params...)
 }
 
 type rpcImplementerFlatDocument struct {

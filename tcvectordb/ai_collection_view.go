@@ -58,6 +58,7 @@ type AICollectionViewInterface interface {
 // Fields:
 //   - DatabaseName: The name of the database.
 //   - CollectionViewName: The name of the collection.
+//   - connCollectionViewName: The name of the collectionView used for connection operations.
 //   - Alias: All aliases of the CollectionView.
 //   - Embedding: A pointer to a [DocumentEmbedding] object, which includes the parameters for embedding.
 //     See [DocumentEmbedding] for more information.
@@ -72,10 +73,14 @@ type AICollectionViewInterface interface {
 //   - FilterIndexes: A [Indexes] object that includes a list of the scalar filter index properties for the documentSets in a collectionView.
 //   - Description: (Optional) The description of the collection.
 //   - CreateTime: The create time of collectionView.
+//   - ReplicaNum: The number of replicas for the collectionView.
+//   - ShardNum: The number of shards for the collectionView.
 type AICollectionView struct {
 	AIDocumentSetsInterface `json:"-"`
-	DatabaseName            string                              `json:"databaseName"`
-	CollectionViewName      string                              `json:"collectionViewName"`
+	DatabaseName            string `json:"databaseName"`
+	CollectionViewName      string `json:"collectionViewName"`
+	// connCollectionViewName: The name of the collectionView used for connection operations.
+	connCollectionViewName  string
 	Alias                   []string                            `json:"alias"`
 	Embedding               *collection_view.DocumentEmbedding  `json:"embedding"`
 	SplitterPreprocess      *collection_view.SplitterPreprocess `json:"splitterPreprocess"`
@@ -87,6 +92,10 @@ type AICollectionView struct {
 	FilterIndexes           []FilterIndex                       `json:"filterIndexes"`
 	Description             string                              `json:"description"`
 	CreateTime              time.Time                           `json:"createTime"`
+	// ReplicaNum: The number of replicas for the collectionView.
+	ReplicaNum *uint32 `json:"replicaNum,omitempty"`
+	// ShardNum: The number of shards for the collectionView.
+	ShardNum *uint32 `json:"shardNum,omitempty"`
 }
 
 type implementerCollectionView struct {
@@ -97,7 +106,7 @@ type implementerCollectionView struct {
 // [CreateCollectionViewParams] holds the parameters for creating a new collectionView.
 //
 // Fields:
-//   - Description: (Optional) The description of the collection.
+//   - Description: (Optional) The description of the collectionView.
 //   - Indexes: A [Indexes] object that includes a list of the scalar field index properties for the documentSets in a collectionView.
 //   - Embedding: A pointer to a [DocumentEmbedding] object, which includes the parameters for embedding.
 //     See [DocumentEmbedding] for more information.
@@ -107,6 +116,8 @@ type implementerCollectionView struct {
 //     for parsing parameters. See [ParsingProcess] for more information.
 //   - ExpectedFileNum: Expected total number of documents.
 //   - AverageFileSize: Estimate the average document size.
+//   - ReplicaNum: The number of replicas for the collectionView.
+//   - ShardNum: The number of shards for the collectionView.
 type CreateCollectionViewParams struct {
 	Description        string
 	Indexes            Indexes
@@ -115,6 +126,8 @@ type CreateCollectionViewParams struct {
 	ParsingProcess     *api.ParsingProcess
 	ExpectedFileNum    uint64
 	AverageFileSize    uint64
+	ReplicaNum         *uint32
+	ShardNum           *uint32
 }
 
 type CreateAICollectionViewResult struct {
@@ -167,6 +180,8 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 	}
 	req.AverageFileSize = param.AverageFileSize
 	req.ExpectedFileNum = param.ExpectedFileNum
+	req.ShardNum = param.ShardNum
+	req.ReplicaNum = param.ReplicaNum
 
 	res := new(collection_view.CreateRes)
 	err := i.Request(ctx, req, &res)
@@ -180,7 +195,10 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 		Description:        req.Description,
 		Embedding:          req.Embedding,
 		SplitterPreprocess: req.SplitterPreprocess,
+		ParsingProcess:     req.ParsingProcess,
 		Indexes:            req.Indexes,
+		ReplicaNum:         req.ReplicaNum,
+		ShardNum:           req.ShardNum,
 	})
 	result := new(CreateAICollectionViewResult)
 	result.AICollectionView = *coll
@@ -245,6 +263,7 @@ func (i *implementerCollectionView) DescribeCollectionView(ctx context.Context, 
 		return nil, fmt.Errorf("get collectionView %s failed", name)
 	}
 	coll := i.toCollectionView(res.CollectionView)
+	coll.connCollectionViewName = name
 	result := new(DescribeAICollectionViewResult)
 	result.AICollectionView = *coll
 	return result, nil
@@ -335,6 +354,7 @@ func (i *implementerCollectionView) CollectionView(name string) *AICollectionVie
 	coll := new(AICollectionView)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionViewName = name
+	coll.connCollectionViewName = name
 
 	docImpl := new(implementerAIDocumentSets)
 	docImpl.SdkClient = i.SdkClient
@@ -349,6 +369,7 @@ func (i *implementerCollectionView) toCollectionView(item *collection_view.Descr
 	coll := new(AICollectionView)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionViewName = item.CollectionView
+	coll.connCollectionViewName = item.CollectionView
 	coll.Description = item.Description
 	coll.Alias = item.Alias
 	coll.CreateTime, _ = time.Parse("2006-01-02 15:04:05", item.CreateTime)
@@ -368,6 +389,8 @@ func (i *implementerCollectionView) toCollectionView(item *collection_view.Descr
 	if item.ParsingProcess != nil {
 		coll.ParsingProcess = item.ParsingProcess
 	}
+	coll.ShardNum = item.ShardNum
+	coll.ReplicaNum = item.ReplicaNum
 
 	if item.Status != nil {
 		coll.FailIndexedDocumentSets = item.Status.FailIndexedDocumentSets

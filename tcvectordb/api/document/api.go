@@ -277,6 +277,7 @@ type UploadUrlReq struct {
 	Database           string                                      `json:"database"`
 	Collection         string                                      `json:"collection"`
 	FileName           string                                      `json:"fileName"`
+	ByteLength         *uint64                                     `json:"byteLength,omitempty"`
 	SplitterPreprocess *ai_document_set.DocumentSplitterPreprocess `json:"splitterPreprocess,omitempty"`
 	EmbeddingModel     string                                      `json:"embeddingModel,omitempty"`
 	ParsingProcess     *api.ParsingProcess                         `json:"parsingProcess,omitempty"`

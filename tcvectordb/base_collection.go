@@ -308,6 +308,7 @@ func (i *implementerCollection) DescribeCollection(ctx context.Context, name str
 		return nil, fmt.Errorf("get collection %s failed", name)
 	}
 	coll := i.toCollection(res.Collection)
+	coll.connCollectionName = name
 	result := new(DescribeCollectionResult)
 	result.Collection = *coll
 	return result, nil
@@ -392,6 +393,7 @@ func (i *implementerCollection) Collection(name string) *Collection {
 	coll := new(Collection)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionName = name
+	coll.connCollectionName = name
 
 	flatImpl := new(implementerFlatDocument)
 	flatImpl.SdkClient = i.SdkClient
@@ -421,6 +423,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 	coll := new(Collection)
 	coll.DatabaseName = i.database.DatabaseName
 	coll.CollectionName = collectionItem.Collection
+	coll.connCollectionName = collectionItem.Collection
 	coll.DocumentCount = collectionItem.DocumentCount
 	coll.Alias = collectionItem.Alias
 	coll.ShardNum = collectionItem.ShardNum
@@ -587,6 +590,7 @@ func optionParamsFromIndexParams(column *api.IndexColumn, v IndexParams) {
 // Fields:
 //   - DatabaseName: The name of the database.
 //   - CollectionName: The name of the collection.
+//   - connCollectionName: The name of the collection used for connection operations.
 //   - DocumentCount: The number of documents in the Collection.
 //   - Alias: All aliases of the Collection.
 //   - ShardNum: The shard number of the collection, which must bigger than 0.
@@ -607,20 +611,22 @@ func optionParamsFromIndexParams(column *api.IndexColumn, v IndexParams) {
 type Collection struct {
 	DocumentInterface `json:"-"`
 	IndexInterface    `json:"-"`
-	DatabaseName      string             `json:"databaseName"`
-	CollectionName    string             `json:"collectionName"`
-	DocumentCount     int64              `json:"documentCount"`
-	Alias             []string           `json:"alias"`
-	ShardNum          uint32             `json:"shardNum"`
-	ReplicasNum       uint32             `json:"replicasNum"`
-	Indexes           Indexes            `json:"indexes"`
-	IndexStatus       IndexStatus        `json:"indexStatus"`
-	Embedding         Embedding          `json:"embedding"`
-	Description       string             `json:"description"`
-	Size              uint64             `json:"size"`
-	CreateTime        time.Time          `json:"createTime"`
-	TtlConfig         *TtlConfig         `json:"ttlConfig,omitempty"`
-	FilterIndexConfig *FilterIndexConfig `json:"filterIndexConfig,omitempty"`
+	DatabaseName      string `json:"databaseName"`
+	CollectionName    string `json:"collectionName"`
+	// connCollectionName: The name of the collection used for connection operations.
+	connCollectionName string
+	DocumentCount      int64              `json:"documentCount"`
+	Alias              []string           `json:"alias"`
+	ShardNum           uint32             `json:"shardNum"`
+	ReplicasNum        uint32             `json:"replicasNum"`
+	Indexes            Indexes            `json:"indexes"`
+	IndexStatus        IndexStatus        `json:"indexStatus"`
+	Embedding          Embedding          `json:"embedding"`
+	Description        string             `json:"description"`
+	Size               uint64             `json:"size"`
+	CreateTime         time.Time          `json:"createTime"`
+	TtlConfig          *TtlConfig         `json:"ttlConfig,omitempty"`
+	FilterIndexConfig  *FilterIndexConfig `json:"filterIndexConfig,omitempty"`
 }
 
 func (c *Collection) Debug(v bool) {
