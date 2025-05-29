@@ -52,14 +52,16 @@ const (
 type FieldType string
 
 const (
-	Uint64       FieldType = "uint64"
-	String       FieldType = "string"
-	Array        FieldType = "array"
-	Json         FieldType = "json"
-	Double       FieldType = "double"
-	Vector       FieldType = "vector"
-	SparseVector FieldType = "sparseVector"
-	BinaryVector FieldType = "binary_vector"
+	Uint64         FieldType = "uint64"
+	String         FieldType = "string"
+	Array          FieldType = "array"
+	Json           FieldType = "json"
+	Double         FieldType = "double"
+	Vector         FieldType = "vector"
+	Float16Vector  FieldType = "float16_vector"
+	BFloat16Vector FieldType = "bfloat16_vector"
+	SparseVector   FieldType = "sparseVector"
+	BinaryVector   FieldType = "binary_vector"
 )
 
 type EmbeddingModel string

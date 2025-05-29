@@ -64,6 +64,7 @@ type ModifyVectorIndexParam struct {
 
 type ModifyVectorIndex struct {
 	FieldName  string
+	FieldType  string
 	MetricType MetricType
 	Params     IndexParams
 }
@@ -165,6 +166,7 @@ func (i *implementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseNa
 	for _, v := range param.VectorIndexes {
 		var column api.IndexColumn
 		column.FieldName = v.FieldName
+		column.FieldType = v.FieldType
 		column.MetricType = string(v.MetricType)
 
 		optionParamsFromIndexParams(&column, v.Params)
