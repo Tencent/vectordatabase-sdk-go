@@ -16,11 +16,11 @@ import (
 )
 
 type Demo struct {
-	client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 func NewDemo(url, username, key string) (*Demo, error) {
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.StrongConsistency})
 	if err != nil {
 		return nil, err
@@ -275,17 +275,15 @@ func printErr(err error) {
 }
 
 func main() {
-	database := "test-db"
-	collectionName := "test-coll"
+	database := "go-sdk-demo-db"
+	collectionName := "go-sdk-demo-col-test"
 
 	_, filePath, _, _ := runtime.Caller(0)
-	localFilePath := path.Join(path.Dir(filePath), "../demo_files/tcvdb.md")
+	localFilePath := path.Join(path.Dir(filePath), "../demo_files/tcvdb.pdf")
 	filename := filepath.Base(localFilePath)
 
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
-	printErr(err)
-	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
@@ -293,5 +291,6 @@ func main() {
 	printErr(err)
 	err = testVdb.QueryData(ctx, database, collectionName, filename)
 	printErr(err)
-
+	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
+	printErr(err)
 }

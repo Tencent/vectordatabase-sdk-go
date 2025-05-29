@@ -966,14 +966,47 @@ func (r *rpcImplementerFlatDocument) Count(ctx context.Context, databaseName, co
 	return &CountDocumentResult{Count: res.Count}, nil
 }
 
+// [UploadFile] uploads a file to the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [UploadFileParams] object that includes the other parameters for uploading file operation.
+//     See [UploadFileParams] for more information.
+//
+// Returns a pointer to a [UploadFileResult] object or an error.
 func (r *rpcImplementerFlatDocument) UploadFile(ctx context.Context, databaseName, collectionName string, param UploadFileParams) (result *UploadFileResult, err error) {
 	return uploadFile(ctx, r.SdkClient, databaseName, collectionName, param)
 }
 
+// [GetImageUrl] retrieves image URLs for the specified file and documents in the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [GetImageUrlParams] object that includes the other parameters for getting image URLs operation.
+//     See [GetImageUrlParams] for more information.
+//
+// Returns a pointer to a [GetImageUrlResult] object or an error.
 func (r *rpcImplementerFlatDocument) GetImageUrl(ctx context.Context, databaseName, collectionName string, param GetImageUrlParams) (result *GetImageUrlResult, err error) {
 	return getImageUrl(ctx, r.SdkClient, databaseName, collectionName, param)
 }
 
+// [QueryFileDetails] queries file details based on the specified query conditions from the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A pointer to a [QueryFileDetailsParams] object that includes the other parameters for querying file details operation.
+//     See [QueryFileDetailsParams] for more information.
+//
+// Returns a pointer to a [QueryFileDetailsResult] object or an error.
 func (r *rpcImplementerFlatDocument) QueryFileDetails(ctx context.Context, databaseName, collectionName string,
 	param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error) {
 	return queryFileDetails(ctx, r.SdkClient, databaseName, collectionName, param)
