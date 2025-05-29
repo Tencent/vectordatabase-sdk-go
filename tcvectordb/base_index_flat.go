@@ -57,13 +57,26 @@ type AddIndexParams struct {
 	BuildExistedData *bool
 }
 
+// [ModifyVectorIndexParam] holds the parameters for modifying vector indexes in a collection.
+//
+// Fields:
+//   - VectorIndexes: The list of vector indexes to be modified.
+//   - RebuildRules: A pointer to [RebuildRules] object that specifies the rules for rebuilding indexes.
 type ModifyVectorIndexParam struct {
 	VectorIndexes []ModifyVectorIndex
 	RebuildRules  *index.RebuildRules
 }
 
+// [ModifyVectorIndex] represents a vector index configuration for modification.
+//
+// Fields:
+//   - FieldName: The name of the field for the vector index.
+//   - FieldType: The type of the field (e.g., "vector", "float16_vector", "bfloat16_vector").
+//   - MetricType: The metric type used for similarity calculation (e.g., COSINE, L2).
+//   - Params: The index parameters that specify the configuration details for the index.
 type ModifyVectorIndex struct {
 	FieldName  string
+	FieldType  string
 	MetricType MetricType
 	Params     IndexParams
 }
@@ -157,19 +170,30 @@ func (i *implementerFlatIndex) DropIndex(ctx context.Context, databaseName, coll
 }
 
 // [ModifyVectorIndex] modifies vector indexes to an existing collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [ModifyVectorIndexParam] object that includes the parameters for modifying vector indexes operation.
+//     See [ModifyVectorIndexParam] for more information.
+//
+// Returns an error if the modification fails.
 func (i *implementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseName, collectionName string, param ModifyVectorIndexParam) error {
 	req := new(index.ModifyVectorIndexReq)
 	req.Database = databaseName
 	req.Collection = collectionName
 
 	for _, v := range param.VectorIndexes {
-		var column api.IndexColumn
+		column := new(api.IndexColumn)
 		column.FieldName = v.FieldName
+		column.FieldType = v.FieldType
 		column.MetricType = string(v.MetricType)
 
-		optionParamsFromIndexParams(&column, v.Params)
+		optionParamsFromIndexParams(column, v.Params)
 
-		req.VectorIndexes = append(req.VectorIndexes, &column)
+		req.VectorIndexes = append(req.VectorIndexes, column)
 	}
 	req.RebuildRules = param.RebuildRules
 

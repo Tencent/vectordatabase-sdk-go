@@ -386,7 +386,7 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 			continue
 		}
 		switch index.FieldType {
-		case string(Vector), string(BinaryVector):
+		case string(Vector), string(BinaryVector), string(BFloat16Vector), string(Float16Vector):
 			vector := VectorIndex{}
 			vector.FieldName = index.FieldName
 			vector.FieldType = FieldType(index.FieldType)

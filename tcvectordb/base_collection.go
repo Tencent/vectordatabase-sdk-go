@@ -174,30 +174,30 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 	req.Description = description
 
 	for _, v := range indexes.VectorIndex {
-		var column api.IndexColumn
+		column := new(api.IndexColumn)
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
 		column.MetricType = string(v.MetricType)
 		column.Dimension = v.Dimension
 
-		optionParams(&column, v)
+		optionParams(column, v)
 
-		req.Indexes = append(req.Indexes, &column)
+		req.Indexes = append(req.Indexes, column)
 	}
 
 	for _, v := range indexes.SparseVectorIndex {
-		var column api.IndexColumn
+		column := new(api.IndexColumn)
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
 		column.MetricType = string(v.MetricType)
 
-		req.Indexes = append(req.Indexes, &column)
+		req.Indexes = append(req.Indexes, column)
 	}
 
 	for _, v := range indexes.FilterIndex {
-		var column api.IndexColumn
+		column := new(api.IndexColumn)
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		if v.FieldType == Array {
@@ -205,7 +205,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		}
 		column.IndexType = string(v.IndexType)
 		column.AutoId = v.AutoId
-		req.Indexes = append(req.Indexes, &column)
+		req.Indexes = append(req.Indexes, column)
 	}
 	if len(params) != 0 && params[0] != nil {
 		param := params[0]
@@ -462,7 +462,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			continue
 		}
 		switch index.FieldType {
-		case string(Vector):
+		case string(Vector), string(BinaryVector), string(BFloat16Vector), string(Float16Vector):
 			vector := VectorIndex{}
 			vector.FieldName = index.FieldName
 			vector.FieldType = FieldType(index.FieldType)

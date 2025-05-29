@@ -93,10 +93,17 @@ type FlatInterface interface {
 	// [ChangePassword] changes the password for the specific user.
 	ChangePassword(ctx context.Context, param ChangePasswordParams) error
 
-	UploadFile(ctx context.Context, databaseName, collectionName string, param UploadFileParams) (result *UploadFileResult, err error)
+	// [UploadFile] uploads a file to the collection.
+	UploadFile(ctx context.Context, databaseName, collectionName string,
+		param UploadFileParams) (result *UploadFileResult, err error)
 
+	// [GetImageUrl] retrieves image URLs for the specified file and documents in the collection.
 	GetImageUrl(ctx context.Context, databaseName, collectionName string,
 		param GetImageUrlParams) (result *GetImageUrlResult, err error)
+
+	// [QueryFileDetails] queries file details from the collection.
+	QueryFileDetails(ctx context.Context, databaseName, collectionName string,
+		param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error)
 }
 
 // [CreateUserParams] holds the parameters for creating the user.
@@ -525,15 +532,35 @@ func uploadFile(ctx context.Context, cli SdkClient, databaseName, collectionName
 	return result, nil
 }
 
+// [GetImageUrlParams] holds the parameters for getting image URLs.
+//
+// Fields:
+//   - FileName: The name of the file to get image URLs for.
+//   - DocumentIds: The list of document IDs to get image URLs for.
 type GetImageUrlParams struct {
 	FileName    string
 	DocumentIds []string
 }
 
+// [GetImageUrlResult] holds the results for getting image URLs.
+//
+// Fields:
+//   - Images: A two-dimensional array of image information, where each inner array contains image details for a document.
 type GetImageUrlResult struct {
 	Images [][]document.ImageInfo
 }
 
+// [GetImageUrl] retrieves image URLs for the specified file and documents in the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A [GetImageUrlParams] object that includes the other parameters for getting image URLs operation.
+//     See [GetImageUrlParams] for more information.
+//
+// Returns a pointer to a [GetImageUrlResult] object or an error.
 func (i *implementerFlatDocument) GetImageUrl(ctx context.Context, databaseName, collectionName string,
 	param GetImageUrlParams) (result *GetImageUrlResult, err error) {
 	return getImageUrl(ctx, i.SdkClient, databaseName, collectionName, param)
@@ -555,5 +582,90 @@ func getImageUrl(ctx context.Context, cli SdkClient, databaseName, collectionNam
 
 	result = new(GetImageUrlResult)
 	result.Images = res.Images
+	return result, nil
+}
+
+// [QueryFileDetailsParams] holds the parameters for querying file details.
+//
+// Fields:
+//   - FileNames: The list of file names to query details for.
+//   - Filter: A pointer to a Filter object for filtering the query results.
+//   - Limit: A pointer to the maximum number of results to return. If nil, default limit is 10.
+//   - Offset: The pagination offset to control the starting position of results returned by the paginated query.
+//   - OutputFields: The list of fields to include in the output results.
+type QueryFileDetailsParams struct {
+	FileNames    []string
+	Filter       *Filter
+	Limit        *int64
+	Offset       int64
+	OutputFields []string
+}
+
+// [QueryFileDetailsResult] holds the results for querying file details.
+//
+// Fields:
+//   - Documents: The list of documents that match the query conditions.
+//   - Count: The total number of documents that match the query conditions.
+type QueryFileDetailsResult struct {
+	Documents []Document
+	Count     uint64
+}
+
+// [QueryFileDetails] queries file details based on the specified query conditions from the collection.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - databaseName: The name of the database.
+//   - collectionName: The name of the collection.
+//   - param: A pointer to a [QueryFileDetailsParams] object that includes the other parameters for querying file details operation.
+//     See [QueryFileDetailsParams] for more information.
+//
+// Returns a pointer to a [QueryFileDetailsResult] object or an error.
+func (i *implementerFlatDocument) QueryFileDetails(ctx context.Context, databaseName, collectionName string,
+	param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error) {
+	return queryFileDetails(ctx, i.SdkClient, databaseName, collectionName, param)
+}
+
+func queryFileDetails(ctx context.Context, cli SdkClient, databaseName, collectionName string,
+	param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error) {
+	req := new(document.QueryFileDetailsReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	if param != nil {
+		req.Query = new(document.QueryFileDetailsCond)
+		req.Query.FileNames = param.FileNames
+		if param.Filter != nil {
+			req.Query.Filter = param.Filter.Cond()
+		}
+		if param.Limit != nil {
+			req.Query.Limit = param.Limit
+		}
+		req.Query.Offset = param.Offset
+		req.Query.OutputFields = param.OutputFields
+	}
+
+	res := new(document.QueryFileDetailsRes)
+	err = cli.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+
+	result = new(QueryFileDetailsResult)
+	result.Count = res.Count
+
+	result.Documents = make([]Document, len(res.Documents))
+
+	for index, doc := range res.Documents {
+		var d Document
+		d.Id = doc.Id
+		d.Fields = make(map[string]Field)
+
+		for n, v := range doc.Fields {
+			d.Fields[n] = Field{Val: v}
+		}
+		result.Documents[index] = d
+	}
+
 	return result, nil
 }

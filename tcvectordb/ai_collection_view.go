@@ -158,11 +158,11 @@ func (i *implementerCollectionView) CreateCollectionView(ctx context.Context, na
 	req.Description = param.Description
 
 	for _, v := range param.Indexes.FilterIndex {
-		var column api.IndexColumn
+		column := new(api.IndexColumn)
 		column.FieldName = v.FieldName
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
-		req.Indexes = append(req.Indexes, &column)
+		req.Indexes = append(req.Indexes, column)
 	}
 
 	if param.Embedding != nil {

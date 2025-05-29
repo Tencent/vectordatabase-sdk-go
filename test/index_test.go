@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/index"
 )
 
 func TestAddIndexWithDefaultParam(t *testing.T) {
@@ -348,5 +349,26 @@ func TestBuildIndex(t *testing.T) {
 	coll := cli.Database(database).Collection(collectionName)
 	// 索引重建，重建期间不支持写入
 	_, err := coll.RebuildIndex(ctx, &tcvectordb.RebuildIndexParams{Throttle: 1})
+	printErr(err)
+}
+
+func TestModifyIndex(t *testing.T) {
+	setThrottle := int32(1)
+	param := tcvectordb.ModifyVectorIndexParam{
+		RebuildRules: &index.RebuildRules{
+			Throttle: &setThrottle,
+		},
+	}
+	param.VectorIndexes = make([]tcvectordb.ModifyVectorIndex, 0)
+	param.VectorIndexes = append(param.VectorIndexes, tcvectordb.ModifyVectorIndex{
+		FieldName:  "vector",
+		FieldType:  string(tcvectordb.BFloat16Vector),
+		MetricType: tcvectordb.COSINE,
+		Params: &tcvectordb.HNSWParam{
+			M:              8,
+			EfConstruction: 0,
+		}})
+
+	err := cli.ModifyVectorIndex(ctx, database, collectionName, param)
 	printErr(err)
 }
