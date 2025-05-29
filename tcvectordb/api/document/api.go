@@ -313,3 +313,25 @@ type ImageInfo struct {
 	ImageName  string `json:"imageName"`
 	ImageUrl   string `json:"imageUrl"`
 }
+
+type QueryFileDetailsReq struct {
+	api.Meta        `path:"/ai/document/queryFileDetails" tags:"Document" method:"Post" summary:"查询文件详情"`
+	Database        string                `json:"database"`
+	Collection      string                `json:"collection"`
+	ReadConsistency string                `json:"readConsistency,omitempty"`
+	Query           *QueryFileDetailsCond `json:"query,omitempty"`
+}
+
+type QueryFileDetailsCond struct {
+	FileNames    []string `json:"fileNames,omitempty"`
+	Filter       string   `json:"filter,omitempty"`
+	Limit        *int64   `json:"limit,omitempty"`
+	Offset       int64    `json:"offset,omitempty"`
+	OutputFields []string `json:"outputFields,omitempty"`
+}
+
+type QueryFileDetailsRes struct {
+	api.CommonRes
+	Count     uint64      `json:"count"`
+	Documents []*Document `json:"documents"`
+}

@@ -97,6 +97,9 @@ type FlatInterface interface {
 
 	GetImageUrl(ctx context.Context, databaseName, collectionName string,
 		param GetImageUrlParams) (result *GetImageUrlResult, err error)
+
+	QueryFileDetails(ctx context.Context, databaseName, collectionName string,
+		param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error)
 }
 
 // [CreateUserParams] holds the parameters for creating the user.
@@ -555,5 +558,66 @@ func getImageUrl(ctx context.Context, cli SdkClient, databaseName, collectionNam
 
 	result = new(GetImageUrlResult)
 	result.Images = res.Images
+	return result, nil
+}
+
+type QueryFileDetailsParams struct {
+	FileNames    []string
+	Filter       *Filter
+	Limit        *int64
+	Offset       int64
+	OutputFields []string
+}
+
+type QueryFileDetailsResult struct {
+	Documents []Document
+	Count     uint64
+}
+
+func (i *implementerFlatDocument) QueryFileDetails(ctx context.Context, databaseName, collectionName string,
+	param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error) {
+	return queryFileDetails(ctx, i.SdkClient, databaseName, collectionName, param)
+}
+
+func queryFileDetails(ctx context.Context, cli SdkClient, databaseName, collectionName string,
+	param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error) {
+	req := new(document.QueryFileDetailsReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	if param != nil {
+		req.Query = new(document.QueryFileDetailsCond)
+		req.Query.FileNames = param.FileNames
+		if param.Filter != nil {
+			req.Query.Filter = param.Filter.Cond()
+		}
+		if param.Limit != nil {
+			req.Query.Limit = param.Limit
+		}
+		req.Query.Offset = param.Offset
+		req.Query.OutputFields = param.OutputFields
+	}
+
+	res := new(document.QueryFileDetailsRes)
+	err = cli.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+
+	result = new(QueryFileDetailsResult)
+	result.Count = res.Count
+
+	result.Documents = make([]Document, len(res.Documents))
+
+	for index, doc := range res.Documents {
+		var d Document
+		d.Id = doc.Id
+		d.Fields = make(map[string]Field)
+
+		for n, v := range doc.Fields {
+			d.Fields[n] = Field{Val: v}
+		}
+		result.Documents[index] = d
+	}
+
 	return result, nil
 }

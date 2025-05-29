@@ -973,3 +973,8 @@ func (r *rpcImplementerFlatDocument) UploadFile(ctx context.Context, databaseNam
 func (r *rpcImplementerFlatDocument) GetImageUrl(ctx context.Context, databaseName, collectionName string, param GetImageUrlParams) (result *GetImageUrlResult, err error) {
 	return getImageUrl(ctx, r.SdkClient, databaseName, collectionName, param)
 }
+
+func (r *rpcImplementerFlatDocument) QueryFileDetails(ctx context.Context, databaseName, collectionName string,
+	param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error) {
+	return queryFileDetails(ctx, r.SdkClient, databaseName, collectionName, param)
+}

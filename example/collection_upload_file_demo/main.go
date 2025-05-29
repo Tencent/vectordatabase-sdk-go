@@ -16,11 +16,11 @@ import (
 )
 
 type Demo struct {
-	client *tcvectordb.RpcClient
+	client *tcvectordb.Client
 }
 
 func NewDemo(url, username, key string) (*Demo, error) {
-	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.StrongConsistency})
 	if err != nil {
 		return nil, err
@@ -109,8 +109,14 @@ func (d *Demo) UploadFile(ctx context.Context, database, collection, localFilePa
 			"sectionNum": "section_num",
 		},
 		MetaData: map[string]interface{}{
-			"testStr": "v1",
-			"testInt": 1024,
+			"testStr":    "v1",
+			"testInt":    1024,
+			"testDouble": 0.1,
+			"testArray":  []string{"one", "two"},
+			"testJson": map[string]interface{}{
+				"a": 1,
+				"b": "str",
+			},
 		},
 	}
 
@@ -125,6 +131,22 @@ func (d *Demo) UploadFile(ctx context.Context, database, collection, localFilePa
 
 func (d *Demo) QueryData(ctx context.Context, database, collection, filename string) error {
 	time.Sleep(15 * time.Second)
+	log.Println("------------------------------ Query file details after waiting 15s to parse file ------------------------------")
+	//limit := int64(2)
+	fileDetialRes, err := d.client.QueryFileDetails(ctx, database, collection, &tcvectordb.QueryFileDetailsParams{
+		FileNames: []string{filename},
+		// Filter:       tcvectordb.NewFilter(`_indexed_status = \"Ready\"`),
+		// Limit:        &limit,
+		// Offset:       0,
+		// OutputFields: []string{"id", "_indexed_status", "_user_metadata"},
+	})
+	if err != nil {
+		return err
+	}
+	for _, doc := range fileDetialRes.Documents {
+		log.Printf("File detail: %+v", doc)
+	}
+
 	log.Println("------------------------------ Query after waiting 15s to parse file ------------------------------")
 
 	result, err := d.client.Query(ctx, database, collection, []string{}, &tcvectordb.QueryDocumentParams{
@@ -253,21 +275,23 @@ func printErr(err error) {
 }
 
 func main() {
-	database := "go-sdk-demo-db"
-	collectionName := "go-sdk-demo-col-test4"
+	database := "test-db"
+	collectionName := "test-coll"
 
 	_, filePath, _, _ := runtime.Caller(0)
-	localFilePath := path.Join(path.Dir(filePath), "../demo_files/tcvdb.pdf")
+	localFilePath := path.Join(path.Dir(filePath), "../demo_files/tcvdb.md")
 	filename := filepath.Base(localFilePath)
 
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
+	printErr(err)
+	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
+	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.UploadFile(ctx, database, collectionName, localFilePath)
 	printErr(err)
 	err = testVdb.QueryData(ctx, database, collectionName, filename)
 	printErr(err)
-	err = testVdb.DeleteAndDrop(ctx, database, collectionName)
-	printErr(err)
+
 }

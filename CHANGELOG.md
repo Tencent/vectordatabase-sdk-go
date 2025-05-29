@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.7.2
+* feat: support float16_vector/bfloat16_vector types for HNSW vector
+* feat: support to query file details when uploading files to collection 
 
 ## v1.7.1
 * fix: Keep using collection/collectionView user defined to access the interface within the Collection/AICollectionView object
