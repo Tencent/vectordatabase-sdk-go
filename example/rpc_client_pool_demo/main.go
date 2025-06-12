@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
 )
@@ -12,14 +13,16 @@ func main() {
 	collectionName := "go-sdk-demo-col"
 	url := "vdb http url or ip and port"
 	key := "key get from web console"
+	username := "vdb username"
 
 	ctx := context.Background()
-	cliPool, err := tcvectordb.NewRpcClientPool(url, "root", key, &tcvectordb.ClientOption{
+	cliPool, err := tcvectordb.NewRpcClientPool(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency,
-		RpcPoolSize:     5})
+		RpcPoolSize:     9})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	defer cliPool.Close()
 
 	//cliPool.Debug(true)
 
@@ -53,8 +56,8 @@ func main() {
 			EfConstruction: 200,
 		},
 	})
-	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY})
-	_, err = cliPool.CreateCollectionIfNotExists(ctx, database, collectionName, 3, 1, "test collection", index)
+	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY, AutoId: "uuid"})
+	_, err = cliPool.CreateCollectionIfNotExists(ctx, database, collectionName, 3, 2, "test collection", index)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -67,28 +70,47 @@ func main() {
 	}
 	log.Printf("DescribeCollection: %+v", colRes)
 
-	log.Println("-------------------------- Upsert --------------------------")
+	log.Println("-------------------------- Concurrent Upsert --------------------------")
 
-	documentList := []tcvectordb.Document{
-		{
-			Id:     "0001",
-			Vector: []float32{0.2123, 0.21, 0.213},
-			Fields: map[string]tcvectordb.Field{
-				"bookName": {Val: "西游记"},
-				"author":   {Val: "吴承恩"},
-				"page":     {Val: 21},
-				"segment":  {Val: "富贵功名，前缘分定，为人切莫欺心。"},
-			},
-		},
+	// 并发参数
+	const concurrency = 100
+	const totalCalls = 1000000
+	const callsPerGoroutine = totalCalls / concurrency
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func(goroutineID int) {
+			defer wg.Done()
+
+			for j := 0; j < callsPerGoroutine; j++ {
+				documentList := []tcvectordb.Document{
+					{
+						Vector: []float32{0.2123, 0.21, 0.213},
+						Fields: map[string]tcvectordb.Field{
+							"bookName": {Val: "西游记"},
+							"author":   {Val: "吴承恩"},
+							"page":     {Val: 21},
+							"segment":  {Val: "富贵功名，前缘分定，为人切莫欺心。"},
+						},
+					},
+				}
+
+				res, err := cliPool.Upsert(ctx, database, collectionName, documentList)
+				if err != nil {
+					log.Printf("Goroutine %d, call %d failed: %v", goroutineID, j+1, err)
+				} else {
+					log.Printf("Goroutine %d, call %d success: %+v", goroutineID, j+1, res)
+				}
+			}
+		}(i)
 	}
-	for i := 0; i < 5; i++ {
-		res, err := cliPool.Upsert(ctx, database, collectionName, documentList)
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-		log.Printf("UpsertResult: %+v", res)
-	}
+
+	// 等待所有goroutine完成
+	wg.Wait()
+	log.Println("All upsert operations completed")
 
 	cliPool.DropDatabase(ctx, database)
-	cliPool.Close()
+
 }

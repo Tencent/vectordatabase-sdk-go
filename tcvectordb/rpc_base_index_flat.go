@@ -40,6 +40,7 @@ func (r *rpcImplementerFlatIndex) RebuildIndex(ctx context.Context, databaseName
 				req.Throttle = 1
 			}
 		}
+		req.FieldName = param.FieldName
 	}
 	res, err := r.rpcClient.RebuildIndex(ctx, req)
 	if err != nil {
@@ -116,6 +117,7 @@ func (r *rpcImplementerFlatIndex) ModifyVectorIndex(ctx context.Context, databas
 		column := &olama.IndexColumn{
 			FieldName:  v.FieldName,
 			FieldType:  v.FieldType,
+			IndexType:  v.IndexType,
 			MetricType: string(v.MetricType),
 		}
 		optionRpcParamsFromIndexParams(column, v.Params)

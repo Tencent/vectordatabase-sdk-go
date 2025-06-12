@@ -40,8 +40,13 @@ type UpsertReq struct {
 // UpsertRes upsert document response
 type UpsertRes struct {
 	api.CommonRes
-	AffectedCount int    `json:"affectedCount,omitempty"`
-	Warning       string `json:"warning,omitempty"`
+	AffectedCount      int                 `json:"affectedCount,omitempty"`
+	Warning            string              `json:"warning,omitempty"`
+	EmbeddingExtraInfo *EmbeddingExtraInfo `json:"embeddingExtraInfo,omitempty"`
+}
+
+type EmbeddingExtraInfo struct {
+	TokenUsed uint64 `json:"tokenUsed,omitempty"`
 }
 
 // Document document struct for document api
@@ -122,8 +127,9 @@ type SearchReq struct {
 // SearchRes search documents response
 type SearchRes struct {
 	api.CommonRes
-	Warning   string        `json:"warning,omitempty"`
-	Documents [][]*Document `json:"documents,omitempty"`
+	Warning            string              `json:"warning,omitempty"`
+	Documents          [][]*Document       `json:"documents,omitempty"`
+	EmbeddingExtraInfo *EmbeddingExtraInfo `json:"embeddingExtraInfo,omitempty"`
 }
 
 type HybridSearchReq struct {
@@ -132,6 +138,22 @@ type HybridSearchReq struct {
 	Collection      string            `json:"collection,omitempty"`      // 索引名称
 	ReadConsistency string            `json:"readConsistency,omitempty"` // 读取一致性
 	Search          *HybridSearchCond `json:"search,omitempty"`
+}
+
+type FullTextSearchReq struct {
+	api.Meta        `path:"/document/fullTextSearch" tags:"Document" method:"Post" summary:"全文检索接口"`
+	Database        string              `json:"database,omitempty"`
+	Collection      string              `json:"collection,omitempty"`      // 索引名称
+	ReadConsistency string              `json:"readConsistency,omitempty"` // 读取一致性
+	Search          *FullTextSearchCond `json:"search,omitempty"`
+}
+
+type FullTextSearchCond struct {
+	Filter         string       `json:"filter,omitempty"`
+	Match          *MatchOption `json:"match,omitempty"`
+	RetrieveVector bool         `json:"retrieveVector,omitempty"` // 是否返回原始向量，注意设置为true时会降低性能
+	Limit          *int         `json:"limit,omitempty"`          // 结果数量
+	OutputFields   []string     `json:"outputFields,omitempty"`   // 输出字段
 }
 
 type HybridSearchCond struct {

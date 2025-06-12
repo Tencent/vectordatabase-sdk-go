@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.0
+* feat: support full-text search interface `/document/fullTextSearch`
+* feat: support rebuilding sparse vector indexes via `/rebuild/index` interface
+* feat: support vector index type modification via `/index/modifyVectorIndex` interface (BIN_FLAT not supported)
+* feat: support rebuilding vector/sparse vector indexes with user defined CPU resource usage
+
 ## v1.7.2
 * feat: support float16_vector/bfloat16_vector types for HNSW vector
 * feat: support to query file details when uploading files to collection 

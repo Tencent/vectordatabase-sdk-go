@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -182,16 +183,31 @@ func (d *AIDemo) LoadAndSplitText(ctx context.Context, database, collection, fil
 func (d *AIDemo) GetFile(ctx context.Context, database, collection, fileName string) error {
 	coll := d.client.AIDatabase(database).CollectionView(collection)
 	log.Println("---------------------------- GetFile by Name ----------------------------")
-	result, err := coll.Query(ctx, tcvectordb.QueryAIDocumentSetParams{
-		DocumentSetName: []string{fileName},
-	})
-	if err != nil {
-		return err
+	for {
+		result, err := coll.Query(ctx, tcvectordb.QueryAIDocumentSetParams{
+			DocumentSetName: []string{fileName},
+		})
+		if err != nil {
+			return err
+		}
+		if len(result.Documents) == 0 {
+			return fmt.Errorf("file %v not found", fileName)
+		}
+
+		if result.Documents[0].DocumentSetInfo != nil {
+			if *result.Documents[0].DocumentSetInfo.IndexedStatus == "Ready" {
+				log.Printf("QueryDocument: %+v", result.Documents[0])
+				return nil
+			} else {
+				log.Printf("file %v is not Ready, status: %v", fileName, *result.Documents[0].DocumentSetInfo.IndexedStatus)
+			}
+		} else {
+			return fmt.Errorf("file %v documentSetInfo is nil", fileName)
+		}
+
+		time.Sleep(time.Second * 10)
 	}
-	log.Printf("QueryResult: count: %v", result.Count)
-	for _, doc := range result.Documents {
-		log.Printf("QueryDocument: %+v", doc)
-	}
+
 	return nil
 }
 
@@ -216,17 +232,16 @@ func (d *AIDemo) QueryAndSearch(ctx context.Context, database, collectionView st
 	coll := db.CollectionView(collectionView)
 
 	log.Println("---------------------------- Search ----------------------------")
-	// 查找与给定查询向量相似的向量。支持输入文本信息检索与输入文本相似的内容，同时，支持搭配标量字段的 Filter 表达式一并检索。
-	enableRerank := true
+	//enableRerank := true
 	res, err := coll.Search(ctx, tcvectordb.SearchAIDocumentSetsParams{
 		Content:     "平安保险的偿付能力是什么水平？",
 		ExpandChunk: []int{1, 0},
 		Filter:      tcvectordb.NewFilter(`test_str="v1"`),
 		Limit:       2,
-		RerankOption: &ai_document_set.RerankOption{
-			Enable:                &enableRerank,
-			ExpectRecallMultiples: 2.5,
-		},
+		// RerankOption: &ai_document_set.RerankOption{
+		// 	Enable:                &enableRerank,
+		// 	ExpectRecallMultiples: 2.5,
+		// },
 	})
 	if err != nil {
 		return err
@@ -299,6 +314,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewAIDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateAIDatabase(ctx, database)
@@ -308,7 +325,6 @@ func main() {
 	// 当前支持的文件格式markdown(.md或.markdown)、pdf(.pdf)、ppt(.pptx)、word(.docx)
 	loadFileRes, err := testVdb.LoadAndSplitText(ctx, database, collectionView, "../demo_files/demo_vision_model_parsing.pdf")
 	printErr(err)
-	time.Sleep(time.Second * 30) // 等待后台解析文件完成
 	err = testVdb.GetFile(ctx, database, collectionView, loadFileRes.DocumentSetName)
 	printErr(err)
 	err = testVdb.GetChunks(ctx, database, collectionView, loadFileRes.DocumentSetName)

@@ -10,13 +10,13 @@ import (
 )
 
 type Demo struct {
-	client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 func NewDemo(url, username, key string) (*Demo, error) {
 	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 	// 	ReadConsistency: tcvectordb.EventualConsistency})
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
@@ -152,9 +152,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 
 	documentList := []tcvectordb.Document{
@@ -200,7 +197,7 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 		},
 	}
 
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
@@ -209,9 +206,6 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 }
 
 func (d *Demo) QueryData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Query ------------------------------")
 	// 查询
 	// 1. query 用于查询数据
@@ -221,7 +215,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	documentIds := []string{"0000", "0001", "0002", "0003", "0004"}
 	outputField := []string{"id", "sparse_vector"}
 
-	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
+	result, err := d.client.Query(ctx, database, collection, documentIds, &tcvectordb.QueryDocumentParams{
 		RetrieveVector: false,
 		OutputFields:   outputField,
 		Limit:          5,
@@ -248,10 +242,12 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 			{TermId: 1172076521, Score: 0.71296215},
 			{TermId: 3434399993, Score: 0.71296215},
 		},
+		TerminateAfter:  1000,
+		CutoffFrequency: 0.8,
 	}
 
 	limit := 2
-	searchRes, err := coll.HybridSearch(ctx, tcvectordb.HybridSearchDocumentParams{
+	searchRes, err := d.client.HybridSearch(ctx, database, collection, tcvectordb.HybridSearchDocumentParams{
 		AnnParams: []*tcvectordb.AnnParam{annSearch},
 		Match:     []*tcvectordb.MatchOption{keywordSearch},
 		// rerank也支持rrf，使用方式见下
@@ -282,30 +278,26 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 }
 
 func (d *Demo) UpdateAndDeleteCollection(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	db := d.client.Database(database)
-	coll := db.Collection(collection)
-
 	log.Println("------------------------------ Update ------------------------------")
 
 	documentId := []string{"0002"}
 	bm25, err := encoder.NewBM25Encoder(&encoder.BM25EncoderParams{Bm25Language: "zh"})
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
 	segments := []string{
 		"腾讯云向量数据库（Tencent Cloud VectorDB）是一款全托管的自研企业级分布式数据库服务，专用于存储、索引、检索、管理由深度神经网络或其他机器学习模型生成的大量多维嵌入向量。",
 	}
 
-	sparse_vectors, err := bm25.EncodeTexts(segments)
+	sparseVectors, err := bm25.EncodeTexts(segments)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
-	result, err := coll.Update(ctx, tcvectordb.UpdateDocumentParams{
+	result, err := d.client.Update(ctx, database, collection, tcvectordb.UpdateDocumentParams{
 		QueryIds:        documentId,
-		UpdateSparseVec: sparse_vectors[0],
+		UpdateSparseVec: sparseVectors[0],
 	})
 	if err != nil {
 		return err
@@ -316,7 +308,7 @@ func (d *Demo) UpdateAndDeleteCollection(ctx context.Context, database, collecti
 	// truncate_collection
 	// 清空 Collection
 	time.Sleep(time.Second * 5)
-	truncateRes, err := db.TruncateCollection(ctx, collection)
+	truncateRes, err := d.client.Database(database).TruncateCollection(ctx, collection)
 	if err != nil {
 		return err
 	}
@@ -336,8 +328,10 @@ func main() {
 	collectionAlias := "go-sdk-demo-col-sparsevec-alias"
 
 	ctx := context.Background()
-	testVdb, err := NewDemo("vdb http url or ip and port", "root", "key get from web console")
+	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

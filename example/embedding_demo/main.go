@@ -9,13 +9,11 @@ import (
 )
 
 type EmbeddingDemo struct {
-	client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 func NewEmbeddingDemo(url, username, key string) (*EmbeddingDemo, error) {
-	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
-	// 	ReadConsistency: tcvectordb.EventualConsistency})
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
@@ -113,7 +111,7 @@ func (d *EmbeddingDemo) CreateDBAndCollection(ctx context.Context, database, col
 	// 第二步：创建 Collection
 	// 创建支持 Embedding 的 Collection
 	db.WithTimeout(time.Second * 30)
-	_, err = db.CreateCollection(ctx, collection, 3, 0, "test collection", index, &tcvectordb.CreateCollectionParams{
+	_, err = db.CreateCollection(ctx, collection, 3, 1, "test collection", index, &tcvectordb.CreateCollectionParams{
 		Embedding: ebd,
 	})
 	if err != nil {
@@ -156,9 +154,6 @@ func (d *EmbeddingDemo) CreateDBAndCollection(ctx context.Context, database, col
 }
 
 func (d *EmbeddingDemo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 	// upsert 写入数据，可能会有一定延迟
 	// 1. 支持动态 Schema，除了 id、vector 字段必须写入，可以写入其他任意字段；
@@ -216,18 +211,15 @@ func (d *EmbeddingDemo) UpsertData(ctx context.Context, database, collection str
 			},
 		},
 	}
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
-	log.Printf("UpsertResult: %+v", result)
+	log.Printf("UpsertResult: %+v", result.EmbeddingExtraInfo.TokenUsed)
 	return nil
 }
 
 func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Query ------------------------------")
 	// 查询
 	// 1. query 用于查询数据
@@ -238,7 +230,7 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	outputField := []string{"id", "bookName"}
 
-	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
+	result, err := d.client.Query(ctx, database, collection, documentIds, &tcvectordb.QueryDocumentParams{
 		Filter:         filter,
 		RetrieveVector: true,
 		OutputFields:   outputField,
@@ -262,7 +254,7 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
 
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
-	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &tcvectordb.SearchDocumentParams{
+	searchResult, err := d.client.SearchById(ctx, database, collection, []string{"0003"}, &tcvectordb.SearchDocumentParams{
 		Filter: filter,
 		Params: &tcvectordb.SearchDocParams{Ef: 200},
 		Limit:  2,
@@ -284,12 +276,15 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 
 	// searchByText 返回类型为 Dict，接口查询过程中 embedding 可能会出现截断，如发生截断将会返回响应 warn 信息，如需确认是否截断可以
 	// 使用 "warning" 作为 key 从 Dict 结果中获取警告信息，查询结果可以通过 "documents" 作为 key 从 Dict 结果中获取
-	searchResult, err = coll.SearchByText(ctx, map[string][]string{"text": {"细作探知这个消息，飞报吕布。"}}, &tcvectordb.SearchDocumentParams{
+	searchResult, err = d.client.SearchByText(ctx, database, collection, map[string][]string{"text": {"细作探知这个消息，飞报吕布。"}}, &tcvectordb.SearchDocumentParams{
 		Params: &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
 		Limit:  2,                                    // 指定 Top K 的 K 值
 	})
 	if err != nil {
 		return err
+	}
+	if searchResult.EmbeddingExtraInfo != nil {
+		log.Printf("SearchByTextResult: token used: %v", searchResult.EmbeddingExtraInfo.TokenUsed)
 	}
 	// 输出相似性检索结果，检索结果为二维数组，每一位为一组返回结果，分别对应search时指定的多个向量
 	for i, item := range searchResult.Documents {
@@ -302,10 +297,6 @@ func (d *EmbeddingDemo) QueryData(ctx context.Context, database, collection stri
 }
 
 func (d *EmbeddingDemo) UpdateAndDelete(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	db := d.client.Database(database)
-	coll := db.Collection(collection)
-
 	log.Println("------------------------------ Update ------------------------------")
 	// update
 	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
@@ -316,7 +307,7 @@ func (d *EmbeddingDemo) UpdateAndDelete(ctx context.Context, database, collectio
 	updateField := map[string]tcvectordb.Field{
 		"page": {Val: 24},
 	}
-	result, err := coll.Update(ctx, tcvectordb.UpdateDocumentParams{
+	result, err := d.client.Update(ctx, database, collection, tcvectordb.UpdateDocumentParams{
 		QueryIds:     documentId,
 		QueryFilter:  filter,
 		UpdateFields: updateField,
@@ -333,7 +324,7 @@ func (d *EmbeddingDemo) UpdateAndDelete(ctx context.Context, database, collectio
 
 	// filter 限制只会删除 id="0001" 成功
 	filter = tcvectordb.NewFilter(`bookName="西游记"`)
-	delResult, err := coll.Delete(ctx, tcvectordb.DeleteDocumentParams{
+	delResult, err := d.client.Delete(ctx, database, collection, tcvectordb.DeleteDocumentParams{
 		Filter:      filter,
 		DocumentIds: documentId,
 	})
@@ -345,7 +336,7 @@ func (d *EmbeddingDemo) UpdateAndDelete(ctx context.Context, database, collectio
 	log.Println("--------------------------- RebuildIndex ---------------------------")
 	// rebuild_index
 	// 索引重建，重建期间不支持写入
-	indexRebuildRes, err := coll.RebuildIndex(ctx)
+	indexRebuildRes, err := d.client.RebuildIndex(ctx, database, collection)
 	if err != nil {
 		return err
 	}
@@ -355,7 +346,7 @@ func (d *EmbeddingDemo) UpdateAndDelete(ctx context.Context, database, collectio
 	// truncate_collection
 	// 清空 Collection
 	time.Sleep(time.Second * 5)
-	truncateRes, err := db.TruncateCollection(ctx, collection)
+	truncateRes, err := d.client.Database(database).TruncateCollection(ctx, collection)
 	if err != nil {
 		return err
 	}
@@ -377,6 +368,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewEmbeddingDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

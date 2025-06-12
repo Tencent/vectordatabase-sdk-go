@@ -9,15 +9,15 @@ import (
 )
 
 type Demo struct {
-	client *tcvectordb.Client
-	//client *tcvectordb.RpcClient
+	//client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 func NewDemo(url, username, key string) (*Demo, error) {
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
-		ReadConsistency: tcvectordb.EventualConsistency})
-	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
+	// cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
 	// 	ReadConsistency: tcvectordb.EventualConsistency})
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
+		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
 	}
@@ -147,9 +147,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 	// upsert 写入数据，可能会有一定延迟
 	// 1. 支持动态 Schema，除了 id、vector 字段必须写入，可以写入其他任意字段；
@@ -207,7 +204,7 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 			},
 		},
 	}
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
@@ -216,11 +213,9 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 }
 
 func (d *Demo) CountAndDeleteLimitData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
 
 	log.Println("------------------------------ Count with no filter------------------------------")
-	result, err := coll.Count(ctx)
+	result, err := d.client.Count(ctx, database, collection)
 	if err != nil {
 		return err
 	}
@@ -229,7 +224,7 @@ func (d *Demo) CountAndDeleteLimitData(ctx context.Context, database, collection
 	log.Println("------------------------------ Count ------------------------------")
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 
-	result, err = coll.Count(ctx, tcvectordb.CountDocumentParams{
+	result, err = d.client.Count(ctx, database, collection, tcvectordb.CountDocumentParams{
 		CountFilter: filter,
 	})
 	if err != nil {
@@ -238,7 +233,7 @@ func (d *Demo) CountAndDeleteLimitData(ctx context.Context, database, collection
 	log.Printf("CountResult, filter: %v, count: %v", filter.Cond(), result.Count)
 
 	log.Println("------------------------------ delete with limit ------------------------------")
-	delResult, err := coll.Delete(ctx, tcvectordb.DeleteDocumentParams{
+	delResult, err := d.client.Delete(ctx, database, collection, tcvectordb.DeleteDocumentParams{
 		Filter: filter,
 		Limit:  1,
 	})
@@ -248,7 +243,7 @@ func (d *Demo) CountAndDeleteLimitData(ctx context.Context, database, collection
 	log.Printf("DeleteResult: %+v", delResult)
 
 	log.Println("------------------------------ Count ------------------------------")
-	result, err = coll.Count(ctx, tcvectordb.CountDocumentParams{
+	result, err = d.client.Count(ctx, database, collection, tcvectordb.CountDocumentParams{
 		CountFilter: filter,
 	})
 	if err != nil {
@@ -273,6 +268,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

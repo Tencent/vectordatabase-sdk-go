@@ -285,6 +285,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.UploadFile(ctx, database, collectionName, localFilePath)

@@ -139,9 +139,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 
 	binaryVectors := [][]byte{
@@ -212,7 +209,7 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 			},
 		},
 	}
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
@@ -221,15 +218,12 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 }
 
 func (d *Demo) QueryAndSearchData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Query ------------------------------")
 	documentIds := []string{"0001", "0002", "0003", "0004", "0005"}
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	outputField := []string{"id", "bookName"}
 
-	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
+	result, err := d.client.Query(ctx, database, collection, documentIds, &tcvectordb.QueryDocumentParams{
 		Filter:         filter,
 		RetrieveVector: false,
 		OutputFields:   outputField,
@@ -247,7 +241,7 @@ func (d *Demo) QueryAndSearchData(ctx context.Context, database, collection stri
 	log.Println("------------------------------ Query ------------------------------")
 
 	filter = tcvectordb.NewFilter(`author="吴承恩"`)
-	_, err = coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
+	_, err = d.client.Query(ctx, database, collection, documentIds, &tcvectordb.QueryDocumentParams{
 		Filter:         filter,
 		RetrieveVector: false,
 		OutputFields:   outputField,
@@ -255,8 +249,7 @@ func (d *Demo) QueryAndSearchData(ctx context.Context, database, collection stri
 		Offset:         1,
 	})
 	if err == nil {
-		log.Printf("query succ. Because the author filter" +
-			" will be ignored, when filterAll is true ")
+		log.Printf("query succ. Because filterAll is true, which means it supports author filtering")
 	}
 
 	log.Println("------------------------------ Search ------------------------------")
@@ -266,7 +259,7 @@ func (d *Demo) QueryAndSearchData(ctx context.Context, database, collection stri
 		return fmt.Errorf("convert failed, err: %v", err.Error())
 	}
 
-	searchResult, err := coll.Search(ctx,
+	searchResult, err := d.client.Search(ctx, database, collection,
 		[][]float32{searchVector}, //指定检索向量，最多指定20个
 		&tcvectordb.SearchDocumentParams{
 			RetrieveVector: true,
@@ -299,6 +292,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

@@ -29,7 +29,7 @@ func NewDemo(url, username, key string) (*Demo, error) {
 
 	bm25, err := encoder.NewBM25Encoder(&encoder.BM25EncoderParams{Bm25Language: "zh"})
 	if err != nil {
-		log.Fatalf(err.Error())
+		return nil, err
 	}
 	return &Demo{client: cli,
 		Bm25: bm25}, nil
@@ -173,9 +173,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 	// upsert 写入数据，可能会有一定延迟
 	// 1. 支持动态 Schema，除了 id、vector 字段必须写入，可以写入其他任意字段；
@@ -194,9 +191,9 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 	// tokens := d.Bm25.GetTokenizer().Tokenize(segments[0])
 	// fmt.Println("tokens: ", tokens)
 
-	sparse_vectors, err := d.Bm25.EncodeTexts(segments)
+	sparseVectors, err := d.Bm25.EncodeTexts(segments)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
 	documentList := make([]tcvectordb.Document, 0)
@@ -207,22 +204,21 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 			Fields: map[string]tcvectordb.Field{
 				"text": {Val: segments[i]},
 			},
-			SparseVector: sparse_vectors[i],
+			SparseVector: sparseVectors[i],
 		})
 	}
 
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
-	log.Printf("UpsertResult: %+v", result)
+	if result.EmbeddingExtraInfo != nil {
+		log.Printf("UpsertResult: token used: %v", result.EmbeddingExtraInfo.TokenUsed)
+	}
 	return nil
 }
 
 func (d *Demo) HybridSearchWithEmbedding(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ hybridSearch ------------------------------")
 
 	searchText := "1. 区域中间区域的普通人期望契约C级和B级灵兽，其中一人刚晋升为七品中期御兽师，略过了E级和D级灵兽蛋区域。 2. 御兽神殿的一男一女隐藏了一颗S级灵兽蛋在C级灵兽蛋中，他们对在这所偏远县城的御兽高中能否出现能契约S级灵兽的天骄表示怀疑。 3. 御兽神殿大祭司预言百年未被认可的S级灵兽蛋将在这所高中找到命定主人。 4. 一名清秀少年在人群中径直走向混在C级灵兽蛋区域中的那颗S级灵兽蛋。"
@@ -243,7 +239,7 @@ func (d *Demo) HybridSearchWithEmbedding(ctx context.Context, database, collecti
 	}
 
 	limit := 2
-	searchRes, err := coll.HybridSearch(ctx, tcvectordb.HybridSearchDocumentParams{
+	searchRes, err := d.client.HybridSearch(ctx, database, collection, tcvectordb.HybridSearchDocumentParams{
 		AnnParams: []*tcvectordb.AnnParam{annSearch},
 		Match:     []*tcvectordb.MatchOption{keywordSearch},
 		// rerank也支持rrf，使用方式见下
@@ -262,7 +258,9 @@ func (d *Demo) HybridSearchWithEmbedding(ctx context.Context, database, collecti
 	if err != nil {
 		return err
 	}
-
+	if searchRes.EmbeddingExtraInfo != nil {
+		log.Printf("HybridSearchDocumentResult: token used: %v", searchRes.EmbeddingExtraInfo.TokenUsed)
+	}
 	// 输出相似性检索结果，检索结果为二维数组，每一位为一组返回结果，分别对应search时指定的多个向量
 	for i, item := range searchRes.Documents {
 		log.Printf("HybridSearchDocumentResult, index: %d ==================", i)
@@ -285,8 +283,10 @@ func main() {
 	collectionAlias := "go-sdk-demo-col-sparsevec-alias"
 
 	ctx := context.Background()
-	testVdb, err := NewDemo("vdb http url or ip and port", "root", "key get from web console")
+	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

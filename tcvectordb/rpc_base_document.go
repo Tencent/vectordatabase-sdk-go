@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 )
@@ -117,6 +118,10 @@ func (r *rpcImplementerDocument) SearchByText(ctx context.Context, text map[stri
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (r *rpcImplementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
 	return r.flat.HybridSearch(ctx, r.database.DatabaseName, r.collection.connCollectionName, params)
+}
+
+func (r *rpcImplementerDocument) FullTextSearch(ctx context.Context, params FullTextSearchParams) (*SearchDocumentResult, error) {
+	return r.flat.FullTextSearch(ctx, r.database.DatabaseName, r.collection.connCollectionName, params)
 }
 
 // [Delete] deletes documents by conditions.
@@ -464,7 +469,15 @@ func (r *rpcImplementerFlatDocument) Upsert(ctx context.Context, databaseName, c
 	if err != nil {
 		return nil, err
 	}
-	return &UpsertDocumentResult{AffectedCount: int(res.AffectedCount)}, nil
+
+	result := new(UpsertDocumentResult)
+	result.AffectedCount = int(res.AffectedCount)
+	if res.EmbeddingExtraInfo != nil {
+		result.EmbeddingExtraInfo = &document.EmbeddingExtraInfo{
+			TokenUsed: res.EmbeddingExtraInfo.TokenUsed,
+		}
+	}
+	return result, nil
 }
 
 // [Query] queries documents that satisfies the condition from the collection.
@@ -738,6 +751,104 @@ func (r *rpcImplementerFlatDocument) HybridSearch(ctx context.Context, databaseN
 		Warning:   res.Warning,
 		Documents: documents,
 	}
+	if res.EmbeddingExtraInfo != nil {
+		result.EmbeddingExtraInfo = &document.EmbeddingExtraInfo{
+			TokenUsed: res.EmbeddingExtraInfo.TokenUsed,
+		}
+	}
+	return result, nil
+}
+
+func (r *rpcImplementerFlatDocument) FullTextSearch(ctx context.Context, databaseName, collectionName string,
+	params FullTextSearchParams) (*SearchDocumentResult, error) {
+	req := &olama.SearchRequest{
+		Database:        databaseName,
+		Collection:      collectionName,
+		ReadConsistency: string(r.SdkClient.Options().ReadConsistency),
+		Search:          &olama.SearchCond{},
+	}
+
+	req.Search.Sparse = make([]*olama.SparseData, 0)
+
+	if params.Match != nil {
+		fieldName := "sparse_vector"
+		if params.Match.FieldName != "" {
+			fieldName = params.Match.FieldName
+		}
+		req.Search.Sparse = append(req.Search.Sparse, &olama.SparseData{
+			FieldName: fieldName,
+		})
+
+		sparseVectorArray := make([]*olama.SparseVectorArray, 0)
+
+		if svs, ok := params.Match.Data.([]encoder.SparseVecItem); ok {
+			data := make([]*olama.SparseVecItem, 0)
+			for _, sv := range svs {
+				data = append(data, &olama.SparseVecItem{
+					TermId: sv.TermId,
+					Score:  sv.Score,
+				})
+			}
+			sparseVectorArray = append(sparseVectorArray, &olama.SparseVectorArray{
+				SpVector: data,
+			})
+			req.Search.Sparse[0].Data = sparseVectorArray
+		} else {
+			return nil, fmt.Errorf("fullTextSearch failed, because of Match.Data field type, " +
+				"which must be []encoder.SparseVecItem")
+		}
+
+		req.Search.Sparse[0].Params = new(olama.SparseSearchParams)
+		req.Search.Sparse[0].Params.TerminateAfter = params.Match.TerminateAfter
+		req.Search.Sparse[0].Params.CutoffFrequency = params.Match.CutoffFrequency
+
+	}
+
+	req.Search.Filter = params.Filter.Cond()
+	req.Search.RetrieveVector = params.RetrieveVector
+	req.Search.Outputfields = params.OutputFields
+	if params.Limit != nil {
+		req.Search.Limit = uint32(*params.Limit)
+	}
+
+	res, err := r.rpcClient.FullTextSearch(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	var documents [][]Document
+	for _, result := range res.Results {
+		var vecDoc []Document
+		for _, doc := range result.Documents {
+			d := Document{
+				Id:     doc.Id,
+				Score:  doc.Score,
+				Fields: make(map[string]Field),
+			}
+
+			d.SparseVector = make([]encoder.SparseVecItem, 0)
+			for _, sv := range doc.SparseVector {
+				d.SparseVector = append(d.SparseVector, encoder.SparseVecItem{
+					TermId: sv.TermId,
+					Score:  sv.Score,
+				})
+			}
+
+			for n, v := range doc.Fields {
+				d.Fields[n] = *ConvertGrpc2Field(v)
+			}
+			vecDoc = append(vecDoc, d)
+		}
+		documents = append(documents, vecDoc)
+	}
+	result := &SearchDocumentResult{
+		Warning:   res.Warning,
+		Documents: documents,
+	}
+	if res.EmbeddingExtraInfo != nil {
+		result.EmbeddingExtraInfo = &document.EmbeddingExtraInfo{
+			TokenUsed: res.EmbeddingExtraInfo.TokenUsed,
+		}
+	}
 	return result, nil
 }
 
@@ -840,7 +951,7 @@ func (r *rpcImplementerFlatDocument) Update(ctx context.Context, databaseName, c
 		for k, v := range updatefields {
 			req.Update.Fields[k] = ConvertField2Grpc(&Field{Val: v})
 		}
-	} else {
+	} else if param.UpdateFields != nil {
 		return nil, fmt.Errorf("update failed, because of incorrect UpdateDocumentParams.UpdateFields field type, " +
 			"which must be map[string]Field or map[string]interface{}")
 	}
@@ -930,6 +1041,11 @@ func (r *rpcImplementerFlatDocument) search(ctx context.Context, databaseName, c
 	result := &SearchDocumentResult{
 		Warning:   res.Warning,
 		Documents: documents,
+	}
+	if res.EmbeddingExtraInfo != nil {
+		result.EmbeddingExtraInfo = &document.EmbeddingExtraInfo{
+			TokenUsed: res.EmbeddingExtraInfo.TokenUsed,
+		}
 	}
 	return result, nil
 }
