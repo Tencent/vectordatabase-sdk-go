@@ -24,9 +24,9 @@ func main() {
 	fmt.Println("tokens: ", tokens)
 
 	// [EncodeText] can be used after set WordsFreqFile in [NewBM25EncoderByFiles]
-	// sparse_vectors, err := bm25.EncodeText(text)
+	// sparseVectors, err := bm25.EncodeText(text)
 	// if err != nil {
 	// 	log.Fatalf(err.Error())
 	// }
-	// fmt.Println("sparse vectors: ", sparse_vectors)
+	// fmt.Println("sparse vectors: ", sparseVectors)
 }

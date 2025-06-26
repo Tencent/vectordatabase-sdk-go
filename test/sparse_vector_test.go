@@ -124,7 +124,7 @@ func Test_UpsertDocsWithSparseVec(t *testing.T) {
 		"布大惊，与陈宫商议。宫曰：“闻刘玄德新领徐州，可往投之。”布从其言，竟投徐州来。有人报知玄德。",
 		"玄德曰：“布乃当今英勇之士，可出迎之。”糜竺曰：“吕布乃虎狼之徒，不可收留；收则伤人矣。",
 	}
-	sparse_vectors, err := bm25.EncodeTexts(segments)
+	sparseVectors, err := bm25.EncodeTexts(segments)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -138,7 +138,7 @@ func Test_UpsertDocsWithSparseVec(t *testing.T) {
 				"page":     {Val: 21},
 				"segment":  {Val: segments[0]},
 			},
-			SparseVector: sparse_vectors[0],
+			SparseVector: sparseVectors[0],
 		},
 		{
 			Id: "0002",
@@ -148,7 +148,7 @@ func Test_UpsertDocsWithSparseVec(t *testing.T) {
 				"page":     {Val: 22},
 				"segment":  {Val: segments[1]},
 			},
-			SparseVector: sparse_vectors[1],
+			SparseVector: sparseVectors[1],
 		},
 		{
 			Id: "0003",
@@ -158,7 +158,7 @@ func Test_UpsertDocsWithSparseVec(t *testing.T) {
 				"page":     {Val: 23},
 				"segment":  {Val: segments[2]},
 			},
-			SparseVector: sparse_vectors[2],
+			SparseVector: sparseVectors[2],
 		},
 		{
 			Id: "0004",
@@ -168,7 +168,7 @@ func Test_UpsertDocsWithSparseVec(t *testing.T) {
 				"page":     {Val: 24},
 				"segment":  {Val: segments[3]},
 			},
-			SparseVector: sparse_vectors[3],
+			SparseVector: sparseVectors[3],
 		},
 		{
 			Id: "0005",
@@ -178,7 +178,7 @@ func Test_UpsertDocsWithSparseVec(t *testing.T) {
 				"page":     {Val: 25},
 				"segment":  {Val: segments[4]},
 			},
-			SparseVector: sparse_vectors[4],
+			SparseVector: sparseVectors[4],
 		},
 	}, nil)
 
@@ -197,12 +197,12 @@ func TestUpsertJsonsWithSparseVec(t *testing.T) {
 	segments := []string{
 		"布大惊，与陈宫商议。",
 	}
-	sparse_vectors, err := bm25.EncodeTexts(segments)
+	sparseVectors, err := bm25.EncodeTexts(segments)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	println(ToJson(sparse_vectors))
+	println(ToJson(sparseVectors))
 
 	buildIndex := true
 	result, err := col.Upsert(ctx, []map[string]interface{}{
@@ -269,7 +269,7 @@ func TestUpdateWithSparseVec(t *testing.T) {
 	segments := []string{
 		"布大惊，与陈宫商议。宫曰：“闻刘玄德新领徐州，可往投之。”布从其言，竟投徐州来。有人报知玄德。",
 	}
-	sparse_vectors, err := bm25.EncodeTexts(segments)
+	sparseVectors, err := bm25.EncodeTexts(segments)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -280,7 +280,7 @@ func TestUpdateWithSparseVec(t *testing.T) {
 		UpdateFields: map[string]tcvectordb.Field{
 			"segment": {Val: segments[0]},
 		},
-		UpdateSparseVec: sparse_vectors[0],
+		UpdateSparseVec: sparseVectors[0],
 	})
 	printErr(err)
 	log.Printf("affect count: %d", result.AffectedCount)

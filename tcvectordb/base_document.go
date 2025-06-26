@@ -47,6 +47,9 @@ type DocumentInterface interface {
 	// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
 	HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (result *SearchDocumentResult, err error)
 
+	// [FullTextSearch] retrieves the most similar topK sparse vectors by the given text.
+	FullTextSearch(ctx context.Context, params FullTextSearchParams) (result *SearchDocumentResult, err error)
+
 	// [SearchById] returns the most similar topK vectors by the given documentIds.
 	SearchById(ctx context.Context, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
 
@@ -81,7 +84,8 @@ type UpsertDocumentParams struct {
 }
 
 type UpsertDocumentResult struct {
-	AffectedCount int
+	AffectedCount      int
+	EmbeddingExtraInfo *document.EmbeddingExtraInfo
 }
 
 // [Upsert] upserts documents into a collection.
@@ -180,8 +184,9 @@ type SearchDocParams struct {
 }
 
 type SearchDocumentResult struct {
-	Warning   string
-	Documents [][]Document
+	Warning            string
+	Documents          [][]Document
+	EmbeddingExtraInfo *document.EmbeddingExtraInfo
 }
 
 // [Search] returns the most similar topK vectors by the given vectors.
@@ -231,6 +236,15 @@ func (i *implementerDocument) SearchById(ctx context.Context, documentIds []stri
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) SearchByText(ctx context.Context, text map[string][]string, params ...*SearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.flat.SearchByText(ctx, i.database.DatabaseName, i.collection.connCollectionName, text, params...)
+}
+
+type FullTextSearchParams struct {
+	Filter         *Filter
+	RetrieveVector bool
+	OutputFields   []string
+	Limit          *int
+
+	Match *FullTextSearchMatchOption
 }
 
 // [HybridSearchDocumentParams] holds the parameters for hybrid searching documents to a collection.
@@ -297,6 +311,23 @@ type MatchOption struct {
 	CutoffFrequency float64
 }
 
+// [FullTextSearchMatchOption] holds the parameters for sparse vectors retrieval configuration.
+//
+// Fields:
+//   - FieldName: The field name for sparse vector retrieval, for example: sparse_vector.
+//   - Data: The sparse vectors to retrieve, supporting only sparse vectors for one sentence.
+//   - TerminateAfter: (Optional) Threshold for early termination of keyword search,
+//     used to improve search efficiency.
+//   - CutoffFrequency: (Optional) CutoffFrequency specifies a positive integer limit, ranging from [1, +∞].
+//     If the term frequency is less than the cutoffFrequency, the term will be ignored during retrieval.
+//     It also supports decimal values within the range [0,1].
+type FullTextSearchMatchOption struct {
+	FieldName       string
+	Data            interface{}
+	TerminateAfter  uint32
+	CutoffFrequency float64
+}
+
 // [AnnParam] holds the parameters for vectors hybrid retrieval configuration.
 //
 // Fields:
@@ -325,6 +356,10 @@ type AnnParam struct {
 // Returns a pointer to a [SearchDocumentResult] object or an error.
 func (i *implementerDocument) HybridSearch(ctx context.Context, params HybridSearchDocumentParams) (*SearchDocumentResult, error) {
 	return i.flat.HybridSearch(ctx, i.database.DatabaseName, i.collection.connCollectionName, params)
+}
+
+func (i *implementerDocument) FullTextSearch(ctx context.Context, params FullTextSearchParams) (*SearchDocumentResult, error) {
+	return i.flat.FullTextSearch(ctx, i.database.DatabaseName, i.collection.connCollectionName, params)
 }
 
 // [DeleteDocumentParams] holds the parameters for deleting documents to a collection.
@@ -514,6 +549,11 @@ func (i *implementerFlatDocument) Upsert(ctx context.Context, db, coll string, d
 		return
 	}
 	result.AffectedCount = int(res.AffectedCount)
+	if res.EmbeddingExtraInfo != nil {
+		result.EmbeddingExtraInfo = &document.EmbeddingExtraInfo{
+			TokenUsed: res.EmbeddingExtraInfo.TokenUsed,
+		}
+	}
 	return
 }
 
@@ -706,6 +746,11 @@ func (i *implementerFlatDocument) search(ctx context.Context, databaseName, coll
 	result := new(SearchDocumentResult)
 	result.Warning = res.Warning
 	result.Documents = documents
+	if res.EmbeddingExtraInfo != nil {
+		result.EmbeddingExtraInfo = &document.EmbeddingExtraInfo{
+			TokenUsed: res.EmbeddingExtraInfo.TokenUsed,
+		}
+	}
 	return result, nil
 }
 
@@ -813,6 +858,86 @@ func (i *implementerFlatDocument) HybridSearch(ctx context.Context, databaseName
 			d := Document{
 				Id:     doc.Id,
 				Vector: doc.Vector,
+				Score:  doc.Score,
+				Fields: make(map[string]Field),
+			}
+
+			d.SparseVector = make([]encoder.SparseVecItem, 0)
+			for _, sv := range doc.SparseVector {
+				svItem, err := ConvSliceInterface2SparseVecItem(sv)
+				if err != nil {
+					return nil, fmt.Errorf("the search response's doc sparse_vector data is incorrect. doc id is %v. err: %v", d.Id, err.Error())
+				}
+				d.SparseVector = append(d.SparseVector, *svItem)
+			}
+
+			for n, v := range doc.Fields {
+				d.Fields[n] = Field{Val: v}
+			}
+			vecDoc = append(vecDoc, d)
+		}
+		documents = append(documents, vecDoc)
+	}
+	result := new(SearchDocumentResult)
+	result.Warning = res.Warning
+	result.Documents = documents
+	if res.EmbeddingExtraInfo != nil {
+		result.EmbeddingExtraInfo = &document.EmbeddingExtraInfo{
+			TokenUsed: res.EmbeddingExtraInfo.TokenUsed,
+		}
+	}
+	return result, nil
+}
+
+func (i *implementerFlatDocument) FullTextSearch(ctx context.Context, databaseName, collectionName string, params FullTextSearchParams) (*SearchDocumentResult, error) {
+	req := new(document.FullTextSearchReq)
+	req.Database = databaseName
+	req.Collection = collectionName
+	req.ReadConsistency = string(i.SdkClient.Options().ReadConsistency)
+	req.Search = new(document.FullTextSearchCond)
+	req.Search.Match = new(document.MatchOption)
+
+	if params.Match != nil {
+		fieldName := "sparse_vector"
+		if params.Match.FieldName != "" {
+			fieldName = params.Match.FieldName
+		}
+		req.Search.Match = &document.MatchOption{
+			FieldName: fieldName,
+		}
+
+		req.Search.Match.Data = make([][][]interface{}, 0)
+		if svs, ok := params.Match.Data.([]encoder.SparseVecItem); ok {
+			sparseVector := make([][]interface{}, 0)
+			for _, svItem := range svs {
+				sparseVector = append(sparseVector, []interface{}{svItem.TermId, svItem.Score})
+			}
+			req.Search.Match.Data = append(req.Search.Match.Data, sparseVector)
+		} else {
+			return nil, fmt.Errorf("fullTextSearch failed, because of Match.Data field type, " +
+				"which must be []encoder.SparseVecItem")
+		}
+
+		req.Search.Match.TerminateAfter = params.Match.TerminateAfter
+		req.Search.Match.CutoffFrequency = params.Match.CutoffFrequency
+	}
+
+	req.Search.Filter = params.Filter.Cond()
+	req.Search.RetrieveVector = params.RetrieveVector
+	req.Search.OutputFields = params.OutputFields
+	req.Search.Limit = params.Limit
+
+	res := new(document.SearchRes)
+	err := i.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+	var documents [][]Document
+	for _, result := range res.Documents {
+		var vecDoc []Document
+		for _, doc := range result {
+			d := Document{
+				Id:     doc.Id,
 				Score:  doc.Score,
 				Fields: make(map[string]Field),
 			}

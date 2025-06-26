@@ -28,6 +28,7 @@ type RebuildReq struct {
 	Throttle          int32  `json:"throttle"`
 	DisableTrain      bool   `json:"disable_train,omitempty"`
 	ForceRebuild      bool   `json:"force_rebuild,omitempty"`
+	FieldName         string `json:"fieldName,omitempty"`
 }
 
 type RebuildRes struct {

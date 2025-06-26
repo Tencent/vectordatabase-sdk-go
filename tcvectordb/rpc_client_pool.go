@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 )
 
 type RpcClientPool struct {
 	FlatInterface
 	clients []*RpcClient
-	index   int
+	index   int64 // Changed to int64 for atomic operations
 	mux     sync.Mutex
 
 	url      string
@@ -46,22 +47,35 @@ func NewRpcClientPool(url, username, key string, option *ClientOption) (VdbClien
 }
 
 func (pool *RpcClientPool) getRpcClient() (*RpcClient, error) {
-	index := pool.index
-	client := pool.clients[index]
-	//println("get rpc client from pool, which index is ", index)
+
+	// 直接使用模运算，避免大数字
+	currentIndex := atomic.AddInt64(&pool.index, 1) % int64(pool.option.RpcPoolSize)
+	if currentIndex < 0 {
+		currentIndex = 0 // 处理负数情况
+	}
+	client := pool.clients[currentIndex]
+
+	//println("get rpc client from pool, which index is ", currentIndex)
 	state := client.cc.GetState().String()
 	var err error
 	if state == "SHUTDOWN" || state == "INVALID_STATE" {
-		client, err = NewRpcClient(pool.url, pool.username, pool.key, pool.option)
-		if err != nil {
-			return nil, err
+		// Only lock when we need to replace a client
+		pool.mux.Lock()
+		// Double-check the state to avoid race conditions
+		if client.cc.GetState().String() == "SHUTDOWN" || client.cc.GetState().String() == "INVALID_STATE" {
+			oldClient := pool.clients[currentIndex]
+			client, err = NewRpcClient(pool.url, pool.username, pool.key, pool.option)
+			if err != nil {
+				pool.mux.Unlock()
+				return nil, err
+			}
+			pool.clients[currentIndex] = client
+			//println("new rpc client from pool, which index is ", currentIndex)
+			oldClient.Close()
 		}
-		pool.clients[index] = client
+		pool.mux.Unlock()
 	}
 
-	pool.mux.Lock()
-	pool.index = (pool.index + 1) % len(pool.clients)
-	defer pool.mux.Unlock()
 	return client, nil
 }
 
@@ -218,6 +232,15 @@ func (pool *RpcClientPool) HybridSearch(ctx context.Context, databaseName, colle
 		return nil, fmt.Errorf("get rpc client failed. err: %v", err.Error())
 	}
 	return client.HybridSearch(ctx, databaseName, collectionName, params)
+}
+
+func (pool *RpcClientPool) FullTextSearch(ctx context.Context, databaseName, collectionName string,
+	params FullTextSearchParams) (result *SearchDocumentResult, err error) {
+	client, err := pool.getRpcClient()
+	if err != nil {
+		return nil, fmt.Errorf("get rpc client failed. err: %v", err.Error())
+	}
+	return client.FullTextSearch(ctx, databaseName, collectionName, params)
 }
 
 func (pool *RpcClientPool) SearchById(ctx context.Context, databaseName, collectionName string,

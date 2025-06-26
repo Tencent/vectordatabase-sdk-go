@@ -19,9 +19,9 @@ func main() {
 	tokens := bm25.GetTokenizer().Tokenize(text)
 	fmt.Println("tokens: ", tokens)
 
-	sparse_vectors, err := bm25.EncodeText(text)
+	sparseVectors, err := bm25.EncodeText(text)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	fmt.Println("sparse vectors: ", sparse_vectors)
+	fmt.Println("sparse vectors: ", sparseVectors)
 }

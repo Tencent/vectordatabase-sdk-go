@@ -90,13 +90,13 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 		FilterIndex: tcvectordb.FilterIndex{
 			FieldName: "vector",
 			FieldType: tcvectordb.Vector,
-			IndexType: tcvectordb.HNSW,
+			IndexType: tcvectordb.IVF_PQ,
 		},
 		Dimension:  3,
 		MetricType: tcvectordb.IP,
-		Params: &tcvectordb.HNSWParam{
-			M:              16,
-			EfConstruction: 200,
+		Params: &tcvectordb.IVFPQParams{
+			M:     1,
+			NList: 10,
 		},
 	})
 	index.FilterIndex = append(index.FilterIndex, tcvectordb.FilterIndex{FieldName: "id", FieldType: tcvectordb.String, IndexType: tcvectordb.PRIMARY})
@@ -149,9 +149,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 	// upsert 写入数据，可能会有一定延迟
 	// 1. 支持动态 Schema，除了 id、vector 字段必须写入，可以写入其他任意字段；
@@ -209,7 +206,11 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 			},
 		},
 	}
-	result, err := coll.Upsert(ctx, documentList)
+
+	buildIndex := false
+	result, err := d.client.Upsert(ctx, database, collection, documentList, &tcvectordb.UpsertDocumentParams{
+		BuildIndex: &buildIndex,
+	})
 	if err != nil {
 		return err
 	}
@@ -218,8 +219,6 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 }
 
 func (d *Demo) ModifyVectorIndex(ctx context.Context, database, collection string) error {
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ ModifyVectorIndex ------------------------------")
 
 	setThrottle := int32(1)
@@ -231,19 +230,16 @@ func (d *Demo) ModifyVectorIndex(ctx context.Context, database, collection strin
 	param.VectorIndexes = make([]tcvectordb.ModifyVectorIndex, 0)
 	param.VectorIndexes = append(param.VectorIndexes, tcvectordb.ModifyVectorIndex{
 		FieldName:  "vector",
-		FieldType:  "bfloat16_vector",
+		FieldType:  "float16_vector",
+		IndexType:  string(tcvectordb.HNSW),
 		MetricType: tcvectordb.COSINE,
 		Params: &tcvectordb.HNSWParam{
-			M:              8,
-			EfConstruction: 0,
-		}})
+			M:              16,
+			EfConstruction: 200,
+		},
+	})
 
-	err := coll.ModifyVectorIndex(ctx, param)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.client.ModifyVectorIndex(ctx, database, collection, param)
 }
 
 func (d *Demo) DescribeCollection(ctx context.Context, database, collection string) error {
@@ -273,6 +269,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

@@ -55,6 +55,9 @@ type FlatInterface interface {
 	// [HybridSearch] retrieves both dense and sparse vectors to return the most similar topK vectors.
 	HybridSearch(ctx context.Context, databaseName, collectionName string, params HybridSearchDocumentParams) (result *SearchDocumentResult, err error)
 
+	// [FullTextSearch] retrieves the most similar topK sparse vectors by the given text.
+	FullTextSearch(ctx context.Context, databaseName, collectionName string, params FullTextSearchParams) (result *SearchDocumentResult, err error)
+
 	// [SearchById] returns the most similar topK vectors by the given documentIds.
 	SearchById(ctx context.Context, databaseName, collectionName string, documentIds []string, params ...*SearchDocumentParams) (result *SearchDocumentResult, err error)
 

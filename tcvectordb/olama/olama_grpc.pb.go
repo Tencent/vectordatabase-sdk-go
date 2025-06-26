@@ -51,7 +51,7 @@ type SearchEngineClient interface {
 	// 混合搜索
 	HybridSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	// 关键词检索
-	KeywordSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	FullTextSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	// 删除向量
 	Dele(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// count
@@ -221,9 +221,9 @@ func (c *searchEngineClient) HybridSearch(ctx context.Context, in *SearchRequest
 	return out, nil
 }
 
-func (c *searchEngineClient) KeywordSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *searchEngineClient) FullTextSearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/document/keywordSearch", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/olama.SearchEngine/full_text_search", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -407,7 +407,7 @@ type SearchEngineServer interface {
 	// 混合搜索
 	HybridSearch(context.Context, *SearchRequest) (*SearchResponse, error)
 	// 关键词检索
-	KeywordSearch(context.Context, *SearchRequest) (*SearchResponse, error)
+	FullTextSearch(context.Context, *SearchRequest) (*SearchResponse, error)
 	// 删除向量
 	Dele(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// count
@@ -490,8 +490,8 @@ func (UnimplementedSearchEngineServer) Search(context.Context, *SearchRequest) (
 func (UnimplementedSearchEngineServer) HybridSearch(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HybridSearch not implemented")
 }
-func (UnimplementedSearchEngineServer) KeywordSearch(context.Context, *SearchRequest) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method KeywordSearch not implemented")
+func (UnimplementedSearchEngineServer) FullTextSearch(context.Context, *SearchRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FullTextSearch not implemented")
 }
 func (UnimplementedSearchEngineServer) Dele(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Dele not implemented")
@@ -806,20 +806,20 @@ func _SearchEngine_HybridSearch_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SearchEngine_KeywordSearch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SearchEngine_FullTextSearch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SearchEngineServer).KeywordSearch(ctx, in)
+		return srv.(SearchEngineServer).FullTextSearch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/olama.SearchEngine/keyword_search",
+		FullMethod: "/olama.SearchEngine/full_text_search",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SearchEngineServer).KeywordSearch(ctx, req.(*SearchRequest))
+		return srv.(SearchEngineServer).FullTextSearch(ctx, req.(*SearchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1176,8 +1176,8 @@ var SearchEngine_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SearchEngine_HybridSearch_Handler,
 		},
 		{
-			MethodName: "keyword_search",
-			Handler:    _SearchEngine_KeywordSearch_Handler,
+			MethodName: "full_text_search",
+			Handler:    _SearchEngine_FullTextSearch_Handler,
 		},
 		{
 			MethodName: "dele",

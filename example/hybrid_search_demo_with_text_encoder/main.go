@@ -13,7 +13,7 @@ import (
 )
 
 type Demo struct {
-	client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 var (
@@ -23,7 +23,7 @@ var (
 func NewDemo(url, username, key string) (*Demo, error) {
 	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 	// 	ReadConsistency: tcvectordb.EventualConsistency})
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
@@ -159,9 +159,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 	// upsert 写入数据，可能会有一定延迟
 	// 1. 支持动态 Schema，除了 id、vector 字段必须写入，可以写入其他任意字段；
@@ -169,7 +166,7 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 
 	bm25, err := encoder.NewBM25Encoder(&encoder.BM25EncoderParams{Bm25Language: "zh"})
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
 	segments := []string{
@@ -184,9 +181,9 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 	tokens := bm25.GetTokenizer().Tokenize(segments[0])
 	fmt.Println("tokens: ", tokens)
 
-	sparse_vectors, err := bm25.EncodeTexts(segments)
+	sparseVectors, err := bm25.EncodeTexts(segments)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
 	documentList := make([]tcvectordb.Document, 0)
@@ -195,11 +192,11 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 		documentList = append(documentList, tcvectordb.Document{
 			Id:           id,
 			Vector:       vectors[i],
-			SparseVector: sparse_vectors[i],
+			SparseVector: sparseVectors[i],
 		})
 	}
 
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
@@ -208,9 +205,6 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 }
 
 func (d *Demo) QueryData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Query ------------------------------")
 	// 查询
 	// 1. query 用于查询数据
@@ -220,7 +214,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	documentIds := []string{"0000", "0001", "0002", "0003", "0004"}
 	outputField := []string{"id", "sparse_vector"}
 
-	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
+	result, err := d.client.Query(ctx, database, collection, documentIds, &tcvectordb.QueryDocumentParams{
 		RetrieveVector: false,
 		OutputFields:   outputField,
 		Limit:          5,
@@ -242,11 +236,11 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	// 批量相似性查询，根据指定的多个向量查找多个 Top K 个相似性结果
 	bm25, err := encoder.NewBM25Encoder(&encoder.BM25EncoderParams{Bm25Language: "zh"})
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 	sparseVec, err := bm25.EncodeQuery("腾讯云向量数据库")
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
 	annSearch := &tcvectordb.AnnParam{
@@ -260,7 +254,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	}
 
 	limit := 2
-	searchRes, err := coll.HybridSearch(ctx, tcvectordb.HybridSearchDocumentParams{
+	searchRes, err := d.client.HybridSearch(ctx, database, collection, tcvectordb.HybridSearchDocumentParams{
 		AnnParams: []*tcvectordb.AnnParam{annSearch},
 		Match:     []*tcvectordb.MatchOption{keywordSearch},
 		// rerank也支持rrf，使用方式见下
@@ -291,30 +285,26 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 }
 
 func (d *Demo) UpdateAndDeleteCollection(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	db := d.client.Database(database)
-	coll := db.Collection(collection)
-
 	log.Println("------------------------------ Update ------------------------------")
 
 	documentId := []string{"0002"}
 	bm25, err := encoder.NewBM25Encoder(&encoder.BM25EncoderParams{Bm25Language: "zh"})
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
 	segments := []string{
 		"腾讯云向量数据库（Tencent Cloud VectorDB）是一款全托管的自研企业级分布式数据库服务，专用于存储、索引、检索、管理由深度神经网络或其他机器学习模型生成的大量多维嵌入向量。",
 	}
 
-	sparse_vectors, err := bm25.EncodeTexts(segments)
+	sparseVectors, err := bm25.EncodeTexts(segments)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
-	result, err := coll.Update(ctx, tcvectordb.UpdateDocumentParams{
+	result, err := d.client.Update(ctx, database, collection, tcvectordb.UpdateDocumentParams{
 		QueryIds:        documentId,
-		UpdateSparseVec: sparse_vectors[0],
+		UpdateSparseVec: sparseVectors[0],
 	})
 	if err != nil {
 		return err
@@ -325,7 +315,7 @@ func (d *Demo) UpdateAndDeleteCollection(ctx context.Context, database, collecti
 	// truncate_collection
 	// 清空 Collection
 	time.Sleep(time.Second * 5)
-	truncateRes, err := db.TruncateCollection(ctx, collection)
+	truncateRes, err := d.client.Database(database).TruncateCollection(ctx, collection)
 	if err != nil {
 		return err
 	}
@@ -358,8 +348,10 @@ func main() {
 	collectionAlias := "go-sdk-demo-col-sparsevec-encoder-alias"
 
 	ctx := context.Background()
-	testVdb, err := NewDemo("vdb http url or ip and port", "root", "key get from web console")
+	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

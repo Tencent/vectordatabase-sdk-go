@@ -20,6 +20,7 @@ package tcvectordb
 
 import "errors"
 
+// IndexType represents the type of index for vector and scalar fields.
 type IndexType string
 
 const (

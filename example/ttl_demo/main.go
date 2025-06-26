@@ -11,7 +11,7 @@ import (
 )
 
 type Demo struct {
-	client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 var (
@@ -21,7 +21,7 @@ var (
 func NewDemo(url, username, key string) (*Demo, error) {
 	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 	// 	ReadConsistency: tcvectordb.EventualConsistency})
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
@@ -90,9 +90,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection s
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 
 	documentList := make([]tcvectordb.Document, 0)
@@ -107,7 +104,7 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 		})
 	}
 
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
@@ -116,9 +113,6 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 }
 
 func (d *Demo) QueryData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Query ------------------------------")
 
 	documentIds := []string{"0000", "0001", "0002", "0003", "0004"}
@@ -130,7 +124,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 		Offset:         0,
 	}
 
-	result, err := coll.Query(ctx, documentIds, &params)
+	result, err := d.client.Query(ctx, database, collection, documentIds, &params)
 	if err != nil {
 		return err
 	}
@@ -141,7 +135,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 
 	time.Sleep(time.Hour)
 	log.Println("------------------------------ Query after 1 hour, and expired data will be deleted------------------------------")
-	result, err = coll.Query(ctx, documentIds, &params)
+	result, err = d.client.Query(ctx, database, collection, documentIds, &params)
 	if err != nil {
 		return err
 	}
@@ -173,8 +167,10 @@ func main() {
 	collectionName := "go-sdk-demo-col-ttl"
 
 	ctx := context.Background()
-	testVdb, err := NewDemo("vdb http url or ip and port", "root", "key get from web console")
+	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.UpsertData(ctx, database, collectionName)

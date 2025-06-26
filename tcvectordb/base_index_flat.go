@@ -36,12 +36,15 @@ type implementerFlatIndex struct {
 //   - DropBeforeRebuild: Whether to delete the old index before rebuilding the new index (defaults to false).
 //     true: first delete the old index and then rebuild the index.
 //     false: after creating the new index, then delete the old index.
-//   - Throttle: (Optional) The number of CPU cores for building an index on a single node. only support 1 currently.
+//   - Throttle: (Optional) The number of CPU cores for building an index on a single node.
+//     Valid range is 1 to the number of CPU cores of the instance.
 //   - UnLimitedCPU: (Optional) Using all CPU cores for building an index on a single node (defaults to false).
+//   - FieldName: (Optional) The name of the field to rebuild the index.
 type RebuildIndexParams struct {
 	DropBeforeRebuild bool
 	Throttle          int
 	UnLimitedCPU      bool
+	FieldName         string
 }
 
 // [AddIndexParams] holds the parameters for adding scalar field index in a collection.
@@ -72,11 +75,13 @@ type ModifyVectorIndexParam struct {
 // Fields:
 //   - FieldName: The name of the field for the vector index.
 //   - FieldType: The type of the field (e.g., "vector", "float16_vector", "bfloat16_vector").
+//   - IndexType: The type of the index (e.g., "HNSW", "FLAT", "IVF_FLAT", "IVF_PQ"). not support BIN_FLAT now.
 //   - MetricType: The metric type used for similarity calculation (e.g., COSINE, L2).
 //   - Params: The index parameters that specify the configuration details for the index.
 type ModifyVectorIndex struct {
 	FieldName  string
 	FieldType  string
+	IndexType  string
 	MetricType MetricType
 	Params     IndexParams
 }
@@ -107,7 +112,7 @@ func (i *implementerFlatIndex) RebuildIndex(ctx context.Context, databaseName, c
 				req.Throttle = 1
 			}
 		}
-
+		req.FieldName = param.FieldName
 	}
 
 	res := new(index.RebuildRes)
@@ -189,6 +194,7 @@ func (i *implementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseNa
 		column := new(api.IndexColumn)
 		column.FieldName = v.FieldName
 		column.FieldType = v.FieldType
+		column.IndexType = v.IndexType
 		column.MetricType = string(v.MetricType)
 
 		optionParamsFromIndexParams(column, v.Params)

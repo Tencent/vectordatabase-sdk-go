@@ -10,14 +10,13 @@ import (
 )
 
 type Demo struct {
-	client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 func NewDemo(url, username, key string) (*Demo, error) {
-	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
-	// 	ReadConsistency: tcvectordb.EventualConsistency})
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency})
+
 	if err != nil {
 		return nil, err
 	}
@@ -147,9 +146,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Upsert ------------------------------")
 	// upsert 写入数据，可能会有一定延迟
 	// 1. 支持动态 Schema，除了 id、vector 字段必须写入，可以写入其他任意字段；
@@ -207,7 +203,7 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 			},
 		},
 	}
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
@@ -216,9 +212,6 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 }
 
 func (d *Demo) QueryData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
-
 	log.Println("------------------------------ Query ------------------------------")
 	// 查询
 	// 1. query 用于查询数据
@@ -229,7 +222,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	filter := tcvectordb.NewFilter(`bookName="三国演义"`)
 	outputField := []string{"id", "bookName", "page"}
 
-	result, err := coll.Query(ctx, documentIds, &tcvectordb.QueryDocumentParams{
+	result, err := d.client.Query(ctx, database, collection, documentIds, &tcvectordb.QueryDocumentParams{
 		Filter:         filter,
 		RetrieveVector: true,
 		OutputFields:   outputField,
@@ -259,7 +252,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	// 4. limit 用于限制每个单元搜索条件的条数，如 vector 传入三组向量，limit 为 3，则 limit 限制的是每组向量返回 top 3 的相似度向量
 
 	// 根据主键 id 查找 Top K 个相似性结果，向量数据库会根据ID 查找对应的向量，再根据向量进行TOP K 相似性检索
-	searchResult, err := coll.SearchById(ctx, []string{"0003"}, &tcvectordb.SearchDocumentParams{
+	searchResult, err := d.client.SearchById(ctx, database, collection, []string{"0003"}, &tcvectordb.SearchDocumentParams{
 		Filter: filter,
 		Params: &tcvectordb.SearchDocParams{Ef: 200},
 		Limit:  2,
@@ -280,7 +273,7 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 	// 其他选项类似 search 接口
 
 	// 批量相似性查询，根据指定的多个向量查找多个 Top K 个相似性结果
-	searchResult, err = coll.Search(ctx,
+	searchResult, err = d.client.Search(ctx, database, collection,
 		[][]float32{{0.3123, 0.43, 0.213}, {0.233, 0.12, 0.97}}, //指定检索向量，最多指定20个
 		&tcvectordb.SearchDocumentParams{
 			Params:         &tcvectordb.SearchDocParams{Ef: 100}, // 若使用HNSW索引，则需要指定参数ef，ef越大，召回率越高，但也会影响检索速度
@@ -301,10 +294,6 @@ func (d *Demo) QueryData(ctx context.Context, database, collection string) error
 }
 
 func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	db := d.client.Database(database)
-	coll := db.Collection(collection)
-
 	log.Println("------------------------------ Update ------------------------------")
 	// update
 	// 1. update 提供基于 [主键查询] 和 [Filter 过滤] 的部分字段更新或者非索引字段新增
@@ -315,7 +304,7 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 	updateField := map[string]tcvectordb.Field{
 		"page": {Val: 24},
 	}
-	result, err := coll.Update(ctx, tcvectordb.UpdateDocumentParams{
+	result, err := d.client.Update(ctx, database, collection, tcvectordb.UpdateDocumentParams{
 		QueryIds:     documentId,
 		QueryFilter:  filter,
 		UpdateFields: updateField,
@@ -332,7 +321,7 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 
 	// filter 限制只会删除 id="0001" 成功
 	filter = tcvectordb.NewFilter(`bookName="西游记"`)
-	delResult, err := coll.Delete(ctx, tcvectordb.DeleteDocumentParams{
+	delResult, err := d.client.Delete(ctx, database, collection, tcvectordb.DeleteDocumentParams{
 		Filter:      filter,
 		DocumentIds: documentId,
 	})
@@ -344,7 +333,7 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 	log.Println("--------------------------- RebuildIndex ---------------------------")
 	// rebuild_index
 	// 索引重建，重建期间不支持写入
-	indexRebuildRes, err := coll.RebuildIndex(ctx)
+	indexRebuildRes, err := d.client.RebuildIndex(ctx, database, collection)
 	if err != nil {
 		return err
 	}
@@ -354,7 +343,7 @@ func (d *Demo) UpdateAndDelete(ctx context.Context, database, collection string)
 	// truncate_collection
 	// 清空 Collection
 	time.Sleep(time.Second * 5)
-	truncateRes, err := db.TruncateCollection(ctx, collection)
+	truncateRes, err := d.client.Database(database).TruncateCollection(ctx, collection)
 	if err != nil {
 		return err
 	}
@@ -376,6 +365,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

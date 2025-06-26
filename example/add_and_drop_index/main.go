@@ -22,7 +22,7 @@ func NewDemo(url, username, key string) (*Demo, error) {
 		return nil, err
 	}
 	// disable/enable http request log print
-	// cli.Debug(false)
+	// cli.Debug(true)
 	return &Demo{client: cli}, nil
 }
 
@@ -113,8 +113,6 @@ func (d *Demo) CreateDBAndCollection(ctx context.Context, database, collection, 
 }
 
 func (d *Demo) UpsertData(ctx context.Context, database, collection string) error {
-	// 获取 Collection 对象
-	coll := d.client.Database(database).Collection(collection)
 
 	log.Println("------------------------------ Upsert ------------------------------")
 	// upsert 写入数据，可能会有一定延迟
@@ -173,7 +171,7 @@ func (d *Demo) UpsertData(ctx context.Context, database, collection string) erro
 			},
 		},
 	}
-	result, err := coll.Upsert(ctx, documentList)
+	result, err := d.client.Upsert(ctx, database, collection, documentList)
 	if err != nil {
 		return err
 	}
@@ -206,6 +204,7 @@ func (d *Demo) AddIndex(ctx context.Context, database, collection string) error 
 		}
 	}
 
+	log.Println("------------------------------ Query after AddIndex ------------------------------")
 	queryResult, queryErr := d.client.Query(ctx, database, collection, nil, &tcvectordb.QueryDocumentParams{
 		Filter: tcvectordb.NewFilter("author=\"罗贯中\""),
 		Limit:  100,
@@ -227,6 +226,7 @@ func (d *Demo) DropIndex(ctx context.Context, database, collection string) error
 		return err
 	}
 
+	log.Println("------------------------------ Query after DropIndex ------------------------------")
 	_, queryErr := d.client.Query(ctx, database, collection, nil, &tcvectordb.QueryDocumentParams{
 		Filter: tcvectordb.NewFilter("author=\"罗贯中\""),
 		Limit:  100,
@@ -264,6 +264,8 @@ func main() {
 	ctx := context.Background()
 	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.Clear(ctx, database)
 	printErr(err)
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)

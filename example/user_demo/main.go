@@ -170,8 +170,10 @@ func main() {
 	userName := "zhangsan"
 
 	ctx := context.Background()
-	testVdb, err := NewDemo("vdb http url or ip and port", "root", "key get from web console")
+	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName)
 	printErr(err)
 	err = testVdb.UserOperations(ctx, database, collectionName, userName)

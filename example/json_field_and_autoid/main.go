@@ -154,8 +154,10 @@ func main() {
 	collectionAlias := "go-sdk-demo-alias"
 
 	ctx := context.Background()
-	testVdb, err := NewDemo("vdb http url or ip and port", "root", "key get from web console")
+	testVdb, err := NewDemo("vdb http url or ip and port", "vdb username", "key get from web console")
 	printErr(err)
+	defer testVdb.client.Close()
+
 	err = testVdb.CreateDBAndCollection(ctx, database, collectionName, collectionAlias)
 	printErr(err)
 	err = testVdb.UpsertData(ctx, database, collectionName)
