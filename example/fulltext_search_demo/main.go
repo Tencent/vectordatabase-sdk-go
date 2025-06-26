@@ -143,7 +143,7 @@ func (d *Demo) QueryAndSearchData(ctx context.Context, database, collection stri
 
 	log.Println("------------------------------ FullTextSearch ------------------------------")
 
-	query, err := d.bm25.EncodeQuery("什么是腾讯云向量数据库")
+	query, err := d.bm25.EncodeQueries([]string{"什么是腾讯云向量数据库"})
 	if err != nil {
 		return err
 	}
@@ -195,6 +195,6 @@ func main() {
 	printErr(err)
 	err = testVdb.QueryAndSearchData(ctx, database, collectionName)
 	printErr(err)
-	err = testVdb.DropDB(ctx, database)
-	printErr(err)
+	// err = testVdb.DropDB(ctx, database)
+	// printErr(err)
 }
