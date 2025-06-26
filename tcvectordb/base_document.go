@@ -907,15 +907,17 @@ func (i *implementerFlatDocument) FullTextSearch(ctx context.Context, databaseNa
 		}
 
 		req.Search.Match.Data = make([][][]interface{}, 0)
-		if svs, ok := params.Match.Data.([]encoder.SparseVecItem); ok {
-			sparseVector := make([][]interface{}, 0)
-			for _, svItem := range svs {
-				sparseVector = append(sparseVector, []interface{}{svItem.TermId, svItem.Score})
+		if svs, ok := params.Match.Data.([][]encoder.SparseVecItem); ok {
+			for _, sv := range svs {
+				sparseVector := make([][]interface{}, 0)
+				for _, svItem := range sv {
+					sparseVector = append(sparseVector, []interface{}{svItem.TermId, svItem.Score})
+				}
+				req.Search.Match.Data = append(req.Search.Match.Data, sparseVector)
 			}
-			req.Search.Match.Data = append(req.Search.Match.Data, sparseVector)
 		} else {
 			return nil, fmt.Errorf("fullTextSearch failed, because of Match.Data field type, " +
-				"which must be []encoder.SparseVecItem")
+				"which must be [][]encoder.SparseVecItem")
 		}
 
 		req.Search.Match.TerminateAfter = params.Match.TerminateAfter

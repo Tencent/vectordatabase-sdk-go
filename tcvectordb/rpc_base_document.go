@@ -780,22 +780,23 @@ func (r *rpcImplementerFlatDocument) FullTextSearch(ctx context.Context, databas
 		})
 
 		sparseVectorArray := make([]*olama.SparseVectorArray, 0)
-
-		if svs, ok := params.Match.Data.([]encoder.SparseVecItem); ok {
-			data := make([]*olama.SparseVecItem, 0)
+		if svs, ok := params.Match.Data.([][]encoder.SparseVecItem); ok {
 			for _, sv := range svs {
-				data = append(data, &olama.SparseVecItem{
-					TermId: sv.TermId,
-					Score:  sv.Score,
+				data := make([]*olama.SparseVecItem, 0)
+				for _, svItem := range sv {
+					data = append(data, &olama.SparseVecItem{
+						TermId: svItem.TermId,
+						Score:  svItem.Score,
+					})
+				}
+				sparseVectorArray = append(sparseVectorArray, &olama.SparseVectorArray{
+					SpVector: data,
 				})
 			}
-			sparseVectorArray = append(sparseVectorArray, &olama.SparseVectorArray{
-				SpVector: data,
-			})
 			req.Search.Sparse[0].Data = sparseVectorArray
 		} else {
 			return nil, fmt.Errorf("fullTextSearch failed, because of Match.Data field type, " +
-				"which must be []encoder.SparseVecItem")
+				"which must be [][]encoder.SparseVecItem")
 		}
 
 		req.Search.Sparse[0].Params = new(olama.SparseSearchParams)
