@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
+	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_service"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
 	api_user "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
@@ -107,6 +108,9 @@ type FlatInterface interface {
 	// [QueryFileDetails] queries file details from the collection.
 	QueryFileDetails(ctx context.Context, databaseName, collectionName string,
 		param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error)
+
+	// [Embedding] embeds the text data using the specified model.
+	Embedding(ctx context.Context, param EmbeddingParams) (result *EmbeddingResult, err error)
 }
 
 // [CreateUserParams] holds the parameters for creating the user.
@@ -635,6 +639,7 @@ func queryFileDetails(ctx context.Context, cli SdkClient, databaseName, collecti
 	req := new(document.QueryFileDetailsReq)
 	req.Database = databaseName
 	req.Collection = collectionName
+	req.ReadConsistency = string(cli.Options().ReadConsistency)
 	if param != nil {
 		req.Query = new(document.QueryFileDetailsCond)
 		req.Query.FileNames = param.FileNames
@@ -669,6 +674,68 @@ func queryFileDetails(ctx context.Context, cli SdkClient, databaseName, collecti
 		}
 		result.Documents[index] = d
 	}
+
+	return result, nil
+}
+
+// [EmbeddingParams] holds the parameters for embedding text data using the specified model.
+//
+// Fields:
+//   - Model: The name of the embedding model to use for generating vectors.
+//   - ModelParams: A pointer to ModelParams object containing additional model-specific parameters.
+//   - DataType: The type of data being embedded (e.g., "text").
+//   - Data: The list of text strings to be embedded into vectors.
+type EmbeddingParams struct {
+	Model       string
+	ModelParams *ai_service.ModelParams
+	DataType    string
+	Data        []string
+}
+
+// [EmbeddingResult] holds the results for embedding text data.
+//
+// Fields:
+//   - TokenUsed: The number of tokens consumed during the embedding process.
+//   - Vectors: The list of dense vectors generated from the input text data.
+//   - SparseVectors: The list of sparse vectors generated from the input text data.
+type EmbeddingResult struct {
+	TokenUsed     int64
+	Vectors       [][]float32
+	SparseVectors []map[string]float32
+}
+
+// [Embedding] embeds the text data using the specified model.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: An [EmbeddingParams] object that includes the other parameters for embedding text data operation.
+//     See [EmbeddingParams] for more information.
+//
+// Returns a pointer to an [EmbeddingResult] object or an error.
+func (i *implementerFlatDocument) Embedding(ctx context.Context,
+	param EmbeddingParams) (result *EmbeddingResult, err error) {
+	return embedding(ctx, i.SdkClient, param)
+}
+
+func embedding(ctx context.Context, cli SdkClient,
+	param EmbeddingParams) (result *EmbeddingResult, err error) {
+	req := new(ai_service.EmbeddingReq)
+	req.Model = param.Model
+	req.ModelParams = param.ModelParams
+	req.DataType = param.DataType
+	req.Data = param.Data
+
+	res := new(ai_service.EmbeddingRes)
+	err = cli.Request(ctx, req, res)
+	if err != nil {
+		return nil, err
+	}
+
+	result = new(EmbeddingResult)
+	result.Vectors = res.DenseVector
+	result.SparseVectors = res.SparseVector
+	result.TokenUsed = res.TokenUsed
 
 	return result, nil
 }

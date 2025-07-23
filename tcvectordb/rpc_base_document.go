@@ -1128,3 +1128,16 @@ func (r *rpcImplementerFlatDocument) QueryFileDetails(ctx context.Context, datab
 	param *QueryFileDetailsParams) (result *QueryFileDetailsResult, err error) {
 	return queryFileDetails(ctx, r.SdkClient, databaseName, collectionName, param)
 }
+
+// [Embedding] embeds the text data using the specified model.
+//
+// Parameters:
+//   - ctx: A context.Context object controls the request's lifetime, allowing for the request
+//     to be canceled or to timeout according to the context's deadline.
+//   - param: An [EmbeddingParams] object that includes the other parameters for embedding text data operation.
+//     See [EmbeddingParams] for more information.
+//
+// Returns a pointer to an [EmbeddingResult] object or an error.
+func (r *rpcImplementerFlatDocument) Embedding(ctx context.Context, param EmbeddingParams) (result *EmbeddingResult, err error) {
+	return embedding(ctx, r.SdkClient, param)
+}

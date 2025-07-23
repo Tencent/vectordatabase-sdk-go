@@ -48,4 +48,6 @@ type VdbClient interface {
 	AddIndex(ctx context.Context, databaseName, collectionName string, params ...*AddIndexParams) (err error)
 	DropIndex(ctx context.Context, databaseName, collectionName string, params DropIndexParams) (err error)
 	ModifyVectorIndex(ctx context.Context, databaseName, collectionName string, param ModifyVectorIndexParam) (err error)
+
+	Embedding(ctx context.Context, param EmbeddingParams) (result *EmbeddingResult, err error)
 }
