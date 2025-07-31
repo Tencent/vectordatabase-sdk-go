@@ -398,3 +398,11 @@ func (pool *RpcClientPool) ModifyVectorIndex(ctx context.Context, databaseName, 
 	}
 	return client.ModifyVectorIndex(ctx, databaseName, collectionName, param)
 }
+
+func (pool *RpcClientPool) Embedding(ctx context.Context, param EmbeddingParams) (result *EmbeddingResult, err error) {
+	client, err := pool.getRpcClient()
+	if err != nil {
+		return nil, fmt.Errorf("get rpc client failed. err: %v", err.Error())
+	}
+	return client.Embedding(ctx, param)
+}

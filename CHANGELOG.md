@@ -1,5 +1,9 @@
 # Changelog
 
+
+## v1.8.1
+* feat: support embedding service interface `/ai/service/embedding`
+
 ## v1.8.0
 * feat: support full-text search interface `/document/fullTextSearch`
 * feat: support rebuilding sparse vector indexes via `/rebuild/index` interface
