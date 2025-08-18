@@ -1,5 +1,7 @@
 # Changelog
 
+## v1.8.2
+* feat: support index type DISK_FLAT 
 
 ## v1.8.1
 * feat: support embedding service interface `/ai/service/embedding`
