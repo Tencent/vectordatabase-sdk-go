@@ -25,15 +25,16 @@ type IndexType string
 
 const (
 	// vector index type
-	FLAT     IndexType = "FLAT"
-	HNSW     IndexType = "HNSW"
-	IVF_FLAT IndexType = "IVF_FLAT"
-	IVF_PQ   IndexType = "IVF_PQ"
-	IVF_SQ4  IndexType = "IVF_SQ4"
-	IVF_SQ8  IndexType = "IVF_SQ8"
-	IVF_SQ16 IndexType = "IVF_SQ16"
-	BIN_FLAT IndexType = "BIN_FLAT"
-	BIN_HNSW IndexType = "BIN_HNSW"
+	FLAT      IndexType = "FLAT"
+	HNSW      IndexType = "HNSW"
+	IVF_FLAT  IndexType = "IVF_FLAT"
+	IVF_PQ    IndexType = "IVF_PQ"
+	IVF_SQ4   IndexType = "IVF_SQ4"
+	IVF_SQ8   IndexType = "IVF_SQ8"
+	IVF_SQ16  IndexType = "IVF_SQ16"
+	BIN_FLAT  IndexType = "BIN_FLAT"
+	BIN_HNSW  IndexType = "BIN_HNSW"
+	DISK_FLAT IndexType = "DISK_FLAT"
 
 	// scalar index type
 	PRIMARY         IndexType = "primaryKey"
