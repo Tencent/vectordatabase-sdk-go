@@ -121,6 +121,13 @@ func (r *RpcClient) Close() {
 	r.cc.Close()
 }
 
+func (r *RpcClient) GetState() string {
+	if r.cc == nil {
+		return ""
+	}
+	return r.cc.GetState().String()
+}
+
 func (r *RpcClient) attachCtx(ctx context.Context) context.Context {
 	auth := fmt.Sprintf("Bearer account=%s&api_key=%s", r.username, r.key)
 	md := metadata.Pairs("authorization", auth)
