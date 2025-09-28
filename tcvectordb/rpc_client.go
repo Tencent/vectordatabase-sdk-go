@@ -64,6 +64,7 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100*1024*1024)),
 		grpc.WithInitialWindowSize(100*1024*1024),
 		grpc.WithInitialConnWindowSize(100*1024*1024),
+		grpc.WithBlock(),
 	)
 	cli.cc = cc
 	if err != nil {
@@ -119,6 +120,13 @@ func (r *RpcClient) Debug(v bool) {
 func (r *RpcClient) Close() {
 	r.httpImplementer.Close()
 	r.cc.Close()
+}
+
+func (r *RpcClient) GetState() string {
+	if r.cc == nil {
+		return ""
+	}
+	return r.cc.GetState().String()
 }
 
 func (r *RpcClient) attachCtx(ctx context.Context) context.Context {
