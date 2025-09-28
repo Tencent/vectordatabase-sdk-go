@@ -125,6 +125,7 @@ type QueryDocumentParams struct {
 }
 
 type QueryDocumentResult struct {
+	Warning       string
 	Documents     []Document
 	AffectedCount int
 	Total         uint64
