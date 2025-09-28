@@ -64,6 +64,7 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100*1024*1024)),
 		grpc.WithInitialWindowSize(100*1024*1024),
 		grpc.WithInitialConnWindowSize(100*1024*1024),
+		grpc.WithBlock(),
 	)
 	cli.cc = cc
 	if err != nil {
