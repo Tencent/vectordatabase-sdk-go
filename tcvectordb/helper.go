@@ -22,6 +22,8 @@ func ConvertField2Grpc(field *Field) (result *olama.Field) {
 	switch field.Type() {
 	case Double:
 		result = &olama.Field{OneofVal: &olama.Field_ValDouble{ValDouble: field.Float()}}
+	case Int64:
+		result = &olama.Field{OneofVal: &olama.Field_ValI64{ValI64: field.Int64()}}
 	case Uint64:
 		result = &olama.Field{OneofVal: &olama.Field_ValU64{ValU64: field.Uint64()}}
 	case String:
@@ -53,6 +55,8 @@ func ConvertGrpc2Field(field *olama.Field) (result *Field) {
 		result.Val = v.ValU64
 	case *olama.Field_ValDouble:
 		result.Val = v.ValDouble
+	case *olama.Field_ValI64:
+		result.Val = v.ValI64
 	case *olama.Field_ValStrArr:
 		result.Val = ConvertByte2StringSlice(v.ValStrArr.StrArr)
 	case *olama.Field_ValJson:

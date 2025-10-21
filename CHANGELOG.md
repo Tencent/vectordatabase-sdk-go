@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.8.4
+* feat: support index type IVF_RABITQ
+* feat: support uint64 and double for filter index 
+
 ## v1.8.2
 * feat: support index type DISK_FLAT 
 

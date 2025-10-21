@@ -84,6 +84,24 @@ func (f Field) Uint64() uint64 {
 	return 0
 }
 
+func (f Field) Int64() int64 {
+	switch v := f.Val.(type) {
+	case int, int8, int16, int32, int64:
+		return int64(reflect.ValueOf(v).Int())
+	case uint, uint8, uint16, uint32, uint64:
+		return int64(reflect.ValueOf(v).Uint())
+	case string:
+		n, _ := strconv.ParseInt(v, 10, 64)
+		return n
+	case float32, float64:
+		return int64(reflect.ValueOf(v).Float())
+	case json.Number:
+		n, _ := v.Int64()
+		return n
+	}
+	return 0
+}
+
 func (f Field) Float() float64 {
 	switch v := f.Val.(type) {
 	case int, int8, int16, int32, int64:
@@ -105,7 +123,7 @@ func (f Field) Float() float64 {
 func (f Field) Type() FieldType {
 	switch f.Val.(type) {
 	case int, int8, int16, int32, int64:
-		return Uint64
+		return Int64
 	case uint, uint8, uint16, uint32, uint64:
 		return Uint64
 	case string:
@@ -122,7 +140,7 @@ func (f Field) Type() FieldType {
 			return Double
 		}
 		if _, err := data.Int64(); err == nil {
-			return Uint64
+			return Int64
 		}
 		return ""
 	}
