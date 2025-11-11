@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.8.4
+* feat: support index type IVF_RABITQ
+* feat: support uint64 and double types for filter index
+* fix: validate document field types in update and upsert operations, return error for unsupported types
+
 ## v1.8.2
 * feat: support index type DISK_FLAT 
 

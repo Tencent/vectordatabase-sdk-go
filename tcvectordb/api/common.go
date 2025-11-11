@@ -71,10 +71,11 @@ type IndexColumn struct {
 }
 
 type IndexParams struct {
-	M              uint32 `protobuf:"varint,1,opt,name=M,proto3" json:"M,omitempty"`
-	EfConstruction uint32 `protobuf:"varint,2,opt,name=efConstruction,proto3" json:"efConstruction,omitempty"`
-	Nprobe         uint32 `protobuf:"varint,3,opt,name=nprobe,proto3" json:"nprobe,omitempty"`
-	Nlist          uint32 `protobuf:"varint,4,opt,name=nlist,proto3" json:"nlist,omitempty"`
+	M              uint32  `protobuf:"varint,1,opt,name=M,proto3" json:"M,omitempty"`
+	EfConstruction uint32  `protobuf:"varint,2,opt,name=efConstruction,proto3" json:"efConstruction,omitempty"`
+	Nprobe         uint32  `protobuf:"varint,3,opt,name=nprobe,proto3" json:"nprobe,omitempty"`
+	Nlist          uint32  `protobuf:"varint,4,opt,name=nlist,proto3" json:"nlist,omitempty"`
+	Bits           *uint32 `protobuf:"varint,5,opt,name=bits,proto3" json:"bits,omitempty"`
 }
 
 // [ParsingProcess] holds the parameters for parsing files.

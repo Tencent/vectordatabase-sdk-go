@@ -68,6 +68,20 @@ var _ IndexParams = &HNSWParam{}
 var _ IndexParams = &IVFFLATParams{}
 var _ IndexParams = &IVFSQParams{}
 var _ IndexParams = &IVFPQParams{}
+var _ IndexParams = &IVFRabitQParams{}
+
+type IVFRabitQParams struct {
+	NList uint32
+	Bits  *uint32
+}
+
+func (p *IVFRabitQParams) MarshalJson() ([]byte, error) {
+	return json.Marshal(p)
+}
+
+func (p *IVFRabitQParams) Name() string {
+	return string(IVF_RABITQ)
+}
 
 type HNSWParam struct {
 	M              uint32

@@ -481,6 +481,8 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 					vector.Params = &IVFPQParams{M: index.Params.M, NList: index.Params.Nlist}
 				case IVF_SQ4, IVF_SQ8, IVF_SQ16:
 					vector.Params = &IVFSQParams{NList: index.Params.Nlist}
+				case IVF_RABITQ:
+					vector.Params = &IVFRabitQParams{NList: index.Params.Nlist, Bits: index.Params.Bits}
 				}
 			}
 			coll.Indexes.VectorIndex = append(coll.Indexes.VectorIndex, vector)
@@ -554,6 +556,11 @@ func optionParams(column *api.IndexColumn, v VectorIndex) {
 		if param, ok := v.Params.(*IVFPQParams); ok && param != nil {
 			column.Params.M = param.M
 			column.Params.Nlist = param.NList
+		}
+	case IVF_RABITQ:
+		if param, ok := v.Params.(*IVFRabitQParams); ok && param != nil {
+			column.Params.Nlist = param.NList
+			column.Params.Bits = param.Bits
 		}
 	}
 }

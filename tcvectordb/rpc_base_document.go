@@ -398,7 +398,11 @@ func (r *rpcImplementerFlatDocument) Upsert(ctx context.Context, databaseName, c
 			}
 
 			for k, v := range doc.Fields {
-				d.Fields[k] = ConvertField2Grpc(&v)
+				field := ConvertField2Grpc(&v)
+				if field == nil {
+					return nil, fmt.Errorf("the document's field `%s` must be one of STRING/UINT64/DOUBLE/INT64/ARRAY/JSON", k)
+				}
+				d.Fields[k] = field
 			}
 			req.Documents = append(req.Documents, d)
 		}
@@ -446,7 +450,12 @@ func (r *rpcImplementerFlatDocument) Upsert(ctx context.Context, databaseName, c
 			}
 
 			for k, v := range doc {
-				d.Fields[k] = ConvertField2Grpc(&Field{Val: v})
+				fmt.Printf("k: %s, v: %v\n", k, v)
+				field := ConvertField2Grpc(&Field{Val: v})
+				if field == nil {
+					return nil, fmt.Errorf("the document's field `%s` must be one of STRING/UINT64/DOUBLE/INT64/ARRAY/JSON", k)
+				}
+				d.Fields[k] = field
 			}
 			req.Documents = append(req.Documents, d)
 		}
@@ -918,7 +927,11 @@ func (r *rpcImplementerFlatDocument) Update(ctx context.Context, databaseName, c
 
 	if updatefields, ok := param.UpdateFields.(map[string]Field); ok {
 		for k, v := range updatefields {
-			req.Update.Fields[k] = ConvertField2Grpc(&v)
+			field := ConvertField2Grpc(&v)
+			if field == nil {
+				return nil, fmt.Errorf("the document's field `%s` must be one of STRING/UINT64/DOUBLE/INT64/ARRAY/JSON", k)
+			}
+			req.Update.Fields[k] = field
 		}
 	} else if updatefields, ok := param.UpdateFields.(map[string]interface{}); ok {
 		if vector, ok := updatefields["vector"]; ok {
@@ -950,7 +963,11 @@ func (r *rpcImplementerFlatDocument) Update(ctx context.Context, databaseName, c
 		}
 
 		for k, v := range updatefields {
-			req.Update.Fields[k] = ConvertField2Grpc(&Field{Val: v})
+			field := ConvertField2Grpc(&Field{Val: v})
+			if field == nil {
+				return nil, fmt.Errorf("the document's field `%s` must be one of STRING/UINT64/DOUBLE/INT64/ARRAY/JSON", k)
+			}
+			req.Update.Fields[k] = field
 		}
 	} else if param.UpdateFields != nil {
 		return nil, fmt.Errorf("update failed, because of incorrect UpdateDocumentParams.UpdateFields field type, " +
