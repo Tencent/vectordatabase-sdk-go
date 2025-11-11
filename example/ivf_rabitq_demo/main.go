@@ -10,13 +10,13 @@ import (
 
 type IVFRabitQDemo struct {
 	//client *tcvectordb.RpcClient
-	client *tcvectordb.Client
+	client *tcvectordb.RpcClient
 }
 
 func NewIVFRabitQDemo(url, username, key string) (*IVFRabitQDemo, error) {
 	// cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 	// 	ReadConsistency: tcvectordb.EventualConsistency})
-	cli, err := tcvectordb.NewClient(url, username, key, &tcvectordb.ClientOption{
+	cli, err := tcvectordb.NewRpcClient(url, username, key, &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency})
 	if err != nil {
 		return nil, err
