@@ -43,7 +43,7 @@ func (f *Filter) And(cond string) *Filter {
 	if f.cond == "" {
 		f.cond = cond
 	} else {
-		f.cond = fmt.Sprintf("%s and (%s)", f.cond, cond)
+		f.cond = fmt.Sprintf("(%s) and (%s)", f.cond, cond)
 	}
 	return f
 }
@@ -55,7 +55,7 @@ func (f *Filter) Or(cond string) *Filter {
 	if f.cond == "" {
 		f.cond = cond
 	} else {
-		f.cond = fmt.Sprintf("%s or (%s)", f.cond, cond)
+		f.cond = fmt.Sprintf("(%s) or (%s)", f.cond, cond)
 	}
 	return f
 }
@@ -67,7 +67,7 @@ func (f *Filter) AndNot(cond string) *Filter {
 	if f.cond == "" {
 		f.cond = fmt.Sprintf("not (%s)", cond)
 	} else {
-		f.cond = fmt.Sprintf("%s and not (%s)", f.cond, cond)
+		f.cond = fmt.Sprintf("(%s) and not (%s)", f.cond, cond)
 	}
 	return f
 }
@@ -79,7 +79,7 @@ func (f *Filter) OrNot(cond string) *Filter {
 	if f.cond == "" {
 		f.cond = fmt.Sprintf("not (%s)", cond)
 	} else {
-		f.cond = fmt.Sprintf("%s or not (%s)", f.cond, cond)
+		f.cond = fmt.Sprintf("(%s) or not (%s)", f.cond, cond)
 	}
 	return f
 }
