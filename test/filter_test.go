@@ -46,3 +46,10 @@ func Test_FilterMultiConditions(t *testing.T) {
 	filter := tcvectordb.NewFilter("author=\"jerry\"").And("a=1").Or("r=\"or\"").OrNot("rn=2").AndNot("an=\"andNot\"")
 	fmt.Println(filter.Cond())
 }
+
+func Test_FilerAndCondtions(t *testing.T) {
+	filter := tcvectordb.NewFilter(`author="jerry" or a=1`).And("b=2 or c=3")
+	// expect: (author="jerry" or a=1) and (b=2 or c=3)
+	// not expect: author="jerry" or a=1 and (b=2 or c=3)
+	fmt.Println(filter.Cond())
+}
