@@ -120,7 +120,12 @@ func (r *rpcImplementerFlatIndex) ModifyVectorIndex(ctx context.Context, databas
 			IndexType:  v.IndexType,
 			MetricType: string(v.MetricType),
 		}
+		if v.FieldType == string(SparseVector) {
+			column.DiskSwapEnabled = v.DiskSwapEnabled
+		}
+
 		optionRpcParamsFromIndexParams(column, v.Params)
+
 		req.VectorIndexes[v.FieldName] = column
 	}
 

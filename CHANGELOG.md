@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.0.0
+* feat: support DiskSwapEnabled param for sparse index. When set to true, sparse vectors are stored on disk
+
 ## v1.8.4
 * feat: support index type IVF_RABITQ
 * feat: support uint64 and double types for filter index

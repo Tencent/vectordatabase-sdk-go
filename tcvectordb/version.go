@@ -18,4 +18,4 @@
 
 package tcvectordb
 
-const SDKVersion = "v1.8.4"
+const SDKVersion = "v2.0.0"

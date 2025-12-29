@@ -120,10 +120,11 @@ func (r *rpcImplementerCollection) CreateCollection(ctx context.Context, name st
 
 	for _, v := range indexes.SparseVectorIndex {
 		column := &olama.IndexColumn{
-			FieldName:  v.FieldName,
-			FieldType:  string(v.FieldType),
-			IndexType:  string(v.IndexType),
-			MetricType: string(v.MetricType),
+			FieldName:       v.FieldName,
+			FieldType:       string(v.FieldType),
+			IndexType:       string(v.IndexType),
+			MetricType:      string(v.MetricType),
+			DiskSwapEnabled: v.DiskSwapEnabled,
 		}
 		req.Indexes[v.FieldName] = column
 	}
@@ -417,6 +418,7 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 			vector.FieldType = FieldType(index.FieldType)
 			vector.IndexType = IndexType(index.IndexType)
 			vector.MetricType = MetricType(index.MetricType)
+			vector.DiskSwapEnabled = index.DiskSwapEnabled
 			coll.Indexes.SparseVectorIndex = append(coll.Indexes.SparseVectorIndex, vector)
 
 		case string(Array):
@@ -465,6 +467,9 @@ func (r *rpcImplementerCollection) toCollection(collectionItem *olama.CreateColl
 }
 
 func optionRpcParamsFromIndexParams(column *olama.IndexColumn, v IndexParams) {
+	if v == nil {
+		return
+	}
 	column.Params = new(olama.IndexParams)
 	switch param := v.(type) {
 	case *HNSWParam:
