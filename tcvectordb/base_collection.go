@@ -192,7 +192,7 @@ func (i *implementerCollection) CreateCollection(ctx context.Context, name strin
 		column.FieldType = string(v.FieldType)
 		column.IndexType = string(v.IndexType)
 		column.MetricType = string(v.MetricType)
-
+		column.DiskSwapEnabled = v.DiskSwapEnabled
 		req.Indexes = append(req.Indexes, column)
 	}
 
@@ -493,6 +493,7 @@ func (i *implementerCollection) toCollection(collectionItem *collection.Describe
 			vector.FieldType = FieldType(index.FieldType)
 			vector.IndexType = IndexType(index.IndexType)
 			vector.MetricType = MetricType(index.MetricType)
+			vector.DiskSwapEnabled = index.DiskSwapEnabled
 			coll.Indexes.SparseVectorIndex = append(coll.Indexes.SparseVectorIndex, vector)
 
 		case string(Array):
@@ -566,6 +567,9 @@ func optionParams(column *api.IndexColumn, v VectorIndex) {
 }
 
 func optionParamsFromIndexParams(column *api.IndexColumn, v IndexParams) {
+	if v == nil {
+		return
+	}
 	column.Params = new(api.IndexParams)
 	switch param := v.(type) {
 	case *HNSWParam:

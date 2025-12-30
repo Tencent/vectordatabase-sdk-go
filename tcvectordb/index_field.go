@@ -29,10 +29,11 @@ type Indexes struct {
 }
 
 type SparseVectorIndex struct {
-	FieldName  string
-	FieldType  FieldType
-	IndexType  IndexType
-	MetricType MetricType
+	FieldName       string
+	FieldType       FieldType
+	IndexType       IndexType
+	MetricType      MetricType
+	DiskSwapEnabled *bool
 }
 
 type FilterIndex struct {

@@ -74,16 +74,18 @@ type ModifyVectorIndexParam struct {
 //
 // Fields:
 //   - FieldName: The name of the field for the vector index.
-//   - FieldType: The type of the field (e.g., "vector", "float16_vector", "bfloat16_vector").
+//   - FieldType: The type of the field (e.g., "vector", "float16_vector", "bfloat16_vector", "sparseVector").
 //   - IndexType: The type of the index (e.g., "HNSW", "FLAT", "IVF_FLAT", "IVF_PQ"). not support BIN_FLAT now.
 //   - MetricType: The metric type used for similarity calculation (e.g., COSINE, L2).
+//   - DiskSwapEnabled: Whether to store the sparse vector on disk.
 //   - Params: The index parameters that specify the configuration details for the index.
 type ModifyVectorIndex struct {
-	FieldName  string
-	FieldType  string
-	IndexType  string
-	MetricType MetricType
-	Params     IndexParams
+	FieldName       string
+	FieldType       string
+	IndexType       string
+	MetricType      MetricType
+	DiskSwapEnabled *bool
+	Params          IndexParams
 }
 
 // [RebuildIndex] rebuilds all indexes under the specified collection.
@@ -196,6 +198,9 @@ func (i *implementerFlatIndex) ModifyVectorIndex(ctx context.Context, databaseNa
 		column.FieldType = v.FieldType
 		column.IndexType = v.IndexType
 		column.MetricType = string(v.MetricType)
+		if v.DiskSwapEnabled != nil && v.FieldType == string(SparseVector) {
+			column.DiskSwapEnabled = v.DiskSwapEnabled
+		}
 
 		optionParamsFromIndexParams(column, v.Params)
 

@@ -65,6 +65,7 @@ type IndexColumn struct {
 	IndexType        string       `json:"indexType,omitempty"`
 	Dimension        uint32       `json:"dimension,omitempty"`
 	MetricType       string       `json:"metricType,omitempty"`
+	DiskSwapEnabled  *bool        `json:"diskSwapEnabled,omitempty"`
 	IndexedCount     uint64       `json:"indexedCount,omitempty"`
 	Params           *IndexParams `json:"params,omitempty"`
 	AutoId           string       `json:"autoId,omitempty"`
