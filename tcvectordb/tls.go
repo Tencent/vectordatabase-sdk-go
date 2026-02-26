@@ -44,10 +44,6 @@ func configureTLSCertificates(tlsConfig *tls.Config, caCertOption string) error 
 
 // CreateTLSConfig creates a complete TLS configuration based on client options and URL
 func CreateTLSConfig(option *ClientOption, url string) (*tls.Config, error) {
-	if !strings.HasPrefix(url, "https://") {
-		return nil, nil
-	}
-
 	if option.CACert == "" && !option.InsecureSkipVerify {
 		return nil, nil
 	}
