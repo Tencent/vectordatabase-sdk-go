@@ -21,7 +21,6 @@ package tcvectordb
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -29,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 )
@@ -182,6 +182,8 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 		method = api.Method(req)
 		path   = api.Path(req)
 	)
+	var json = jsoniter.Config{SortMapKeys: true, ValidateJsonRawMessage: true}.Froze()
+
 	reqBody := bytes.NewBuffer(nil)
 	encoder := json.NewEncoder(reqBody)
 	encoder.SetEscapeHTML(false)
@@ -233,6 +235,7 @@ func (c *Client) handleResponse(ctx context.Context, res *http.Response, out int
 	if res.StatusCode/100 != 2 {
 		return errors.Errorf("response code is %d, %s", res.StatusCode, string(responseBytes))
 	}
+	var json = jsoniter.Config{SortMapKeys: true, ValidateJsonRawMessage: true}.Froze()
 
 	if !json.Valid(responseBytes) {
 		return errors.Errorf(`invalid response content: %s`, responseBytes)
