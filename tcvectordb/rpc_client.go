@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
@@ -44,7 +45,12 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 			rpcTarget += ":80"
 		}
 	} else if strings.HasPrefix(url, "https://") {
-		return nil, errors.Errorf("invalid url param with %v for not supporting https://", url)
+		httpTarget = url
+		rpcTarget = strings.TrimPrefix(url, "https://")
+		portIndex := strings.Index(rpcTarget, ":")
+		if portIndex == -1 {
+			rpcTarget += ":443"
+		}
 	} else {
 		httpTarget = "http://" + url
 		rpcTarget = url
@@ -57,15 +63,31 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 	cli.debug = false
 	cli.option = optionMerge(*option)
 
-	cc, err := grpc.Dial(rpcTarget,
+	// Configure transport credentials based on TLS requirement
+	var dialOpts []grpc.DialOption
+
+	// Configure TLS using the new CreateTLSConfig function
+	tlsConfig, err := CreateTLSConfig(option, url)
+	if err != nil {
+		return nil, err
+	}
+	if tlsConfig != nil {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+	} else {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	// Add common dial options
+	dialOpts = append(dialOpts,
 		grpc.WithUnaryInterceptor(newInterceptor(cli)),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)),
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100*1024*1024)),
 		grpc.WithInitialWindowSize(100*1024*1024),
 		grpc.WithInitialConnWindowSize(100*1024*1024),
 		grpc.WithBlock(),
 	)
+
+	cc, err := grpc.Dial(rpcTarget, dialOpts...)
 	cli.cc = cc
 	if err != nil {
 		return nil, err
