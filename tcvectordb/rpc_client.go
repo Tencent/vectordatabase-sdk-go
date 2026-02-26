@@ -88,10 +88,10 @@ func NewRpcClient(url, username, key string, option *ClientOption) (*RpcClient, 
 	)
 
 	cc, err := grpc.Dial(rpcTarget, dialOpts...)
-	cli.cc = cc
 	if err != nil {
 		return nil, err
 	}
+	cli.cc = cc
 	cli.rpcClient = olama.NewSearchEngineClient(cc)
 
 	httpc, err := NewClient(httpTarget, username, key, option)

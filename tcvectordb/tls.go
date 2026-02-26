@@ -29,12 +29,6 @@ func configureTLSCertificates(tlsConfig *tls.Config, caCertOption string) error 
 		certContent = string(certBytes)
 	}
 
-	// Validate PEM format
-	if !strings.Contains(certContent, "-----BEGIN CERTIFICATE-----") ||
-		!strings.Contains(certContent, "-----END CERTIFICATE-----") {
-		return errors.New("CA certificate must be in PEM format with BEGIN/END CERTIFICATE markers")
-	}
-
 	if ok := caCertPool.AppendCertsFromPEM([]byte(certContent)); !ok {
 		return errors.Errorf("failed to parse CA certificate: invalid PEM format or certificate content")
 	}
