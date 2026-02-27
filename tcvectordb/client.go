@@ -21,8 +21,6 @@ package tcvectordb
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -30,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
 )
@@ -54,6 +53,8 @@ type SdkClient interface {
 //   - ReadConsistency: (Optional) ReadConsistency represents the consistency level for reads.
 //     The default value is "eventualConsistency", but it can be set to "strongConsistency" as well.
 //   - Transport: (Optional) Transport specifies the mechanism by which individual HTTP requests are made (defaults to http.Transport).
+//   - CACert: (Optional) CA certificate content or file path for HTTPS connections. If provided, the client will use this CA certificate to verify the server's certificate.
+//   - InsecureSkipVerify: (Optional) If true, skip TLS certificate verification. Should be used only for testing (defaults to false).
 type ClientOption struct {
 	Timeout            time.Duration
 	MaxIdleConnPerHost int
@@ -64,6 +65,9 @@ type ClientOption struct {
 	ReadConsistency    ReadConsistency
 	Transport          http.RoundTripper
 	RpcPoolSize        int
+	// HTTPS configuration
+	CACert             string // CA certificate content or file path for HTTPS connections
+	InsecureSkipVerify bool   // If true, skip TLS certificate verification
 }
 type Client struct {
 	DatabaseInterface
@@ -92,6 +96,7 @@ var defaultOption = ClientOption{
 	IdleConnTimeout:    time.Minute,
 	ReadConsistency:    api.EventualConsistency,
 	RpcPoolSize:        defaultRpcPoolSize,
+	InsecureSkipVerify: false, // Default to verify TLS certificates
 }
 
 var defaultRpcPoolSize = 2
@@ -99,7 +104,7 @@ var defaultRpcPoolSize = 2
 // [NewClient] creates and initializes a new instance of [Client] with the given url, username, key and option.
 //
 // Parameters:
-//   - url: The address of vectordb, supporting http only.
+//   - url: The address of vectordb, supporting both http and https protocols.
 //   - username: The username of vectordb, supporting root only currently.
 //   - key: The account api key of vectordb, which you can get from console.
 //   - option: A [ClientOption] object that includes the configuration for the vectordb client. See
@@ -108,6 +113,7 @@ var defaultRpcPoolSize = 2
 // Notes:
 //   - It is important to handle the error returned by this function to ensure that the
 //     vectordb client has been created successfully before attempting to make API calls.
+//   - For HTTPS connections, you can configure CA certificate verification and SNI settings through the ClientOption.
 //
 // Returns a pointer to an initialized [Client] instance or an error.
 
@@ -119,7 +125,7 @@ func NewClient(url, username, key string, option *ClientOption) (*Client, error)
 }
 
 func newClient(url, username, key string, option ClientOption) (*Client, error) {
-	if !strings.HasPrefix(url, "http") {
+	if !strings.HasPrefix(url, "http") && !strings.HasPrefix(url, "https") {
 		return nil, errors.Errorf("invalid url param with: %s", url)
 	}
 	if username == "" || key == "" {
@@ -142,10 +148,15 @@ func newClient(url, username, key string, option ClientOption) (*Client, error) 
 		if cli.option.MaxIdleConnPerHost != 0 {
 			maxIdleConnsPerHost = cli.option.MaxIdleConnPerHost
 		}
+
+		// Configure TLS for HTTPS connections
+		tlsConfig, err := CreateTLSConfig(&cli.option, url)
+		if err != nil {
+			return nil, err
+		}
+
 		cli.cli.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
+			TLSClientConfig:     tlsConfig,
 			MaxIdleConnsPerHost: maxIdleConnsPerHost,
 			IdleConnTimeout:     cli.option.IdleConnTimeout,
 		}
@@ -171,6 +182,8 @@ func (c *Client) Request(ctx context.Context, req, res interface{}) error {
 		method = api.Method(req)
 		path   = api.Path(req)
 	)
+	var json = jsoniter.Config{SortMapKeys: true, ValidateJsonRawMessage: true}.Froze()
+
 	reqBody := bytes.NewBuffer(nil)
 	encoder := json.NewEncoder(reqBody)
 	encoder.SetEscapeHTML(false)
@@ -222,6 +235,7 @@ func (c *Client) handleResponse(ctx context.Context, res *http.Response, out int
 	if res.StatusCode/100 != 2 {
 		return errors.Errorf("response code is %d, %s", res.StatusCode, string(responseBytes))
 	}
+	var json = jsoniter.Config{SortMapKeys: true, ValidateJsonRawMessage: true}.Froze()
 
 	if !json.Valid(responseBytes) {
 		return errors.Errorf(`invalid response content: %s`, responseBytes)
