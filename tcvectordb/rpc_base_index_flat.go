@@ -129,12 +129,14 @@ func (r *rpcImplementerFlatIndex) ModifyVectorIndex(ctx context.Context, databas
 		req.VectorIndexes[v.FieldName] = column
 	}
 
-	defaultThrottle := int32(1)
-	if param.RebuildRules == nil {
+	if param.RebuildRules != nil {
 		req.RebuildRules = new(olama.RebuildIndexRequest)
-		req.RebuildRules.Throttle = defaultThrottle
-	} else if param.RebuildRules.Throttle == nil {
-		req.RebuildRules.Throttle = defaultThrottle
+		if param.RebuildRules.DropBeforeRebuild != nil {
+			req.RebuildRules.DropBeforeRebuild = *param.RebuildRules.DropBeforeRebuild
+		}
+		if param.RebuildRules.Throttle != nil {
+			req.RebuildRules.Throttle = *param.RebuildRules.Throttle
+		}
 	}
 
 	res, err := r.rpcClient.ModifyVectorIndex(ctx, req)
