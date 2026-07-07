@@ -45,17 +45,14 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 	defaultStopWordFilePath := defaultStorageDir + tcvdbtext.DefaultStopWordsFileName
 	cosStopWordsUrl := tcvdbtext.CosSparsevectorDir + tcvdbtext.DefaultStopWordsFileName
 
-	if jbt.StopWordsFilePath == "" {
+	if params == nil {
+		log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
+		jbt.StopWordsFilePath = defaultStopWordFilePath
 		err := jbt.downloadFileFromCos(tcvdbtext.DefaultStorageDir, defaultStopWordFilePath, cosStopWordsUrl)
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if params == nil {
-		log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
-		jbt.StopWordsFilePath = defaultStopWordFilePath
-		err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
+		err = jbt.Jieba.LoadStop(defaultStopWordFilePath)
 		if err != nil {
 			return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
@@ -76,28 +73,31 @@ func NewJiebaTokenizer(params *TokenizerParams) (Tokenizer, error) {
 		jbt.useHmm = *params.Hmm
 	}
 
-	stopWordFilePath, ok := params.StopWords.(string)
-	if ok {
-		jbt.StopWordsFilePath = stopWordFilePath
+	switch value := params.StopWords.(type) {
+	case string:
+		jbt.StopWordsFilePath = value
+		if !tcvdbtext.FileExists(jbt.StopWordsFilePath) {
+			return nil, fmt.Errorf("the stop words file %v doesn't exist", jbt.StopWordsFilePath)
+		}
 		err := jbt.Jieba.LoadStop(jbt.StopWordsFilePath)
 		if err != nil {
 			return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 		}
-	} else {
-		stopWordsEnable, ok := params.StopWords.(bool)
-		if ok {
-			jbt.StopWordsEnable = stopWordsEnable
-			if stopWordsEnable {
-				log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
-				jbt.StopWordsFilePath = defaultStopWordFilePath
-				err := jbt.Jieba.LoadStop(defaultStopWordFilePath)
-				if err != nil {
-					return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
-				}
+	case bool:
+		jbt.StopWordsEnable = value
+		if jbt.StopWordsEnable {
+			log.Printf("[Warning] Jieba will use default file for stopwords, which is %v", defaultStopWordFilePath)
+			jbt.StopWordsFilePath = defaultStopWordFilePath
+			err := jbt.downloadFileFromCos(tcvdbtext.DefaultStorageDir, defaultStopWordFilePath, cosStopWordsUrl)
+			if err != nil {
+				return nil, err
+			}
+			err = jbt.Jieba.LoadStop(defaultStopWordFilePath)
+			if err != nil {
+				return nil, fmt.Errorf("jieba loads file %v for stopwords failed. err: %v", jbt.StopWordsFilePath, err.Error())
 			}
 		}
 	}
-
 	if params.UserDictFilePath != "" && !tcvdbtext.FileExists(params.UserDictFilePath) {
 		return nil, fmt.Errorf("the UserDictFilePath in params is invalid, "+
 			"because the filepath %v doesn't exist", params.UserDictFilePath)

@@ -39,6 +39,28 @@ func Test_JiebaTokenizer(t *testing.T) {
 
 }
 
+func Test_JiebaCustomeStopWords(t *testing.T) {
+	// default stop words
+	jbt, err := NewJiebaTokenizer(&TokenizerParams{
+		StopWords: true,
+	})
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	tokenizeRes := jbt.Tokenize("腾讯云的vdb是一款向量数据库")
+	println(ToJson(tokenizeRes))
+
+	// custome stop words
+	jbt, err = NewJiebaTokenizer(&TokenizerParams{
+		StopWords: "../data/user_define_stopwords.txt",
+	})
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	tokenizeRes = jbt.Tokenize("腾讯云的vdb是一款向量数据库")
+	println(ToJson(tokenizeRes))
+}
+
 func ToJson(any interface{}) string {
 	bytes, err := json.Marshal(any)
 	if err != nil {
