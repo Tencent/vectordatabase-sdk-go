@@ -1,6 +1,6 @@
 package ai_service
 
-import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+import "github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
 
 type ModelParams struct {
 	RetrieveDenseVector  *bool `json:"retrieveDenseVector,omitempty"`

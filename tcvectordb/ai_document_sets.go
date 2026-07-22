@@ -34,8 +34,8 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/ai_document_set"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 

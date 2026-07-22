@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/index"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/index"
 )
 
 var _ FlatIndexInterface = &implementerFlatIndex{}

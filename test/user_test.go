@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/user"
 )
 
 func Test_DropUser(t *testing.T) {

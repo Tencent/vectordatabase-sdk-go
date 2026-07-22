@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/olama"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"

@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
 )
 
 func main() {

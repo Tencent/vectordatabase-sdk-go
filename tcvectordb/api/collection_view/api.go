@@ -18,7 +18,7 @@
 
 package collection_view
 
-import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+import "github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
 
 // CreateReq create CollectionView request
 type CreateReq struct {

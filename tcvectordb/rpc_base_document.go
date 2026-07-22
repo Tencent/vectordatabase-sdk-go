@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/document"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/user"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/olama"
 )
 
 var _ DocumentInterface = &rpcImplementerDocument{}

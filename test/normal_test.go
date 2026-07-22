@@ -25,8 +25,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/document"
 )
 
 func TestDropDatabase(t *testing.T) {

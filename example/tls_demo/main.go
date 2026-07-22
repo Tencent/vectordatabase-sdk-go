@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	tcvectordb "github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	tcvectordb "github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
 )
 
 func main() {

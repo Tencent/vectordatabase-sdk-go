@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_database"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/database"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/ai_database"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/database"
 )
 
 var _ DatabaseInterface = &implementerDatabase{}

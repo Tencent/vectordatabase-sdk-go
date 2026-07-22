@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/olama"
 )
 
 var _ CollectionInterface = &rpcImplementerCollection{}

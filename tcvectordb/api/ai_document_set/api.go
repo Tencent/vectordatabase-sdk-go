@@ -18,7 +18,7 @@
 
 package ai_document_set
 
-import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+import "github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
 
 // QueryReq query document request
 type QueryReq struct {

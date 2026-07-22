@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
 )
 
 // Document document struct for document api

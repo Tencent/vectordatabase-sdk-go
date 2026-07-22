@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/ai_document_set"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/document"
 )
 
 type Demo struct {
