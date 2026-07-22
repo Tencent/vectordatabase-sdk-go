@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
 )
 
 type Demo struct {

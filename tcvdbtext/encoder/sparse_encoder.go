@@ -1,6 +1,6 @@
 package encoder
 
-import "github.com/tencent/vectordatabase-sdk-go/tcvdbtext/tokenizer"
+import "github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext/tokenizer"
 
 type SparseEncoder interface {
 	encodeSingleDocument(text string) []SparseVecItem

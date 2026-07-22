@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
 )
 
 func Test_FilterUint64OneCondition(t *testing.T) {

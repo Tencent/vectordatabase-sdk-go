@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext/encoder"
 )
 
 func main() {

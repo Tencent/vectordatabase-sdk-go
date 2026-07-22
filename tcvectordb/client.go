@@ -30,7 +30,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
 )
 
 // SdkClient provides the operations of a client.

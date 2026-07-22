@@ -18,7 +18,7 @@
 
 package user
 
-import "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
+import "github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
 
 type CreateReq struct {
 	api.Meta `path:"/user/create" tags:"User" method:"Post" summary:"创建用户"`

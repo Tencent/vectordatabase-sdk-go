@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/collection_view"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/collection_view"
 )
 
 var _ AICollectionViewInterface = &implementerCollectionView{}

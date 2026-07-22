@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-ego/gse"
 
-	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/tcvdbtext"
-	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/hash"
+	tcvdbtext "github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext/hash"
 )
 
 type JiebaTokenizer struct {

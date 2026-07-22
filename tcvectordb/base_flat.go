@@ -33,12 +33,12 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_document_set"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/ai_service"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
-	api_user "github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/ai_document_set"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/ai_service"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/document"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/user"
+	api_user "github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/user"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 

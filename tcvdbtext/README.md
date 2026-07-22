@@ -11,7 +11,7 @@ Go SDK for [Tencent VectorDB Sparse Encoder](https://cloud.tencent.com/document/
 
 1. Use `go get` to install the latest version of the TencentCloud VectorDB Sparse Encoder SDK dependencies: 
 ```sh
-go get -u github.com/tencent/vectordatabase-sdk-go/tcvdbtext
+go get -u github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext
 ```
 
 2. Try [sparse_vector_demo](examples/sparse_vector_demo/main.go) in an online environment with internet access.

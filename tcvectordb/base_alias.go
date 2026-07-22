@@ -21,7 +21,7 @@ package tcvectordb
 import (
 	"context"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/alias"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/alias"
 )
 
 var _ AliasInterface = &implementerAlias{}

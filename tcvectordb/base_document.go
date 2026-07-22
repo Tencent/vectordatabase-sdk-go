@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/encoder"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/document"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext/encoder"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/document"
 )
 
 var _ DocumentInterface = &implementerDocument{}

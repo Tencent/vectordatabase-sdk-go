@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvdbtext/tokenizer"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvdbtext/tokenizer"
 )
 
 func Test_BM25Encoder_DownloadParams(t *testing.T) {

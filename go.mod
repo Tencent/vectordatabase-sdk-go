@@ -1,4 +1,4 @@
-module github.com/tencent/vectordatabase-sdk-go
+module github.com/tencent/vectordatabase-sdk-go/v2
 
 go 1.17
 

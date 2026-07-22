@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/index"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/index"
 )
 
 func TestAddIndexWithDefaultParam(t *testing.T) {

@@ -9,12 +9,12 @@
 
 1. Use `go get` to install the latest version of the TencentCloud VectorDB Go SDK and dependencies: 
 ```sh
-go get -u github.com/tencent/vectordatabase-sdk-go/tcvectordb
+go get -u github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb
 ```
 
 2. Create New VectorDB Client To Start:
 ```go
-import "github.com/tencent/vectordatabase-sdk-go/tcvectordb"
+import "github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
 
 cli, err := tcvectordb.NewRpcClient("vdb http url or ip and post", "root", "key get from web console", &tcvectordb.ClientOption{
 		ReadConsistency: tcvectordb.EventualConsistency,

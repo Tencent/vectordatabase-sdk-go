@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb"
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/api/user"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/api/user"
 )
 
 type Demo struct {

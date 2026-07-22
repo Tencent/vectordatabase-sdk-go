@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/olama"
 )
 
 var _ DatabaseInterface = &rpcImplementerDatabase{}

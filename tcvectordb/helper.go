@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/tencent/vectordatabase-sdk-go/tcvectordb/olama"
+	"github.com/tencent/vectordatabase-sdk-go/v2/tcvectordb/olama"
 )
 
 func ConvertDbType(dataType olama.DataType) string {
